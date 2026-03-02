@@ -1,7 +1,11 @@
 node_modules/
 .env
 data.db
+data.db-shm
+data.db-wal
 sessions.db
+sessions.db-shm
+sessions.db-wal
 logs/
 *.log
 test-complete.sh
