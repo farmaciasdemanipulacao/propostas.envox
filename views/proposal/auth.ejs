@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proposta Comercial — Envox</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/auth.css">
+</head>
+<body class="auth-body">
+  <div class="auth-bg">
+    <div class="auth-bg-circle c1"></div>
+    <div class="auth-bg-circle c2"></div>
+    <div class="auth-bg-circle c3"></div>
+  </div>
+  
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <span class="brand-env">env</span><span class="brand-ox">ox</span>
+        <div class="brand-tagline">MARKETING DIGITAL</div>
+      </div>
+      
+      <% if (!validToken) { %>
+        <div class="auth-invalid">
+          <div class="invalid-icon">🔒</div>
+          <h2>Link Inválido</h2>
+          <p><%= error %></p>
+          <a href="https://www.envox.com.br" class="btn-auth-primary">Falar com a Envox</a>
+        </div>
+      <% } else { %>
+        <h2 class="auth-title">Proposta Comercial</h2>
+        <p class="auth-subtitle">
+          Para visualizar sua proposta comercial exclusiva, 
+          confirme seus dados abaixo:
+        </p>
+        
+        <% if (error) { %>
+          <div class="auth-alert">
+            <span>⚠️</span> <%= error %>
+          </div>
+        <% } %>
+        
+        <form action="/proposta/<%= token %>/auth" method="POST" class="auth-form">
+          <div class="auth-form-group">
+            <label>WhatsApp</label>
+            <div class="auth-input-wrap">
+              <span class="auth-input-icon">📱</span>
+              <input type="text" name="whatsapp" id="whatsapp"
+                placeholder="(41) 9 9999-9999" 
+                required maxlength="16"
+                autocomplete="tel">
+            </div>
+          </div>
+          
+          <div class="auth-form-group">
+            <label>Email</label>
+            <div class="auth-input-wrap">
+              <span class="auth-input-icon">✉️</span>
+              <input type="email" name="email" 
+                placeholder="seu@email.com" 
+                required
+                autocomplete="email">
+            </div>
+          </div>
+          
+          <button type="submit" class="btn-auth-primary">
+            <span>🔓</span> Acessar Proposta
+          </button>
+        </form>
+        
+        <div class="auth-footer">
+          <p>Problemas para acessar? 
+            <a href="https://wa.me/5541992369292" target="_blank">Fale conosco</a>
+          </p>
+        </div>
+      <% } %>
+    </div>
+  </div>
+  
+  <script>
+    const waInput = document.getElementById('whatsapp');
+    if (waInput) {
+      waInput.addEventListener('input', function() {
+        let v = this.value.replace(/\D/g, '');
+        if (v.length > 11) v = v.slice(0, 11);
+        if (v.length >= 11) {
+          this.value = `(${v.slice(0,2)}) ${v.slice(2,3)} ${v.slice(3,7)}-${v.slice(7)}`;
+        } else if (v.length >= 7) {
+          this.value = `(${v.slice(0,2)}) ${v.slice(2,6)}-${v.slice(6)}`;
+        } else if (v.length >= 3) {
+          this.value = `(${v.slice(0,2)}) ${v.slice(2)}`;
+        } else if (v.length >= 1) {
+          this.value = `(${v}`;
+        }
+      });
+    }
+  </script>
+</body>
+</html>

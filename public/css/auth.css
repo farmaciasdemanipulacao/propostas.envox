@@ -1,0 +1,160 @@
+/* AUTH PAGE */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --pink: #E91E63;
+  --pink-dark: #C2185B;
+  --dark: #1A1A2E;
+  --white: #FFFFFF;
+}
+
+body.auth-body {
+  font-family: 'Poppins', sans-serif;
+  background: var(--dark);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-bg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+}
+.auth-bg-circle {
+  position: absolute; border-radius: 50%;
+  background: rgba(233,30,99,0.08);
+}
+.auth-bg-circle.c1 { width: 600px; height: 600px; top: -200px; right: -200px; }
+.auth-bg-circle.c2 { width: 400px; height: 400px; bottom: -150px; left: -150px; background: rgba(156,39,176,0.06); }
+.auth-bg-circle.c3 { width: 200px; height: 200px; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(233,30,99,0.04); }
+
+.auth-container {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 440px;
+  padding: 1.5rem;
+}
+
+.auth-card {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+
+.auth-logo {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+.auth-logo .brand-env { font-size: 2.8rem; font-weight: 800; color: var(--white); }
+.auth-logo .brand-ox  { font-size: 2.8rem; font-weight: 800; color: var(--pink); }
+.auth-logo .brand-tagline {
+  font-size: 0.65rem; letter-spacing: 3px;
+  color: rgba(255,255,255,0.4); font-weight: 500;
+  text-transform: uppercase; margin-top: 0.3rem;
+}
+
+.auth-title {
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 0.5rem;
+}
+.auth-subtitle {
+  text-align: center;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 1.75rem;
+  line-height: 1.6;
+}
+
+.auth-alert {
+  background: rgba(220,53,69,0.2);
+  border: 1px solid rgba(220,53,69,0.4);
+  color: #ff8fa3;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+
+.auth-form { display: flex; flex-direction: column; gap: 1.25rem; }
+
+.auth-form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+.auth-form-group label {
+  font-size: 0.82rem; font-weight: 600;
+  color: rgba(255,255,255,0.7); letter-spacing: 0.3px;
+}
+.auth-input-wrap { position: relative; }
+.auth-input-icon {
+  position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%);
+  font-size: 1rem; z-index: 1;
+}
+.auth-input-wrap input {
+  width: 100%;
+  background: rgba(255,255,255,0.08);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 0.8rem 1rem 0.8rem 2.8rem;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem;
+  color: var(--white);
+  outline: none;
+  transition: all 0.2s ease;
+}
+.auth-input-wrap input::placeholder { color: rgba(255,255,255,0.3); }
+.auth-input-wrap input:focus {
+  border-color: var(--pink);
+  background: rgba(255,255,255,0.1);
+  box-shadow: 0 0 0 3px rgba(233,30,99,0.2);
+}
+
+.btn-auth-primary {
+  display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+  width: 100%;
+  background: var(--pink);
+  color: var(--white);
+  border: none;
+  border-radius: 10px;
+  padding: 0.9rem 1.5rem;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  margin-top: 0.5rem;
+  letter-spacing: 0.3px;
+}
+.btn-auth-primary:hover {
+  background: var(--pink-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(233,30,99,0.35);
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.35);
+}
+.auth-footer a { color: var(--pink); text-decoration: none; }
+.auth-footer a:hover { text-decoration: underline; }
+
+/* Invalid token */
+.auth-invalid {
+  text-align: center;
+  padding: 1rem 0;
+}
+.invalid-icon { font-size: 3rem; margin-bottom: 1rem; }
+.auth-invalid h2 { color: var(--white); font-size: 1.4rem; margin-bottom: 0.5rem; }
+.auth-invalid p  { color: rgba(255,255,255,0.5); font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.6; }
+
+@media (max-width: 480px) {
+  .auth-card { padding: 1.75rem 1.25rem; }
+}

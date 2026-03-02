@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Envox Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <div class="top-bar"></div>
+  
+  <!-- Sidebar -->
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <span class="brand-env">env</span><span class="brand-ox">ox</span>
+        <div class="brand-tagline">ADMIN</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/admin" class="nav-item active">
+          <span class="nav-icon">📊</span> Dashboard
+        </a>
+        <a href="/admin/leads/new" class="nav-item">
+          <span class="nav-icon">➕</span> Novo Lead
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/admin/logout" class="nav-item logout">
+          <span class="nav-icon">🚪</span> Sair
+        </a>
+      </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Dashboard</h1>
+          <p class="page-subtitle">Gerencie seus leads e acompanhe o engajamento</p>
+        </div>
+        <a href="/admin/leads/new" class="btn-primary">
+          ➕ Novo Lead
+        </a>
+      </div>
+      
+      <% if (success) { %>
+        <div class="alert alert-success"><span>✅</span> <%= success %></div>
+      <% } %>
+      <% if (error) { %>
+        <div class="alert alert-error"><span>⚠️</span> <%= error %></div>
+      <% } %>
+      
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value"><%= leads.length %></div>
+          <div class="stat-label">Total de Leads</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value"><%= leads.filter(l => l.status === 'viewed').length %></div>
+          <div class="stat-label">Visualizaram</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔴</div>
+          <div class="stat-value"><%= leads.filter(l => l.status === 'not_viewed').length %></div>
+          <div class="stat-label">Não Visualizaram</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">👁️</div>
+          <div class="stat-value"><%= leads.filter(l => l.status === 'viewing').length %></div>
+          <div class="stat-label">Visualizando Agora</div>
+        </div>
+      </div>
+      
+      <!-- Leads Table -->
+      <div class="table-card">
+        <div class="table-header">
+          <h2>Leads Cadastrados</h2>
+          <span class="table-count"><%= leads.length %> leads</span>
+        </div>
+        
+        <% if (leads.length === 0) { %>
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <p>Nenhum lead cadastrado ainda.</p>
+            <a href="/admin/leads/new" class="btn-primary">Cadastrar Primeiro Lead</a>
+          </div>
+        <% } else { %>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>WhatsApp</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                  <th>Acessos</th>
+                  <th>Último Acesso</th>
+                  <th>Tempo Total</th>
+                  <th>Interesse</th>
+                  <th>Link</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% leads.forEach(lead => { %>
+                  <tr onclick="window.location='/admin/leads/<%= lead.id %>'" style="cursor:pointer">
+                    <td class="td-name">
+                      <strong><%= lead.name %></strong>
+                    </td>
+                    <td><%= lead.whatsapp %></td>
+                    <td class="td-email"><%= lead.email %></td>
+                    <td>
+                      <% if (lead.status === 'viewed') { %>
+                        <span class="badge badge-success">✅ Visualizou</span>
+                      <% } else if (lead.status === 'viewing') { %>
+                        <span class="badge badge-warning">👁️ Visualizando</span>
+                      <% } else { %>
+                        <span class="badge badge-danger">❌ Não visualizou</span>
+                      <% } %>
+                    </td>
+                    <td class="td-center"><%= lead.total_accesses || 0 %></td>
+                    <td>
+                      <% if (lead.last_access) { %>
+                        <small><%= new Date(lead.last_access).toLocaleDateString('pt-BR') %><br>
+                        <%= new Date(lead.last_access).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) %></small>
+                      <% } else { %>
+                        <span class="text-muted">—</span>
+                      <% } %>
+                    </td>
+                    <td class="td-center">
+                      <% const mins = Math.floor((lead.total_duration || 0) / 60); %>
+                      <% const secs = (lead.total_duration || 0) % 60; %>
+                      <%= mins %>m <%= secs %>s
+                    </td>
+                    <td class="td-center">
+                      <% if (lead.interestLevel > 0) { %>
+                        <span class="interest-badge badge-<%= lead.interestInfo.color %>">
+                          <%= lead.interestLevel %>/10
+                        </span>
+                      <% } else { %>
+                        <span class="text-muted">—</span>
+                      <% } %>
+                    </td>
+                    <td onclick="event.stopPropagation()">
+                      <button class="btn-copy-link btn-sm" 
+                        data-url="<%= baseUrl %>/proposta/<%= lead.token %>"
+                        title="Copiar link">
+                        📋 Copiar
+                      </button>
+                    </td>
+                    <td onclick="event.stopPropagation()">
+                      <a href="/admin/leads/<%= lead.id %>" class="btn-sm btn-outline">Ver</a>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </main>
+  </div>
+  
+  <!-- Toast notification -->
+  <div id="toast" class="toast hidden">Link copiado!</div>
+  
+  <script>
+    // Copiar link
+    document.querySelectorAll('.btn-copy-link').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const url = this.dataset.url;
+        navigator.clipboard.writeText(url).then(() => {
+          const toast = document.getElementById('toast');
+          toast.classList.remove('hidden');
+          setTimeout(() => toast.classList.add('hidden'), 2500);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Novo Lead — Envox Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <div class="top-bar"></div>
+  
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <span class="brand-env">env</span><span class="brand-ox">ox</span>
+        <div class="brand-tagline">ADMIN</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/admin" class="nav-item">
+          <span class="nav-icon">📊</span> Dashboard
+        </a>
+        <a href="/admin/leads/new" class="nav-item active">
+          <span class="nav-icon">➕</span> Novo Lead
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/admin/logout" class="nav-item logout">
+          <span class="nav-icon">🚪</span> Sair
+        </a>
+      </div>
+    </aside>
+    
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Novo Lead</h1>
+          <p class="page-subtitle">Cadastre um lead e gere o link personalizado da proposta</p>
+        </div>
+        <a href="/admin" class="btn-outline">← Voltar</a>
+      </div>
+      
+      <% if (error) { %>
+        <div class="alert alert-error"><span>⚠️</span> <%= error %></div>
+      <% } %>
+      <% if (success) { %>
+        <div class="alert alert-success"><span>✅</span> <%= success %></div>
+      <% } %>
+      
+      <div class="form-card">
+        <form action="/admin/leads" method="POST" class="lead-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="name">Nome Completo *</label>
+              <input type="text" id="name" name="name" 
+                placeholder="Ex: João Silva" required>
+            </div>
+          </div>
+          
+          <div class="form-row form-row-2">
+            <div class="form-group">
+              <label for="whatsapp">WhatsApp *</label>
+              <input type="text" id="whatsapp" name="whatsapp" 
+                placeholder="(41) 9 9999-9999" required maxlength="16">
+              <small class="form-hint">Com DDD. Ex: (41) 9 9999-9999</small>
+            </div>
+            <div class="form-group">
+              <label for="email">Email *</label>
+              <input type="email" id="email" name="email" 
+                placeholder="email@empresa.com.br" required>
+            </div>
+          </div>
+          
+          <div class="form-actions">
+            <a href="/admin" class="btn-outline">Cancelar</a>
+            <button type="submit" class="btn-primary">
+              🔗 Cadastrar e Gerar Link
+            </button>
+          </div>
+        </form>
+      </div>
+      
+      <div class="info-card">
+        <h3>ℹ️ Como funciona?</h3>
+        <ol>
+          <li>Cadastre o lead com nome, WhatsApp e email</li>
+          <li>O sistema gera um <strong>link único e exclusivo</strong> para esse lead</li>
+          <li>Envie o link via WhatsApp ou email para o lead</li>
+          <li>O lead acessa o link e se autentica com os dados cadastrados</li>
+          <li>Você recebe um alerta no WhatsApp quando ele visualizar a proposta</li>
+          <li>Acompanhe o engajamento em tempo real no painel</li>
+        </ol>
+      </div>
+    </main>
+  </div>
+  
+  <script>
+    // Máscara WhatsApp
+    const waInput = document.getElementById('whatsapp');
+    waInput.addEventListener('input', function() {
+      let v = this.value.replace(/\D/g, '');
+      if (v.length > 11) v = v.slice(0, 11);
+      if (v.length >= 11) {
+        this.value = `(${v.slice(0,2)}) ${v.slice(2,3)} ${v.slice(3,7)}-${v.slice(7)}`;
+      } else if (v.length >= 7) {
+        this.value = `(${v.slice(0,2)}) ${v.slice(2,6)}-${v.slice(6)}`;
+      } else if (v.length >= 3) {
+        this.value = `(${v.slice(0,2)}) ${v.slice(2)}`;
+      } else if (v.length >= 1) {
+        this.value = `(${v}`;
+      }
+    });
+  </script>
+</body>
+</html>

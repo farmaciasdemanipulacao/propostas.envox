@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= stats.lead.name %> — Envox Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="top-bar"></div>
+  
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <span class="brand-env">env</span><span class="brand-ox">ox</span>
+        <div class="brand-tagline">ADMIN</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/admin" class="nav-item">
+          <span class="nav-icon">📊</span> Dashboard
+        </a>
+        <a href="/admin/leads/new" class="nav-item">
+          <span class="nav-icon">➕</span> Novo Lead
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/admin/logout" class="nav-item logout">
+          <span class="nav-icon">🚪</span> Sair
+        </a>
+      </div>
+    </aside>
+    
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1><%= stats.lead.name %></h1>
+          <p class="page-subtitle">Análise de engajamento com a proposta</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn-copy-link btn-outline" 
+            data-url="<%= baseUrl %>/proposta/<%= stats.lead.token %>">
+            📋 Copiar Link
+          </button>
+          <form action="/admin/leads/<%= stats.lead.id %>/resend-alert" method="POST" style="display:inline">
+            <button type="submit" class="btn-whatsapp">
+              📲 Reenviar Alerta
+            </button>
+          </form>
+          <a href="/admin" class="btn-outline">← Voltar</a>
+        </div>
+      </div>
+      
+      <% if (success) { %>
+        <div class="alert alert-success"><span>✅</span> <%= success %></div>
+      <% } %>
+      <% if (error) { %>
+        <div class="alert alert-error"><span>⚠️</span> <%= error %></div>
+      <% } %>
+      
+      <!-- Lead Info + Interest -->
+      <div class="detail-top-grid">
+        <!-- Informações do Lead -->
+        <div class="detail-card">
+          <h3 class="card-title">📋 Informações do Lead</h3>
+          <div class="info-list">
+            <div class="info-row">
+              <span class="info-label">Nome</span>
+              <span class="info-value"><%= stats.lead.name %></span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">WhatsApp</span>
+              <span class="info-value">
+                <a href="https://wa.me/55<%= stats.lead.whatsapp.replace(/\D/g,'') %>" 
+                   target="_blank" class="wa-link">
+                  📱 <%= stats.lead.whatsapp %>
+                </a>
+              </span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Email</span>
+              <span class="info-value"><%= stats.lead.email %></span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Cadastrado em</span>
+              <span class="info-value">
+                <%= new Date(stats.lead.created_at).toLocaleDateString('pt-BR') %>
+              </span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Link da Proposta</span>
+              <span class="info-value">
+                <button class="btn-copy-link btn-sm" 
+                  data-url="<%= baseUrl %>/proposta/<%= stats.lead.token %>">
+                  📋 Copiar Link
+                </button>
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Métricas Gerais -->
+        <div class="detail-card">
+          <h3 class="card-title">📊 Métricas Gerais</h3>
+          <div class="metrics-grid">
+            <div class="metric-item">
+              <div class="metric-value"><%= stats.totalAccesses %></div>
+              <div class="metric-label">Acessos</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value"><%= stats.totalSlidesSeen %>/11</div>
+              <div class="metric-label">Slides Vistos</div>
+            </div>
+            <div class="metric-item">
+              <% const m = Math.floor(stats.totalDuration/60); const s = stats.totalDuration%60; %>
+              <div class="metric-value"><%= m %>m <%= s %>s</div>
+              <div class="metric-label">Tempo Total</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">
+                <% const revisitCount = stats.slideStats ? stats.slideStats.filter(s => s.revisit_count > 0).length : 0; %>
+                <%= revisitCount %>
+              </div>
+              <div class="metric-label">Slides Revisitados</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Nível de Interesse -->
+        <div class="detail-card interest-card">
+          <h3 class="card-title">🎯 Nível de Interesse</h3>
+          <div class="interest-display">
+            <div class="interest-number interest-<%= interestInfo.color %>">
+              <%= interestLevel %>
+            </div>
+            <div class="interest-label-big">/ 10</div>
+          </div>
+          <div class="interest-bar-wrap">
+            <div class="interest-bar">
+              <div class="interest-fill" style="width: <%= interestLevel * 10 %>%"></div>
+            </div>
+          </div>
+          <div class="interest-tag badge-<%= interestInfo.color %>">
+            <%= interestInfo.label %>
+          </div>
+          <div class="interest-hint">
+            <small>
+              Baseado em: tempo de visualização, slides visitados, 
+              revisitas e interesse em slides de preço
+            </small>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Gráfico de Slides -->
+      <div class="detail-card full-width-card">
+        <h3 class="card-title">📈 Tempo por Slide (segundos)</h3>
+        <div class="chart-wrap">
+          <canvas id="slideChart" height="100"></canvas>
+        </div>
+      </div>
+      
+      <!-- Mapa de Calor de Slides -->
+      <div class="detail-card full-width-card">
+        <h3 class="card-title">🔥 Mapa de Calor — Engajamento por Slide</h3>
+        <div class="heatmap-grid">
+          <% 
+          const slideNamesList = ['', 'Capa', 'O Problema', 'Nossa Solução', 
+            'Plano 1', 'Plano 2', 'Plano 3', 'Comparativo', 
+            'Serv. Adicionais', 'Serv. Separados', 'Por que Envox?', 'Encerramento'];
+          for (let i = 1; i <= 11; i++) { 
+            const slideStat = stats.slideStats.find(s => s.slide_number === i);
+            const dur = slideStat ? Math.round(slideStat.total_duration || 0) : 0;
+            const views = slideStat ? slideStat.view_count : 0;
+            let heatClass = 'heat-none';
+            if (dur > 0 && dur < 20) heatClass = 'heat-low';
+            else if (dur >= 20 && dur < 60) heatClass = 'heat-medium';
+            else if (dur >= 60) heatClass = 'heat-high';
+          %>
+            <div class="heatmap-cell <%= heatClass %>">
+              <div class="heat-number"><%= i %></div>
+              <div class="heat-name"><%= slideNamesList[i] %></div>
+              <div class="heat-time"><%= dur %>s</div>
+              <div class="heat-views"><%= views %> viz.</div>
+            </div>
+          <% } %>
+        </div>
+        <div class="heatmap-legend">
+          <span class="legend-item heat-none">⬜ Não visto</span>
+          <span class="legend-item heat-low">🟩 Pouco tempo (&lt;20s)</span>
+          <span class="legend-item heat-medium">🟨 Médio (20-60s)</span>
+          <span class="legend-item heat-high">🟥 Muito tempo (&gt;60s)</span>
+        </div>
+      </div>
+      
+      <!-- Histórico de Sessões -->
+      <% if (stats.sessions && stats.sessions.length > 0) { %>
+      <div class="detail-card full-width-card">
+        <h3 class="card-title">🕐 Histórico de Acessos</h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Início</th>
+              <th>Fim</th>
+              <th>Duração</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% stats.sessions.forEach((sess, idx) => { %>
+              <tr>
+                <td><%= stats.sessions.length - idx %></td>
+                <td>
+                  <%= new Date(sess.started_at).toLocaleDateString('pt-BR') %>
+                  <%= new Date(sess.started_at).toLocaleTimeString('pt-BR') %>
+                </td>
+                <td>
+                  <% if (sess.ended_at) { %>
+                    <%= new Date(sess.ended_at).toLocaleDateString('pt-BR') %>
+                    <%= new Date(sess.ended_at).toLocaleTimeString('pt-BR') %>
+                  <% } else { %>
+                    <span class="badge badge-warning">Em andamento</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% const dm = Math.floor((sess.total_duration_seconds||0)/60); %>
+                  <% const ds = (sess.total_duration_seconds||0)%60; %>
+                  <%= dm %>m <%= ds %>s
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% } %>
+      
+      <!-- Log de Eventos -->
+      <div class="detail-card full-width-card">
+        <h3 class="card-title">📋 Log de Eventos</h3>
+        <% if (eventLog && eventLog.length > 0) { %>
+          <div class="event-log">
+            <% eventLog.forEach(ev => { %>
+              <div class="event-item event-<%= ev.event_type %>">
+                <div class="event-time">
+                  <%= new Date(ev.timestamp).toLocaleDateString('pt-BR') %>
+                  <%= new Date(ev.timestamp).toLocaleTimeString('pt-BR') %>
+                </div>
+                <div class="event-dot"></div>
+                <div class="event-text">
+                  <% if (ev.event_type === 'proposal_opened') { %>
+                    🔓 Abriu a proposta
+                  <% } else if (ev.event_type === 'proposal_closed') { %>
+                    🔒 Fechou a proposta
+                    <% if (ev.parsedDetails && ev.parsedDetails.total_duration) { %>
+                      <small>(duração: <%= Math.round(ev.parsedDetails.total_duration) %>s)</small>
+                    <% } %>
+                  <% } else if (ev.event_type === 'slide_viewed') { %>
+                    👁️ <%= ev.parsedDetails ? ev.parsedDetails.message : `Visualizou slide` %>
+                    <% if (ev.parsedDetails && ev.parsedDetails.duration_seconds > 0) { %>
+                      <small>(<%= Math.round(ev.parsedDetails.duration_seconds) %>s)</small>
+                    <% } %>
+                  <% } else if (ev.event_type === 'slide_revisited') { %>
+                    🔄 <%= ev.parsedDetails ? ev.parsedDetails.message : `Revisitou slide` %>
+                    <% if (ev.parsedDetails && ev.parsedDetails.duration_seconds > 0) { %>
+                      <small>(<%= Math.round(ev.parsedDetails.duration_seconds) %>s)</small>
+                    <% } %>
+                  <% } else { %>
+                    ℹ️ <%= ev.event_type %>
+                  <% } %>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        <% } else { %>
+          <p class="text-muted">Nenhum evento registrado ainda.</p>
+        <% } %>
+      </div>
+      
+    </main>
+  </div>
+  
+  <div id="toast" class="toast hidden">Link copiado!</div>
+  
+  <script>
+    // Gráfico
+    const ctx = document.getElementById('slideChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: <%- slideLabels %>,
+        datasets: [{
+          label: 'Tempo (segundos)',
+          data: <%- slideDurations %>,
+          backgroundColor: <%- slideColors %>,
+          borderRadius: 6,
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => `${ctx.raw}s de visualização`
+            }
+          }
+        },
+        scales: {
+          y: { 
+            beginAtZero: true,
+            grid: { color: '#f0f0f0' },
+            ticks: { callback: v => v + 's' }
+          },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+    
+    // Copiar link
+    document.querySelectorAll('.btn-copy-link').forEach(btn => {
+      btn.addEventListener('click', function() {
+        navigator.clipboard.writeText(this.dataset.url).then(() => {
+          const toast = document.getElementById('toast');
+          toast.classList.remove('hidden');
+          setTimeout(() => toast.classList.add('hidden'), 2500);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
