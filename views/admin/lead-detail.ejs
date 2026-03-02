@@ -19,17 +19,12 @@
         <div class="brand-tagline">ADMIN</div>
       </div>
       <nav class="sidebar-nav">
-        <a href="/admin" class="nav-item">
-          <span class="nav-icon">📊</span> Dashboard
-        </a>
-        <a href="/admin/leads/new" class="nav-item">
-          <span class="nav-icon">➕</span> Novo Lead
-        </a>
+        <a href="/admin" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="/admin/leads/new" class="nav-item"><span class="nav-icon">➕</span> Novo Lead</a>
+        <a href="/admin/planejamentos" class="nav-item"><span class="nav-icon">📋</span> Planejamentos</a>
       </nav>
       <div class="sidebar-footer">
-        <a href="/admin/logout" class="nav-item logout">
-          <span class="nav-icon">🚪</span> Sair
-        </a>
+        <a href="/admin/logout" class="nav-item logout"><span class="nav-icon">🚪</span> Sair</a>
       </div>
     </aside>
     
@@ -40,29 +35,21 @@
           <p class="page-subtitle">Análise de engajamento com a proposta</p>
         </div>
         <div class="header-actions">
-          <button class="btn-copy-link btn-outline" 
-            data-url="<%= baseUrl %>/proposta/<%= stats.lead.token %>">
+          <button class="btn-copy-link btn-outline" data-url="<%= baseUrl %>/proposta/<%= stats.lead.token %>">
             📋 Copiar Link
           </button>
           <form action="/admin/leads/<%= stats.lead.id %>/resend-alert" method="POST" style="display:inline">
-            <button type="submit" class="btn-whatsapp">
-              📲 Reenviar Alerta
-            </button>
+            <button type="submit" class="btn-whatsapp">📲 Reenviar Alerta</button>
           </form>
           <a href="/admin" class="btn-outline">← Voltar</a>
         </div>
       </div>
       
-      <% if (success) { %>
-        <div class="alert alert-success"><span>✅</span> <%= success %></div>
-      <% } %>
-      <% if (error) { %>
-        <div class="alert alert-error"><span>⚠️</span> <%= error %></div>
-      <% } %>
+      <% if (success) { %><div class="alert alert-success"><span>✅</span> <%= success %></div><% } %>
+      <% if (error) { %><div class="alert alert-error"><span>⚠️</span> <%= error %></div><% } %>
       
-      <!-- Lead Info + Interest -->
+      <!-- Lead Info + Metrics + Interest -->
       <div class="detail-top-grid">
-        <!-- Informações do Lead -->
         <div class="detail-card">
           <h3 class="card-title">📋 Informações do Lead</h3>
           <div class="info-list">
@@ -73,8 +60,7 @@
             <div class="info-row">
               <span class="info-label">WhatsApp</span>
               <span class="info-value">
-                <a href="https://wa.me/55<%= stats.lead.whatsapp.replace(/\D/g,'') %>" 
-                   target="_blank" class="wa-link">
+                <a href="https://wa.me/55<%= stats.lead.whatsapp.replace(/\D/g,'') %>" target="_blank" class="wa-link">
                   📱 <%= stats.lead.whatsapp %>
                 </a>
               </span>
@@ -85,23 +71,17 @@
             </div>
             <div class="info-row">
               <span class="info-label">Cadastrado em</span>
-              <span class="info-value">
-                <%= new Date(stats.lead.created_at).toLocaleDateString('pt-BR') %>
-              </span>
+              <span class="info-value"><%= new Date(stats.lead.created_at).toLocaleDateString('pt-BR') %></span>
             </div>
             <div class="info-row">
               <span class="info-label">Link da Proposta</span>
               <span class="info-value">
-                <button class="btn-copy-link btn-sm" 
-                  data-url="<%= baseUrl %>/proposta/<%= stats.lead.token %>">
-                  📋 Copiar Link
-                </button>
+                <button class="btn-copy-link btn-sm" data-url="<%= baseUrl %>/proposta/<%= stats.lead.token %>">📋 Copiar</button>
               </span>
             </div>
           </div>
         </div>
         
-        <!-- Métricas Gerais -->
         <div class="detail-card">
           <h3 class="card-title">📊 Métricas Gerais</h3>
           <div class="metrics-grid">
@@ -110,31 +90,34 @@
               <div class="metric-label">Acessos</div>
             </div>
             <div class="metric-item">
-              <div class="metric-value"><%= stats.totalSlidesSeen %>/11</div>
+              <div class="metric-value"><%= stats.totalSlidesSeen %>/12</div>
               <div class="metric-label">Slides Vistos</div>
             </div>
             <div class="metric-item">
               <% const m = Math.floor(stats.totalDuration/60); const s = stats.totalDuration%60; %>
-              <div class="metric-value"><%= m %>m <%= s %>s</div>
+              <div class="metric-value"><%= m %>m<%= s %>s</div>
               <div class="metric-label">Tempo Total</div>
             </div>
             <div class="metric-item">
-              <div class="metric-value">
-                <% const revisitCount = stats.slideStats ? stats.slideStats.filter(s => s.revisit_count > 0).length : 0; %>
-                <%= revisitCount %>
-              </div>
+              <% const revisitCount = stats.slideStats ? stats.slideStats.filter(s => s.revisit_count > 0).length : 0; %>
+              <div class="metric-value"><%= revisitCount %></div>
               <div class="metric-label">Slides Revisitados</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value"><%= inviteHistory ? inviteHistory.length : 0 %></div>
+              <div class="metric-label">Convites Enviados</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value"><%= followupHistory ? followupHistory.length : 0 %></div>
+              <div class="metric-label">Follow-ups</div>
             </div>
           </div>
         </div>
         
-        <!-- Nível de Interesse -->
         <div class="detail-card interest-card">
           <h3 class="card-title">🎯 Nível de Interesse</h3>
           <div class="interest-display">
-            <div class="interest-number interest-<%= interestInfo.color %>">
-              <%= interestLevel %>
-            </div>
+            <div class="interest-number interest-<%= interestInfo.color %>"><%= interestLevel %></div>
             <div class="interest-label-big">/ 10</div>
           </div>
           <div class="interest-bar-wrap">
@@ -142,16 +125,65 @@
               <div class="interest-fill" style="width: <%= interestLevel * 10 %>%"></div>
             </div>
           </div>
-          <div class="interest-tag badge-<%= interestInfo.color %>">
-            <%= interestInfo.label %>
-          </div>
+          <div class="interest-tag badge-<%= interestInfo.color %>"><%= interestInfo.label %></div>
           <div class="interest-hint">
-            <small>
-              Baseado em: tempo de visualização, slides visitados, 
-              revisitas e interesse em slides de preço
-            </small>
+            <small>Baseado em: tempo de visualização, slides visitados, revisitas e interesse em slides de preço</small>
           </div>
         </div>
+      </div>
+
+      <!-- Ações de Comunicação -->
+      <div class="detail-card full-width-card">
+        <h3 class="card-title">📲 Comunicação com o Lead</h3>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+          <% if (stats.totalAccesses === 0) { %>
+            <!-- Ainda não visualizou - mostrar convite -->
+            <form action="/admin/leads/<%= stats.lead.id %>/invite" method="POST">
+              <button type="submit" class="btn-whatsapp">
+                📲 Enviar Convite WhatsApp
+              </button>
+            </form>
+            <span style="font-size:0.82rem;color:#666">
+              <% if (inviteHistory && inviteHistory.length > 0) { %>
+                Último convite: <%= new Date(inviteHistory[0].sent_at).toLocaleString('pt-BR') %>
+              <% } else { %>
+                Nenhum convite enviado ainda
+              <% } %>
+            </span>
+          <% } else { %>
+            <!-- Já visualizou - mostrar follow-up -->
+            <form action="/admin/leads/<%= stats.lead.id %>/followup" method="POST" style="display:inline">
+              <input type="hidden" name="category" value="article">
+              <button type="submit" class="btn-sm" style="background:#1a73e8;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-size:0.85rem;cursor:pointer">
+                📰 Follow-up: Artigo
+              </button>
+            </form>
+            <form action="/admin/leads/<%= stats.lead.id %>/followup" method="POST" style="display:inline">
+              <input type="hidden" name="category" value="result">
+              <button type="submit" class="btn-sm" style="background:#4caf50;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-size:0.85rem;cursor:pointer">
+                🏆 Follow-up: Resultado
+              </button>
+            </form>
+            <form action="/admin/leads/<%= stats.lead.id %>/followup" method="POST" style="display:inline">
+              <input type="hidden" name="category" value="urgency">
+              <button type="submit" class="btn-sm" style="background:#ff9800;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-size:0.85rem;cursor:pointer">
+                ⏰ Follow-up: Urgência
+              </button>
+            </form>
+            <form action="/admin/leads/<%= stats.lead.id %>/resend-alert" method="POST" style="display:inline">
+              <button type="submit" class="btn-sm" style="background:#E91E63;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-size:0.85rem;cursor:pointer">
+                🔔 Reenviar Alerta
+              </button>
+            </form>
+          <% } %>
+        </div>
+
+        <% if (nextInviteMsg) { %>
+        <div style="margin-top:12px;padding:12px;background:#f8f9fa;border-radius:8px;font-size:0.82rem;color:#555;border-left:3px solid #E91E63">
+          <strong>Próxima mensagem de convite:</strong><br>
+          <em><%= nextInviteMsg %></em>
+        </div>
+        <% } %>
       </div>
       
       <!-- Gráfico de Slides -->
@@ -162,15 +194,15 @@
         </div>
       </div>
       
-      <!-- Mapa de Calor de Slides -->
+      <!-- Mapa de Calor -->
       <div class="detail-card full-width-card">
         <h3 class="card-title">🔥 Mapa de Calor — Engajamento por Slide</h3>
         <div class="heatmap-grid">
           <% 
-          const slideNamesList = ['', 'Capa', 'O Problema', 'Nossa Solução', 
-            'Plano 1', 'Plano 2', 'Plano 3', 'Comparativo', 
-            'Serv. Adicionais', 'Serv. Separados', 'Por que Envox?', 'Encerramento'];
-          for (let i = 1; i <= 11; i++) { 
+          const slideNamesList = ['','Capa','O Problema','Nossa Solução','Plano Crescimento',
+            'Plano Presença Forte','Plano Performance','Comparativo','Monte seu Plano',
+            'Adicionais','Separados','Por que Envox?','Encerramento'];
+          for (let i = 1; i <= 12; i++) {
             const slideStat = stats.slideStats.find(s => s.slide_number === i);
             const dur = slideStat ? Math.round(slideStat.total_duration || 0) : 0;
             const views = slideStat ? slideStat.view_count : 0;
@@ -189,11 +221,31 @@
         </div>
         <div class="heatmap-legend">
           <span class="legend-item heat-none">⬜ Não visto</span>
-          <span class="legend-item heat-low">🟩 Pouco tempo (&lt;20s)</span>
+          <span class="legend-item heat-low">🟩 Pouco (&lt;20s)</span>
           <span class="legend-item heat-medium">🟨 Médio (20-60s)</span>
-          <span class="legend-item heat-high">🟥 Muito tempo (&gt;60s)</span>
+          <span class="legend-item heat-high">🟥 Alto (&gt;60s)</span>
         </div>
       </div>
+
+      <!-- Planos customizados -->
+      <% if (stats.customPlans && stats.customPlans.length > 0) { %>
+      <div class="detail-card full-width-card">
+        <h3 class="card-title">🛒 Planos Customizados</h3>
+        <table class="data-table">
+          <thead><tr><th>Data</th><th>Mensal</th><th>Único</th><th>Enviou WA</th></tr></thead>
+          <tbody>
+            <% stats.customPlans.forEach(plan => { %>
+            <tr>
+              <td><small><%= new Date(plan.created_at).toLocaleString('pt-BR') %></small></td>
+              <td>R$ <%= (plan.monthly_total||0).toLocaleString('pt-BR') %></td>
+              <td>R$ <%= (plan.onetime_total||0).toLocaleString('pt-BR') %></td>
+              <td><%= plan.sent_via_whatsapp ? '✅ Sim' : '❌ Não' %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% } %>
       
       <!-- Histórico de Sessões -->
       <% if (stats.sessions && stats.sessions.length > 0) { %>
@@ -201,35 +253,55 @@
         <h3 class="card-title">🕐 Histórico de Acessos</h3>
         <table class="data-table">
           <thead>
-            <tr>
-              <th>#</th>
-              <th>Início</th>
-              <th>Fim</th>
-              <th>Duração</th>
-            </tr>
+            <tr><th>#</th><th>Início</th><th>Fim</th><th>Duração</th><th>Alerta WA</th></tr>
           </thead>
           <tbody>
             <% stats.sessions.forEach((sess, idx) => { %>
-              <tr>
-                <td><%= stats.sessions.length - idx %></td>
-                <td>
-                  <%= new Date(sess.started_at).toLocaleDateString('pt-BR') %>
-                  <%= new Date(sess.started_at).toLocaleTimeString('pt-BR') %>
-                </td>
-                <td>
-                  <% if (sess.ended_at) { %>
-                    <%= new Date(sess.ended_at).toLocaleDateString('pt-BR') %>
-                    <%= new Date(sess.ended_at).toLocaleTimeString('pt-BR') %>
-                  <% } else { %>
-                    <span class="badge badge-warning">Em andamento</span>
-                  <% } %>
-                </td>
-                <td>
-                  <% const dm = Math.floor((sess.total_duration_seconds||0)/60); %>
-                  <% const ds = (sess.total_duration_seconds||0)%60; %>
-                  <%= dm %>m <%= ds %>s
-                </td>
-              </tr>
+            <tr>
+              <td><%= stats.sessions.length - idx %></td>
+              <td><small><%= new Date(sess.started_at).toLocaleString('pt-BR') %></small></td>
+              <td>
+                <% if (sess.ended_at) { %>
+                  <small><%= new Date(sess.ended_at).toLocaleString('pt-BR') %></small>
+                <% } else { %><span class="badge badge-warning">Em andamento</span><% } %>
+              </td>
+              <td>
+                <% const dm = Math.floor((sess.total_duration_seconds||0)/60); %>
+                <% const ds = (sess.total_duration_seconds||0)%60; %>
+                <%= dm %>m<%= ds %>s
+              </td>
+              <td><%= sess.alert_sent ? '✅' : '—' %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% } %>
+
+      <!-- Histórico de Convites -->
+      <% if ((inviteHistory && inviteHistory.length > 0) || (followupHistory && followupHistory.length > 0)) { %>
+      <div class="detail-card full-width-card">
+        <h3 class="card-title">📲 Histórico de Mensagens Enviadas</h3>
+        <table class="data-table">
+          <thead><tr><th>Tipo</th><th>Mensagem</th><th>Enviado em</th></tr></thead>
+          <tbody>
+            <% const allMessages = [...(inviteHistory||[]), ...(followupHistory||[])].sort((a,b) => new Date(b.sent_at) - new Date(a.sent_at)); %>
+            <% allMessages.forEach(inv => { %>
+            <tr>
+              <td>
+                <% if (inv.invite_type === 'invite') { %>
+                  <span class="badge badge-success">📲 Convite</span>
+                <% } else if (inv.invite_type === 'followup_article') { %>
+                  <span class="badge" style="background:#e3f2fd;color:#1a73e8">📰 Artigo</span>
+                <% } else if (inv.invite_type === 'followup_result') { %>
+                  <span class="badge" style="background:#e8f5e9;color:#4caf50">🏆 Resultado</span>
+                <% } else { %>
+                  <span class="badge badge-warning">⏰ Urgência</span>
+                <% } %>
+              </td>
+              <td><small style="color:#666"><%= inv.message_text.substring(0, 80) %>...</small></td>
+              <td><small><%= new Date(inv.sent_at).toLocaleString('pt-BR') %></small></td>
+            </tr>
             <% }) %>
           </tbody>
         </table>
@@ -244,8 +316,7 @@
             <% eventLog.forEach(ev => { %>
               <div class="event-item event-<%= ev.event_type %>">
                 <div class="event-time">
-                  <%= new Date(ev.timestamp).toLocaleDateString('pt-BR') %>
-                  <%= new Date(ev.timestamp).toLocaleTimeString('pt-BR') %>
+                  <%= new Date(ev.timestamp).toLocaleString('pt-BR') %>
                 </div>
                 <div class="event-dot"></div>
                 <div class="event-text">
@@ -257,14 +328,25 @@
                       <small>(duração: <%= Math.round(ev.parsedDetails.total_duration) %>s)</small>
                     <% } %>
                   <% } else if (ev.event_type === 'slide_viewed') { %>
-                    👁️ <%= ev.parsedDetails ? ev.parsedDetails.message : `Visualizou slide` %>
+                    👁️ <%= ev.parsedDetails ? ev.parsedDetails.message : 'Visualizou slide' %>
                     <% if (ev.parsedDetails && ev.parsedDetails.duration_seconds > 0) { %>
                       <small>(<%= Math.round(ev.parsedDetails.duration_seconds) %>s)</small>
                     <% } %>
                   <% } else if (ev.event_type === 'slide_revisited') { %>
-                    🔄 <%= ev.parsedDetails ? ev.parsedDetails.message : `Revisitou slide` %>
-                    <% if (ev.parsedDetails && ev.parsedDetails.duration_seconds > 0) { %>
-                      <small>(<%= Math.round(ev.parsedDetails.duration_seconds) %>s)</small>
+                    🔄 <%= ev.parsedDetails ? ev.parsedDetails.message : 'Revisitou slide' %>
+                  <% } else if (ev.event_type === 'custom_plan_saved') { %>
+                    🛒 Montou plano customizado
+                    <% if (ev.parsedDetails && ev.parsedDetails.monthly) { %>
+                      <small>(R$ <%= ev.parsedDetails.monthly %>/ mês)</small>
+                    <% } %>
+                  <% } else if (ev.event_type === 'custom_plan_sent') { %>
+                    ✅ Enviou plano pelo WhatsApp
+                  <% } else if (ev.event_type === 'invite_sent') { %>
+                    📲 Convite enviado
+                  <% } else if (ev.event_type === 'followup_sent') { %>
+                    🔄 Follow-up enviado
+                    <% if (ev.parsedDetails && ev.parsedDetails.category) { %>
+                      <small>(<%= ev.parsedDetails.category %>)</small>
                     <% } %>
                   <% } else { %>
                     ℹ️ <%= ev.event_type %>
@@ -284,7 +366,6 @@
   <div id="toast" class="toast hidden">Link copiado!</div>
   
   <script>
-    // Gráfico
     const ctx = document.getElementById('slideChart').getContext('2d');
     new Chart(ctx, {
       type: 'bar',
@@ -302,24 +383,15 @@
         responsive: true,
         plugins: {
           legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: ctx => `${ctx.raw}s de visualização`
-            }
-          }
+          tooltip: { callbacks: { label: ctx => `${ctx.raw}s de visualização` } }
         },
         scales: {
-          y: { 
-            beginAtZero: true,
-            grid: { color: '#f0f0f0' },
-            ticks: { callback: v => v + 's' }
-          },
+          y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { callback: v => v + 's' } },
           x: { grid: { display: false } }
         }
       }
     });
     
-    // Copiar link
     document.querySelectorAll('.btn-copy-link').forEach(btn => {
       btn.addEventListener('click', function() {
         navigator.clipboard.writeText(this.dataset.url).then(() => {

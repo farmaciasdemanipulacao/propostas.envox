@@ -465,9 +465,168 @@ const slides = [
     </div>`
   },
 
-  // SLIDE 8 — SERVIÇOS ADICIONAIS
+  // SLIDE 8 — MONTE SEU PLANO (CUSTOMIZADOR INTERATIVO)
   {
     number: 8,
+    title: 'Monte seu Plano',
+    html: `
+    <div class="slide-content slide-builder">
+      <div class="builder-layout">
+        <div class="builder-main">
+          <div class="builder-header">
+            <span class="slide-tag">PERSONALIZADO</span>
+            <h2>Monte seu <span class="text-pink">plano ideal</span></h2>
+            <p class="slide-desc">Selecione os serviços e quantidades que fazem sentido para o seu negócio</p>
+          </div>
+
+          <!-- SOCIAL MEDIA -->
+          <div class="builder-section" id="bs-social">
+            <div class="bs-title-row">
+              <div class="bs-icon">📱</div>
+              <div class="bs-label">Social Media</div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="tog-social" onchange="builderUpdate()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="bs-options" id="opts-social" style="display:none">
+              <label class="opt-card" data-val="1170" data-key="social_6">
+                <input type="radio" name="social_posts" value="6"> <span class="opt-name">6 posts/mês</span><span class="opt-price">R$ 1.170</span>
+              </label>
+              <label class="opt-card" data-val="1470" data-key="social_9">
+                <input type="radio" name="social_posts" value="9"> <span class="opt-name">9 posts/mês</span><span class="opt-price">R$ 1.470</span>
+              </label>
+              <label class="opt-card" data-val="1970" data-key="social_12">
+                <input type="radio" name="social_posts" value="12"> <span class="opt-name">12 posts/mês</span><span class="opt-price">R$ 1.970</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- TRÁFEGO PAGO -->
+          <div class="builder-section">
+            <div class="bs-title-row">
+              <div class="bs-icon">🎯</div>
+              <div class="bs-label">Tráfego Pago</div>
+            </div>
+            <div class="bs-toggles-row">
+              <div class="bs-toggle-item">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="tog-google" onchange="builderUpdate()">
+                  <span class="toggle-slider"></span>
+                </label>
+                <span>Google Ads <strong>R$ 1.490/mês</strong></span>
+              </div>
+              <div class="bs-toggle-item">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="tog-meta" onchange="builderUpdate()">
+                  <span class="toggle-slider"></span>
+                </label>
+                <span>Meta Ads <strong>R$ 1.490/mês</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CAPTAÇÃO -->
+          <div class="builder-section" id="bs-captacao">
+            <div class="bs-title-row">
+              <div class="bs-icon">🎬</div>
+              <div class="bs-label">Captação de Conteúdo</div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="tog-captacao" onchange="builderUpdate()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="bs-options bs-options-row" id="opts-captacao" style="display:none">
+              <span class="bs-qty-label">Sessões/mês:</span>
+              <div class="bs-qty-btns">
+                <button type="button" class="qty-btn" onclick="setQty('captacao',-1)">−</button>
+                <span id="qty-captacao" class="qty-val">1</span>
+                <button type="button" class="qty-btn" onclick="setQty('captacao',1)">+</button>
+              </div>
+              <span class="bs-qty-note">R$ 1.200 × <span id="qty-captacao-x">1</span> = <strong id="captacao-total">R$ 1.200</strong></span>
+            </div>
+          </div>
+
+          <!-- SDR -->
+          <div class="builder-section" id="bs-sdr">
+            <div class="bs-title-row">
+              <div class="bs-icon">💬</div>
+              <div class="bs-label">Atendimento SDR</div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="tog-sdr" onchange="builderUpdate()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="bs-options" id="opts-sdr" style="display:none">
+              <label class="opt-card" data-val="990" data-key="sdr1">
+                <input type="radio" name="sdr_plan" value="sdr1"> <span class="opt-name">SDR 1 — 6h/dia seg-sex</span><span class="opt-price">R$ 990</span>
+              </label>
+              <label class="opt-card" data-val="1770" data-key="sdr2">
+                <input type="radio" name="sdr_plan" value="sdr2"> <span class="opt-name">SDR 2 — 8h/dia seg-sex</span><span class="opt-price">R$ 1.770</span>
+              </label>
+              <label class="opt-card" data-val="2180" data-key="sdr3">
+                <input type="radio" name="sdr_plan" value="sdr3"> <span class="opt-name">SDR 3 — 11h às 20h seg-sex</span><span class="opt-price">R$ 2.180</span>
+              </label>
+              <div class="bs-toggle-item" style="margin-top:0.5rem">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="tog-fds" onchange="builderUpdate()">
+                  <span class="toggle-slider"></span>
+                </label>
+                <span>Adicionar Sáb/Dom <strong>(+30%)</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- WEBSITE -->
+          <div class="builder-section">
+            <div class="bs-title-row">
+              <div class="bs-icon">🌐</div>
+              <div class="bs-label">Website <small style="color:#999">(valor único)</small></div>
+            </div>
+            <div class="bs-toggles-row">
+              <div class="bs-toggle-item">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="tog-web5" onchange="builderUpdate()">
+                  <span class="toggle-slider"></span>
+                </label>
+                <span>Até 5 páginas <strong>R$ 3.999</strong></span>
+              </div>
+              <div class="bs-toggle-item">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="tog-web7" onchange="builderUpdate()">
+                  <span class="toggle-slider"></span>
+                </label>
+                <span>Até 7 páginas <strong>R$ 4.999</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RESUMO SIDEBAR -->
+        <div class="builder-summary" id="builder-summary">
+          <div class="summary-title">✦ Seu Plano Personalizado</div>
+          <div id="summary-items" class="summary-items">
+            <p class="summary-empty">Selecione pelo menos um serviço para montar seu plano</p>
+          </div>
+          <div id="summary-monthly" class="summary-total" style="display:none">
+            <span>Investimento Mensal</span>
+            <div class="summary-price" id="summary-monthly-val">R$ 0</div>
+          </div>
+          <div id="summary-onetime" class="summary-total summary-onetime" style="display:none">
+            <span>Investimento Único (website)</span>
+            <div class="summary-price-small" id="summary-onetime-val">R$ 0</div>
+          </div>
+          <button id="btn-send-plan" class="btn-whatsapp-builder" style="display:none" onclick="sendPlanWhatsApp()">
+            💬 Gostei assim! Enviar pelo WhatsApp
+          </button>
+        </div>
+      </div>
+    </div>`
+  },
+
+  // SLIDE 9 — SERVIÇOS ADICIONAIS
+  {
+    number: 9,
     title: 'Serviços Adicionais',
     html: `
     <div class="slide-content slide-8">
@@ -529,9 +688,9 @@ const slides = [
     </div>`
   },
 
-  // SLIDE 9 — SERVIÇOS SEPARADOS
+  // SLIDE 10 — SERVIÇOS SEPARADOS
   {
-    number: 9,
+    number: 10,
     title: 'Serviços Separados',
     html: `
     <div class="slide-content slide-9">
@@ -604,9 +763,9 @@ const slides = [
     </div>`
   },
 
-  // SLIDE 10 — POR QUE A ENVOX
+  // SLIDE 11 — POR QUE A ENVOX
   {
-    number: 10,
+    number: 11,
     title: 'Por que a Envox?',
     html: `
     <div class="slide-content slide-10">
@@ -650,9 +809,9 @@ const slides = [
     </div>`
   },
 
-  // SLIDE 11 — ENCERRAMENTO
+  // SLIDE 12 — ENCERRAMENTO
   {
-    number: 11,
+    number: 12,
     title: 'Vamos Conversar?',
     html: `
     <div class="slide-content slide-11">

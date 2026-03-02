@@ -41,9 +41,14 @@ app.set('views', path.join(__dirname, 'views'));
 const adminRouter = require('./routes/admin');
 const proposalRouter = require('./routes/proposal');
 const apiRouter = require('./routes/api');
+const planejamentosRouter = require('./routes/planejamentos');
+const planejamentoClientRouter = require('./routes/planejamento-client');
 
+// IMPORTANTE: rotas mais específicas antes das genéricas
+app.use('/admin/planejamentos', planejamentosRouter);
 app.use('/admin', adminRouter);
 app.use('/proposta', proposalRouter);
+app.use('/planejamento', planejamentoClientRouter);
 app.use('/api/track', apiRouter);
 app.use('/api', apiRouter);
 

@@ -29,6 +29,7 @@
       const data = await resp.json();
       if (data.sessionId) {
         sessionId = data.sessionId;
+        window._sessionId = sessionId; // expose for builder.js
         console.log('[Tracking] Session started:', sessionId);
         
         // Registrar slide 1 como visualizado ao abrir

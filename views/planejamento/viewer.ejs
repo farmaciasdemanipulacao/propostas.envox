@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= plan.title %> — Revisão Envox</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Poppins',sans-serif;background:#0f0f1a;color:#fff;min-height:100vh}
+    .plan-header{background:#1A1A2E;border-bottom:3px solid #E91E63;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+    .plan-logo{font-size:1.4rem;font-weight:800}.plan-logo .ox{color:#E91E63}
+    .plan-title{font-size:0.95rem;color:#ccc;text-align:center;flex:1;padding:0 16px}
+    .plan-progress{font-size:0.85rem;color:#E91E63;white-space:nowrap}
+    .plan-container{max-width:860px;margin:0 auto;padding:32px 16px}
+    .slide-review-card{background:#1a1a2e;border:1px solid #2a2a4e;border-radius:16px;margin-bottom:32px;overflow:hidden;transition:border-color 0.3s}
+    .slide-review-card.approved{border-color:#4caf50;box-shadow:0 0 20px rgba(76,175,80,0.15)}
+    .slide-review-card.revision{border-color:#ff9800;box-shadow:0 0 20px rgba(255,152,0,0.15)}
+    .slide-header{background:#16213e;padding:16px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #2a2a4e}
+    .slide-num{background:#E91E63;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;flex-shrink:0}
+    .slide-title-txt{flex:1;font-weight:600;font-size:0.95rem}
+    .slide-status-badge{font-size:0.8rem;padding:4px 10px;border-radius:20px;font-weight:600}
+    .badge-pending{background:rgba(158,158,158,0.2);color:#9e9e9e}
+    .badge-approved{background:rgba(76,175,80,0.2);color:#4caf50}
+    .badge-revision{background:rgba(255,152,0,0.2);color:#ff9800}
+    .slide-body{padding:24px}
+    .slide-content{font-size:0.9rem;line-height:1.9;color:#ddd;white-space:pre-wrap;margin-bottom:20px}
+    .slide-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start}
+    .btn-approve{background:#4caf50;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:0.9rem;font-family:inherit;font-weight:600;cursor:pointer;transition:all 0.2s}
+    .btn-approve:hover{background:#43a047}
+    .btn-revision{background:transparent;color:#ff9800;border:2px solid #ff9800;padding:10px 20px;border-radius:8px;font-size:0.9rem;font-family:inherit;font-weight:600;cursor:pointer;transition:all 0.2s}
+    .btn-revision:hover{background:rgba(255,152,0,0.1)}
+    .btn-disabled{opacity:0.4;cursor:not-allowed}
+    .revision-form{margin-top:12px;width:100%}
+    .revision-form textarea{width:100%;background:#0f0f1a;border:1px solid #333;border-radius:8px;padding:10px;color:#fff;font-family:inherit;font-size:0.85rem;resize:vertical}
+    .revision-form textarea::placeholder{color:#666}
+    .revision-form button{margin-top:8px;background:#ff9800;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-family:inherit;font-size:0.85rem;cursor:pointer}
+    .done-screen{text-align:center;padding:60px 24px}
+    .done-icon{font-size:5rem;margin-bottom:20px}
+    .done-title{font-size:1.8rem;font-weight:800;margin-bottom:12px}
+    .done-subtitle{color:#aaa;font-size:1rem;line-height:1.7}
+    .done-summary{background:#1a1a2e;border:1px solid #2a2a4e;border-radius:12px;padding:20px;margin:24px auto;max-width:400px;text-align:left}
+    .summary-item{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #2a2a4e;font-size:0.9rem}
+    .summary-item:last-child{border-bottom:none}
+    .progress-bar{height:4px;background:#2a2a4e;border-radius:2px;margin-bottom:24px}
+    .progress-fill{height:100%;background:linear-gradient(90deg,#E91E63,#ff6b9d);border-radius:2px;transition:width 0.5s}
+    .lock-notice{background:rgba(233,30,99,0.1);border:1px solid rgba(233,30,99,0.3);border-radius:8px;padding:12px 16px;font-size:0.82rem;color:#ff9ab5;margin-bottom:16px}
+  </style>
+</head>
+<body>
+  <div class="plan-header">
+    <div class="plan-logo">env<span class="ox">ox</span></div>
+    <div class="plan-title"><%= plan.title %></div>
+    <div class="plan-progress" id="headerProgress">0 / <%= slides.length %> revisados</div>
+  </div>
+
+  <div id="mainContent" style="display:block">
+    <div class="plan-container">
+      <div style="text-align:center;margin-bottom:32px">
+        <h2 style="font-size:1.4rem;margin-bottom:8px">Revise cada slide abaixo</h2>
+        <p style="color:#aaa;font-size:0.9rem">Aprove os que estiverem corretos ou solicite ajustes com seu comentário.<br>Navegue na ordem — cada slide libera o próximo.</p>
+      </div>
+
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+      <% slides.forEach((slide, idx) => { %>
+      <div class="slide-review-card <%= slide.status %>" id="card-<%= slide.id %>">
+        <div class="slide-header">
+          <div class="slide-num"><%= slide.slide_number %></div>
+          <div class="slide-title-txt"><%= slide.title || `Slide ${slide.slide_number}` %></div>
+          <span class="slide-status-badge badge-<%= slide.status %>" id="badge-<%= slide.id %>">
+            <% if (slide.status === 'approved') { %>✅ Aprovado
+            <% } else if (slide.status === 'revision') { %>💬 Ajuste Solicitado
+            <% } else { %>⏳ Pendente<% } %>
+          </span>
+        </div>
+        <div class="slide-body">
+          <div class="slide-content"><%= slide.content %></div>
+          
+          <% if (idx > 0) { %>
+          <div class="lock-notice" id="lock-<%= slide.id %>" style="display:none">
+            🔒 Revise o slide anterior primeiro para liberar este.
+          </div>
+          <% } %>
+
+          <% if (slide.status === 'pending') { %>
+          <div class="slide-actions" id="actions-<%= slide.id %>">
+            <button class="btn-approve <%= idx > 0 ? 'btn-disabled' : '' %>" 
+              id="btn-approve-<%= slide.id %>"
+              onclick="approveSlide(<%= slide.id %>, <%= slide.slide_number %>, this)"
+              <%= idx > 0 ? 'disabled' : '' %>>
+              ✅ Aprovar este slide
+            </button>
+            <button class="btn-revision <%= idx > 0 ? 'btn-disabled' : '' %>"
+              id="btn-revision-<%= slide.id %>"
+              onclick="showRevisionForm(<%= slide.id %>)"
+              <%= idx > 0 ? 'disabled' : '' %>>
+              💬 Solicitar ajuste
+            </button>
+            <div class="revision-form" id="revision-form-<%= slide.id %>" style="display:none">
+              <textarea id="comment-<%= slide.id %>" rows="3" placeholder="Descreva o ajuste necessário..."></textarea>
+              <button onclick="requestRevision(<%= slide.id %>, <%= slide.slide_number %>)">Enviar pedido de ajuste</button>
+            </div>
+          </div>
+          <% } else { %>
+          <div style="color:<%= slide.status==='approved' ? '#4caf50' : '#ff9800' %>;font-size:0.9rem;font-weight:600">
+            <% if (slide.status === 'approved') { %>✅ Aprovado por você
+            <% } else { %>💬 Ajuste solicitado: <em style="font-weight:400"><%= slide.client_comment %></em><% } %>
+          </div>
+          <% } %>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+
+  <!-- Done Screen -->
+  <div id="doneScreen" style="display:none">
+    <div class="done-screen">
+      <div class="done-icon">🎉</div>
+      <div class="done-title">Revisão Concluída!</div>
+      <div class="done-subtitle">Obrigado por revisar seu planejamento de marketing.<br>Nossa equipe já foi notificada e entrará em contato em breve.</div>
+      <div class="done-summary" id="doneSummary"></div>
+      <p style="color:#aaa;font-size:0.85rem;margin-top:16px">Você pode fechar esta página.</p>
+    </div>
+  </div>
+
+  <script>
+    const TOKEN = '<%= token %>';
+    const SESSION_ID = '<%= sessionId %>';
+    const TOTAL = <%= slides.length %>;
+    let reviewedCount = <%= slides.filter(s => s.status !== 'pending').length %>;
+    let currentUnlocked = <%= slides.filter(s => s.status !== 'pending').length %>;
+
+    // Inicializar estado de bloqueio
+    function initLocks() {
+      const cards = document.querySelectorAll('.slide-review-card');
+      cards.forEach((card, idx) => {
+        const slideId = card.id.replace('card-', '');
+        const lockEl = document.getElementById(`lock-${slideId}`);
+        const approveBtn = document.getElementById(`btn-approve-${slideId}`);
+        const revisionBtn = document.getElementById(`btn-revision-${slideId}`);
+        
+        if (idx > currentUnlocked) {
+          if (lockEl) lockEl.style.display = 'block';
+          if (approveBtn) { approveBtn.disabled = true; approveBtn.classList.add('btn-disabled'); }
+          if (revisionBtn) { revisionBtn.disabled = true; revisionBtn.classList.add('btn-disabled'); }
+        } else if (idx === currentUnlocked) {
+          if (lockEl) lockEl.style.display = 'none';
+          if (approveBtn) { approveBtn.disabled = false; approveBtn.classList.remove('btn-disabled'); }
+          if (revisionBtn) { revisionBtn.disabled = false; revisionBtn.classList.remove('btn-disabled'); }
+        }
+      });
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const pct = TOTAL > 0 ? (reviewedCount / TOTAL) * 100 : 0;
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('headerProgress').textContent = `${reviewedCount} / ${TOTAL} revisados`;
+    }
+
+    function unlockNext(currentIdx) {
+      const cards = document.querySelectorAll('.slide-review-card');
+      const nextCard = cards[currentIdx + 1];
+      if (!nextCard) return;
+      const nextId = nextCard.id.replace('card-', '');
+      const lockEl = document.getElementById(`lock-${nextId}`);
+      const approveBtn = document.getElementById(`btn-approve-${nextId}`);
+      const revisionBtn = document.getElementById(`btn-revision-${nextId}`);
+      if (lockEl) lockEl.style.display = 'none';
+      if (approveBtn) { approveBtn.disabled = false; approveBtn.classList.remove('btn-disabled'); }
+      if (revisionBtn) { revisionBtn.disabled = false; revisionBtn.classList.remove('btn-disabled'); }
+      // Scroll para o próximo card
+      setTimeout(() => nextCard.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+    }
+
+    function getCardIndex(slideId) {
+      const cards = Array.from(document.querySelectorAll('.slide-review-card'));
+      return cards.findIndex(c => c.id === `card-${slideId}`);
+    }
+
+    function showRevisionForm(slideId) {
+      document.getElementById(`revision-form-${slideId}`).style.display = 'block';
+    }
+
+    async function approveSlide(slideId, slideNumber, btn) {
+      btn.disabled = true; btn.textContent = '⏳ Salvando...';
+      try {
+        const r = await fetch(`/planejamento/${TOKEN}/review`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slideNumber, action: 'approve', sessionId: SESSION_ID })
+        });
+        const data = await r.json();
+        if (data.success) {
+          reviewedCount++;
+          updateProgress();
+          const card = document.getElementById(`card-${slideId}`);
+          card.className = 'slide-review-card approved';
+          const badge = document.getElementById(`badge-${slideId}`);
+          badge.className = 'slide-status-badge badge-approved';
+          badge.textContent = '✅ Aprovado';
+          const actions = document.getElementById(`actions-${slideId}`);
+          if (actions) actions.innerHTML = '<div style="color:#4caf50;font-weight:600">✅ Aprovado por você</div>';
+          currentUnlocked++;
+          if (data.allDone) showDone(data);
+          else unlockNext(getCardIndex(slideId));
+        }
+      } catch(e) { btn.disabled = false; btn.textContent = '✅ Aprovar este slide'; }
+    }
+
+    async function requestRevision(slideId, slideNumber) {
+      const comment = document.getElementById(`comment-${slideId}`).value.trim();
+      if (!comment) { alert('Por favor, descreva o ajuste necessário.'); return; }
+      const btn = document.querySelector(`#revision-form-${slideId} button`);
+      btn.disabled = true; btn.textContent = '⏳ Enviando...';
+      try {
+        const r = await fetch(`/planejamento/${TOKEN}/review`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slideNumber, action: 'revision', comment, sessionId: SESSION_ID })
+        });
+        const data = await r.json();
+        if (data.success) {
+          reviewedCount++;
+          updateProgress();
+          const card = document.getElementById(`card-${slideId}`);
+          card.className = 'slide-review-card revision';
+          const badge = document.getElementById(`badge-${slideId}`);
+          badge.className = 'slide-status-badge badge-revision';
+          badge.textContent = '💬 Ajuste Solicitado';
+          const actions = document.getElementById(`actions-${slideId}`);
+          if (actions) actions.innerHTML = `<div style="color:#ff9800;font-weight:600">💬 Ajuste solicitado: <em style="font-weight:400">${comment}</em></div>`;
+          currentUnlocked++;
+          if (data.allDone) showDone(data);
+          else unlockNext(getCardIndex(slideId));
+        }
+      } catch(e) { btn.disabled = false; btn.textContent = 'Enviar pedido de ajuste'; }
+    }
+
+    function showDone(data) {
+      document.getElementById('mainContent').style.display = 'none';
+      const done = document.getElementById('doneScreen');
+      done.style.display = 'block';
+      document.getElementById('doneSummary').innerHTML = `
+        <div class="summary-item"><span>✅ Slides aprovados</span><strong style="color:#4caf50">${data.approvedCount || 0}</strong></div>
+        <div class="summary-item"><span>💬 Slides com ajuste</span><strong style="color:#ff9800">${data.revisionCount || 0}</strong></div>
+        <div class="summary-item"><span>📑 Total de slides</span><strong>${TOTAL}</strong></div>
+      `;
+      done.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    initLocks();
+  </script>
+</body>
+</html>

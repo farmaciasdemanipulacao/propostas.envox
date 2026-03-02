@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= stats.plan.title %> — Envox Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <div class="top-bar"></div>
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <span class="brand-env">env</span><span class="brand-ox">ox</span>
+        <div class="brand-tagline">ADMIN</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/admin" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="/admin/leads/new" class="nav-item"><span class="nav-icon">➕</span> Novo Lead</a>
+        <a href="/admin/planejamentos" class="nav-item active"><span class="nav-icon">📋</span> Planejamentos</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/admin/logout" class="nav-item logout"><span class="nav-icon">🚪</span> Sair</a>
+      </div>
+    </aside>
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1><%= stats.plan.title %></h1>
+          <p class="page-subtitle">
+            <%= stats.slides.length %> slides · 
+            Status: <strong><%= stats.plan.status %></strong>
+            <% if (stats.plan.original_filename) { %> · 📄 <%= stats.plan.original_filename %><% } %>
+          </p>
+        </div>
+        <div class="header-actions">
+          <% if (stats.plan.status === 'sent' || stats.plan.status === 'reviewed') { %>
+            <button class="btn-copy-link btn-outline" data-url="<%= baseUrl %>/planejamento/<%= stats.plan.token %>">
+              📋 Copiar Link
+            </button>
+            <form action="/admin/planejamentos/<%= stats.plan.id %>/invite" method="POST" style="display:inline">
+              <button type="submit" class="btn-whatsapp">📲 Enviar Convite WA</button>
+            </form>
+          <% } %>
+          <a href="/admin/planejamentos" class="btn-outline">← Voltar</a>
+        </div>
+      </div>
+
+      <% if (success) { %><div class="alert alert-success"><span>✅</span> <%= success %></div><% } %>
+      <% if (error) { %><div class="alert alert-error"><span>⚠️</span> <%= error %></div><% } %>
+
+      <!-- Enviar para cliente -->
+      <% if (stats.plan.status === 'draft') { %>
+      <div class="detail-card">
+        <h3 class="card-title">📤 Enviar para Cliente</h3>
+        <p style="color:#666;font-size:0.9rem;margin-bottom:16px">Preencha os dados do cliente para gerar o link de aprovação:</p>
+        <form action="/admin/planejamentos/<%= stats.plan.id %>/send" method="POST">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+            <div class="form-group" style="margin:0">
+              <label class="form-label">Nome do Cliente</label>
+              <input type="text" name="client_name" class="form-input" placeholder="Nome completo" required>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="form-label">WhatsApp</label>
+              <input type="text" name="client_whatsapp" class="form-input" placeholder="41999999999" required>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="form-label">Email</label>
+              <input type="email" name="client_email" class="form-input" placeholder="cliente@email.com" required>
+            </div>
+          </div>
+          <button type="submit" class="btn-primary">🚀 Gerar Link e Enviar</button>
+        </form>
+      </div>
+      <% } else { %>
+      <!-- Info do cliente -->
+      <div class="detail-card">
+        <h3 class="card-title">👤 Cliente</h3>
+        <div class="info-list">
+          <div class="info-row">
+            <span class="info-label">Nome</span><span class="info-value"><%= stats.plan.client_name %></span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">WhatsApp</span>
+            <span class="info-value">
+              <a href="https://wa.me/55<%= (stats.plan.client_whatsapp||'').replace(/\D/g,'') %>" target="_blank" class="wa-link">
+                📱 <%= stats.plan.client_whatsapp %>
+              </a>
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Email</span><span class="info-value"><%= stats.plan.client_email %></span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Link de Revisão</span>
+            <span class="info-value">
+              <button class="btn-copy-link btn-sm" data-url="<%= baseUrl %>/planejamento/<%= stats.plan.token %>">
+                📋 Copiar Link
+              </button>
+              <small style="color:#999;margin-left:8px"><%= baseUrl %>/planejamento/<%= stats.plan.token %></small>
+            </span>
+          </div>
+        </div>
+        <!-- Stats da revisão -->
+        <% const approvedCount = stats.slides.filter(s => s.status==='approved').length; %>
+        <% const revisionCount = stats.slides.filter(s => s.status==='revision').length; %>
+        <% const pendingCount = stats.slides.filter(s => s.status==='pending').length; %>
+        <div class="metrics-grid" style="margin-top:16px">
+          <div class="metric-item"><div class="metric-value" style="color:#4caf50"><%= approvedCount %></div><div class="metric-label">Aprovados</div></div>
+          <div class="metric-item"><div class="metric-value" style="color:#ff9800"><%= revisionCount %></div><div class="metric-label">Com Ajuste</div></div>
+          <div class="metric-item"><div class="metric-value" style="color:#9e9e9e"><%= pendingCount %></div><div class="metric-label">Pendentes</div></div>
+          <div class="metric-item"><div class="metric-value"><%= stats.slides.length %></div><div class="metric-label">Total</div></div>
+        </div>
+      </div>
+      <% } %>
+
+      <!-- Slides -->
+      <div class="detail-card full-width-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 class="card-title" style="margin:0">📑 Slides (<%= stats.slides.length %>)</h3>
+          <button class="btn-primary" style="font-size:0.85rem;padding:8px 16px" onclick="toggleAddSlide()">
+            ➕ Adicionar Slide
+          </button>
+        </div>
+
+        <!-- Add Slide Form (hidden) -->
+        <div id="addSlideForm" style="display:none;background:#f8f9fa;border-radius:8px;padding:16px;margin-bottom:16px">
+          <div class="form-group"><label class="form-label">Título</label><input type="text" id="newSlideTitle" class="form-input" placeholder="Título do slide"></div>
+          <div class="form-group"><label class="form-label">Conteúdo</label><textarea id="newSlideContent" class="form-input" rows="4" placeholder="Conteúdo do slide..."></textarea></div>
+          <button class="btn-primary" onclick="addSlide()">✅ Adicionar</button>
+          <button class="btn-outline" onclick="toggleAddSlide()" style="margin-left:8px">Cancelar</button>
+        </div>
+
+        <% stats.slides.forEach((slide, idx) => { %>
+        <div class="slide-editor-card" id="slide-<%= slide.id %>">
+          <div class="slide-editor-header">
+            <div class="slide-num">#<%= slide.slide_number %></div>
+            <div class="slide-title-display" id="title-display-<%= slide.id %>">
+              <%= slide.title || `Slide ${slide.slide_number}` %>
+            </div>
+            <div class="slide-status">
+              <% if (slide.status === 'approved') { %>
+                <span class="badge badge-success">✅ Aprovado</span>
+              <% } else if (slide.status === 'revision') { %>
+                <span class="badge badge-danger">💬 Ajuste</span>
+              <% } else { %>
+                <span class="badge badge-secondary">⏳ Pendente</span>
+              <% } %>
+            </div>
+            <div class="slide-actions">
+              <button class="btn-sm btn-outline" onclick="toggleEdit(<%= slide.id %>)">✏️ Editar</button>
+              <button class="btn-sm" style="background:#dc3545;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer" onclick="deleteSlide(<%= slide.id %>, <%= stats.plan.id %>)">🗑️</button>
+            </div>
+          </div>
+
+          <!-- Preview -->
+          <div class="slide-content-preview" id="preview-<%= slide.id %>">
+            <%= slide.content.substring(0, 200) %><% if (slide.content.length > 200) { %>...<% } %>
+            <% if (slide.status === 'revision' && slide.client_comment) { %>
+              <div class="revision-comment">💬 Comentário do cliente: <em><%= slide.client_comment %></em></div>
+            <% } %>
+          </div>
+
+          <!-- Edit Form -->
+          <div class="slide-edit-form" id="edit-<%= slide.id %>" style="display:none">
+            <input type="text" class="form-input" id="edit-title-<%= slide.id %>" value="<%= (slide.title||'').replace(/"/g,'&quot;') %>" placeholder="Título do slide" style="margin-bottom:8px">
+            <textarea class="form-input" id="edit-content-<%= slide.id %>" rows="6" style="margin-bottom:8px"><%= slide.content %></textarea>
+            <button class="btn-primary" style="font-size:0.85rem" onclick="saveSlide(<%= slide.id %>, <%= stats.plan.id %>)">💾 Salvar</button>
+            <button class="btn-outline" style="font-size:0.85rem;margin-left:8px" onclick="toggleEdit(<%= slide.id %>)">Cancelar</button>
+          </div>
+        </div>
+        <% }) %>
+      </div>
+
+      <!-- Event Log -->
+      <% if (stats.eventLog && stats.eventLog.length > 0) { %>
+      <div class="detail-card full-width-card">
+        <h3 class="card-title">📋 Log de Eventos</h3>
+        <div class="event-log">
+          <% stats.eventLog.forEach(ev => { %>
+            <div class="event-item">
+              <div class="event-time"><%= new Date(ev.timestamp).toLocaleString('pt-BR') %></div>
+              <div class="event-dot"></div>
+              <div class="event-text"><%= ev.event_type.replace(/_/g,' ') %>
+                <% if (ev.details) { try { const d = JSON.parse(ev.details); if(d.slideCount) { %> (<%= d.slideCount %> slides)<% } } catch(e){} } %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+      <% } %>
+    </main>
+  </div>
+
+  <div id="toast" class="toast hidden">Link copiado!</div>
+
+  <style>
+    .slide-editor-card { border: 1px solid #eee; border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+    .slide-editor-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f8f9fa; border-bottom: 1px solid #eee; }
+    .slide-num { background: #E91E63; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
+    .slide-title-display { flex: 1; font-weight: 600; font-size: 0.9rem; }
+    .slide-status { flex-shrink: 0; }
+    .slide-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .slide-content-preview { padding: 12px 16px; font-size: 0.85rem; color: #555; line-height: 1.6; white-space: pre-wrap; }
+    .slide-edit-form { padding: 12px 16px; background: #fff; }
+    .revision-comment { margin-top: 8px; padding: 8px 12px; background: #fff3cd; border-radius: 6px; font-size: 0.82rem; border-left: 3px solid #ff9800; }
+  </style>
+
+  <script>
+    const PLAN_ID = <%= stats.plan.id %>;
+
+    function toggleEdit(id) {
+      const edit = document.getElementById(`edit-${id}`);
+      const preview = document.getElementById(`preview-${id}`);
+      edit.style.display = edit.style.display === 'none' ? 'block' : 'none';
+      preview.style.display = preview.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function toggleAddSlide() {
+      const form = document.getElementById('addSlideForm');
+      form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function saveSlide(slideId, planId) {
+      const title = document.getElementById(`edit-title-${slideId}`).value;
+      const content = document.getElementById(`edit-content-${slideId}`).value;
+      try {
+        const r = await fetch(`/admin/planejamentos/${planId}/slides/${slideId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, content })
+        });
+        if (r.ok) location.reload();
+        else alert('Erro ao salvar slide');
+      } catch(e) { alert('Erro: ' + e.message); }
+    }
+
+    async function deleteSlide(slideId, planId) {
+      if (!confirm('Excluir este slide?')) return;
+      try {
+        const r = await fetch(`/admin/planejamentos/${planId}/slides/${slideId}`, { method: 'DELETE' });
+        if (r.ok) location.reload();
+        else alert('Erro ao excluir slide');
+      } catch(e) { alert('Erro: ' + e.message); }
+    }
+
+    async function addSlide() {
+      const title = document.getElementById('newSlideTitle').value;
+      const content = document.getElementById('newSlideContent').value;
+      if (!content.trim()) { alert('Conteúdo é obrigatório'); return; }
+      try {
+        const r = await fetch(`/admin/planejamentos/${PLAN_ID}/slides`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, content })
+        });
+        if (r.ok) location.reload();
+        else alert('Erro ao adicionar slide');
+      } catch(e) { alert('Erro: ' + e.message); }
+    }
+
+    document.querySelectorAll('.btn-copy-link').forEach(btn => {
+      btn.addEventListener('click', function() {
+        navigator.clipboard.writeText(this.dataset.url).then(() => {
+          const toast = document.getElementById('toast');
+          toast.classList.remove('hidden');
+          setTimeout(() => toast.classList.add('hidden'), 2500);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

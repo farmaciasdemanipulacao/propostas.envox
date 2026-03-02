@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Planejamentos — Envox Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <div class="top-bar"></div>
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <span class="brand-env">env</span><span class="brand-ox">ox</span>
+        <div class="brand-tagline">ADMIN</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/admin" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="/admin/leads/new" class="nav-item"><span class="nav-icon">➕</span> Novo Lead</a>
+        <a href="/admin/planejamentos" class="nav-item active"><span class="nav-icon">📋</span> Planejamentos</a>
+        <a href="/admin/planejamentos/new" class="nav-item"><span class="nav-icon">📤</span> Novo Planejamento</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/admin/logout" class="nav-item logout"><span class="nav-icon">🚪</span> Sair</a>
+      </div>
+    </aside>
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Planejamentos</h1>
+          <p class="page-subtitle">Upload e gestão de planejamentos de marketing para aprovação</p>
+        </div>
+        <a href="/admin/planejamentos/new" class="btn-primary">📤 Novo Planejamento</a>
+      </div>
+
+      <% if (success) { %><div class="alert alert-success"><span>✅</span> <%= success %></div><% } %>
+      <% if (error) { %><div class="alert alert-error"><span>⚠️</span> <%= error %></div><% } %>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📋</div>
+          <div class="stat-value"><%= planejamentos.length %></div>
+          <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value"><%= planejamentos.filter(p => p.status === 'reviewed').length %></div>
+          <div class="stat-label">Revisados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📤</div>
+          <div class="stat-value"><%= planejamentos.filter(p => p.status === 'sent').length %></div>
+          <div class="stat-label">Enviados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✏️</div>
+          <div class="stat-value"><%= planejamentos.filter(p => p.status === 'draft').length %></div>
+          <div class="stat-label">Rascunhos</div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-header">
+          <h2>Lista de Planejamentos</h2>
+          <span class="table-count"><%= planejamentos.length %> planejamentos</span>
+        </div>
+        <% if (planejamentos.length === 0) { %>
+          <div class="empty-state">
+            <div class="empty-icon">📄</div>
+            <p>Nenhum planejamento cadastrado ainda.</p>
+            <a href="/admin/planejamentos/new" class="btn-primary">Criar Primeiro Planejamento</a>
+          </div>
+        <% } else { %>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Título</th>
+                  <th>Cliente</th>
+                  <th>Status</th>
+                  <th>Slides</th>
+                  <th>Aprovados</th>
+                  <th>Ajustes</th>
+                  <th>Criado em</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% planejamentos.forEach(plan => { %>
+                  <tr onclick="window.location='/admin/planejamentos/<%= plan.id %>'" style="cursor:pointer">
+                    <td><strong><%= plan.title %></strong></td>
+                    <td>
+                      <% if (plan.client_name) { %>
+                        <%= plan.client_name %>
+                      <% } else { %>
+                        <span class="text-muted">—</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <% if (plan.status === 'reviewed') { %>
+                        <span class="badge badge-success">✅ Revisado</span>
+                      <% } else if (plan.status === 'sent') { %>
+                        <span class="badge badge-warning">📤 Enviado</span>
+                      <% } else { %>
+                        <span class="badge badge-secondary">✏️ Rascunho</span>
+                      <% } %>
+                    </td>
+                    <td class="td-center"><%= plan.total_slides || 0 %></td>
+                    <td class="td-center">
+                      <% if ((plan.approved_slides || 0) > 0) { %>
+                        <span class="badge badge-success"><%= plan.approved_slides %></span>
+                      <% } else { %><span class="text-muted">0</span><% } %>
+                    </td>
+                    <td class="td-center">
+                      <% if ((plan.revision_slides || 0) > 0) { %>
+                        <span class="badge badge-danger"><%= plan.revision_slides %></span>
+                      <% } else { %><span class="text-muted">0</span><% } %>
+                    </td>
+                    <td><small><%= new Date(plan.created_at).toLocaleDateString('pt-BR') %></small></td>
+                    <td onclick="event.stopPropagation()">
+                      <a href="/admin/planejamentos/<%= plan.id %>" class="btn-sm btn-outline">Ver</a>
+                      <form action="/admin/planejamentos/<%= plan.id %>/delete" method="POST" style="display:inline" onsubmit="return confirm('Excluir este planejamento?')">
+                        <button type="submit" class="btn-sm" style="background:#dc3545;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer">🗑️</button>
+                      </form>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

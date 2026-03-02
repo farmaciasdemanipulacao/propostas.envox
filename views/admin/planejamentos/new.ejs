@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Novo Planejamento — Envox Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <div class="top-bar"></div>
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <span class="brand-env">env</span><span class="brand-ox">ox</span>
+        <div class="brand-tagline">ADMIN</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/admin" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="/admin/leads/new" class="nav-item"><span class="nav-icon">➕</span> Novo Lead</a>
+        <a href="/admin/planejamentos" class="nav-item"><span class="nav-icon">📋</span> Planejamentos</a>
+        <a href="/admin/planejamentos/new" class="nav-item active"><span class="nav-icon">📤</span> Novo Planejamento</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/admin/logout" class="nav-item logout"><span class="nav-icon">🚪</span> Sair</a>
+      </div>
+    </aside>
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Novo Planejamento</h1>
+          <p class="page-subtitle">Faça upload de um documento para converter em slides de aprovação</p>
+        </div>
+        <a href="/admin/planejamentos" class="btn-outline">← Voltar</a>
+      </div>
+
+      <% if (error) { %><div class="alert alert-error"><span>⚠️</span> <%= error %></div><% } %>
+
+      <div class="form-card" style="max-width:600px">
+        <form action="/admin/planejamentos" method="POST" enctype="multipart/form-data">
+          <div class="form-group">
+            <label class="form-label">Título do Planejamento *</label>
+            <input type="text" name="title" class="form-input" 
+              placeholder="Ex: Planejamento Marketing Digital — Empresa XYZ" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Arquivo do Planejamento *</label>
+            <div class="upload-zone" id="uploadZone">
+              <input type="file" name="file" id="fileInput" accept=".pdf,.docx,.txt"
+                style="position:absolute;inset:0;opacity:0;cursor:pointer" required>
+              <div class="upload-icon">📄</div>
+              <div class="upload-text">
+                <strong>Clique para selecionar</strong> ou arraste o arquivo aqui
+              </div>
+              <div class="upload-hint">PDF, DOCX ou TXT — máximo 10 MB</div>
+              <div id="fileName" class="upload-filename" style="display:none"></div>
+            </div>
+          </div>
+
+          <div class="form-note">
+            <p>📌 <strong>Como funciona:</strong></p>
+            <ul>
+              <li>O documento será convertido automaticamente em slides</li>
+              <li>Títulos/cabeçalhos viram novos slides</li>
+              <li>A cada ~300 palavras, um novo slide é criado</li>
+              <li>Você poderá editar e reordenar antes de enviar ao cliente</li>
+            </ul>
+          </div>
+
+          <div class="form-actions">
+            <a href="/admin/planejamentos" class="btn-outline">Cancelar</a>
+            <button type="submit" class="btn-primary" id="submitBtn">
+              📤 Processar Documento
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <style>
+    .upload-zone {
+      position: relative;
+      border: 2px dashed #e0e0e0;
+      border-radius: 12px;
+      padding: 40px 20px;
+      text-align: center;
+      transition: all 0.2s;
+      background: #fafafa;
+      cursor: pointer;
+    }
+    .upload-zone:hover { border-color: #E91E63; background: #fff5f8; }
+    .upload-zone.dragover { border-color: #E91E63; background: #fff0f5; }
+    .upload-icon { font-size: 3rem; margin-bottom: 12px; }
+    .upload-text { font-size: 0.95rem; color: #333; margin-bottom: 4px; }
+    .upload-hint { font-size: 0.8rem; color: #999; }
+    .upload-filename { margin-top: 10px; font-size: 0.9rem; color: #E91E63; font-weight: 500; }
+    .form-note { background: #f8f9fa; border-radius: 8px; padding: 16px; margin: 16px 0; }
+    .form-note p { margin: 0 0 8px 0; font-size: 0.9rem; }
+    .form-note ul { margin: 0; padding-left: 20px; font-size: 0.85rem; color: #666; line-height: 1.8; }
+  </style>
+  <script>
+    const input = document.getElementById('fileInput');
+    const zone = document.getElementById('uploadZone');
+    const nameEl = document.getElementById('fileName');
+    const btn = document.getElementById('submitBtn');
+
+    input.addEventListener('change', () => {
+      if (input.files[0]) {
+        nameEl.textContent = '✅ ' + input.files[0].name;
+        nameEl.style.display = 'block';
+        zone.style.borderColor = '#E91E63';
+      }
+    });
+
+    document.querySelector('form').addEventListener('submit', () => {
+      btn.textContent = '⏳ Processando...';
+      btn.disabled = true;
+    });
+  </script>
+</body>
+</html>

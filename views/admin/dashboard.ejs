@@ -11,7 +11,6 @@
 <body>
   <div class="top-bar"></div>
   
-  <!-- Sidebar -->
   <div class="admin-layout">
     <aside class="sidebar">
       <div class="sidebar-logo">
@@ -19,30 +18,26 @@
         <div class="brand-tagline">ADMIN</div>
       </div>
       <nav class="sidebar-nav">
-        <a href="/admin" class="nav-item active">
-          <span class="nav-icon">📊</span> Dashboard
-        </a>
-        <a href="/admin/leads/new" class="nav-item">
-          <span class="nav-icon">➕</span> Novo Lead
-        </a>
+        <a href="/admin" class="nav-item active"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="/admin/leads/new" class="nav-item"><span class="nav-icon">➕</span> Novo Lead</a>
+        <a href="/admin/planejamentos" class="nav-item"><span class="nav-icon">📋</span> Planejamentos</a>
+        <a href="/admin/planejamentos/new" class="nav-item"><span class="nav-icon">📤</span> Novo Planejamento</a>
       </nav>
       <div class="sidebar-footer">
-        <a href="/admin/logout" class="nav-item logout">
-          <span class="nav-icon">🚪</span> Sair
-        </a>
+        <a href="/admin/logout" class="nav-item logout"><span class="nav-icon">🚪</span> Sair</a>
       </div>
     </aside>
     
-    <!-- Main Content -->
     <main class="main-content">
       <div class="page-header">
         <div>
           <h1>Dashboard</h1>
           <p class="page-subtitle">Gerencie seus leads e acompanhe o engajamento</p>
         </div>
-        <a href="/admin/leads/new" class="btn-primary">
-          ➕ Novo Lead
-        </a>
+        <div class="header-actions">
+          <a href="/admin/leads/new" class="btn-primary">➕ Novo Lead</a>
+          <a href="/admin/planejamentos/new" class="btn-outline">📤 Novo Planejamento</a>
+        </div>
       </div>
       
       <% if (success) { %>
@@ -70,9 +65,9 @@
           <div class="stat-label">Não Visualizaram</div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon">👁️</div>
-          <div class="stat-value"><%= leads.filter(l => l.status === 'viewing').length %></div>
-          <div class="stat-label">Visualizando Agora</div>
+          <div class="stat-icon">📋</div>
+          <div class="stat-value"><%= planejamentos ? planejamentos.length : 0 %></div>
+          <div class="stat-label">Planejamentos</div>
         </div>
       </div>
       
@@ -96,11 +91,9 @@
                 <tr>
                   <th>Nome</th>
                   <th>WhatsApp</th>
-                  <th>Email</th>
                   <th>Status</th>
                   <th>Acessos</th>
-                  <th>Último Acesso</th>
-                  <th>Tempo Total</th>
+                  <th>Tempo</th>
                   <th>Interesse</th>
                   <th>Link</th>
                   <th>Ações</th>
@@ -111,50 +104,49 @@
                   <tr onclick="window.location='/admin/leads/<%= lead.id %>'" style="cursor:pointer">
                     <td class="td-name">
                       <strong><%= lead.name %></strong>
+                      <div style="font-size:0.78rem;color:#999"><%= lead.email %></div>
                     </td>
                     <td><%= lead.whatsapp %></td>
-                    <td class="td-email"><%= lead.email %></td>
                     <td>
                       <% if (lead.status === 'viewed') { %>
                         <span class="badge badge-success">✅ Visualizou</span>
                       <% } else if (lead.status === 'viewing') { %>
-                        <span class="badge badge-warning">👁️ Visualizando</span>
+                        <span class="badge badge-warning">👁️ Vendo agora</span>
                       <% } else { %>
                         <span class="badge badge-danger">❌ Não visualizou</span>
                       <% } %>
                     </td>
                     <td class="td-center"><%= lead.total_accesses || 0 %></td>
-                    <td>
-                      <% if (lead.last_access) { %>
-                        <small><%= new Date(lead.last_access).toLocaleDateString('pt-BR') %><br>
-                        <%= new Date(lead.last_access).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) %></small>
-                      <% } else { %>
-                        <span class="text-muted">—</span>
-                      <% } %>
-                    </td>
                     <td class="td-center">
                       <% const mins = Math.floor((lead.total_duration || 0) / 60); %>
                       <% const secs = (lead.total_duration || 0) % 60; %>
-                      <%= mins %>m <%= secs %>s
+                      <%= mins %>m<%= secs %>s
                     </td>
                     <td class="td-center">
                       <% if (lead.interestLevel > 0) { %>
-                        <span class="interest-badge badge-<%= lead.interestInfo.color %>">
-                          <%= lead.interestLevel %>/10
-                        </span>
+                        <span class="interest-badge badge-<%= lead.interestInfo.color %>"><%= lead.interestLevel %>/10</span>
                       <% } else { %>
                         <span class="text-muted">—</span>
                       <% } %>
                     </td>
                     <td onclick="event.stopPropagation()">
-                      <button class="btn-copy-link btn-sm" 
-                        data-url="<%= baseUrl %>/proposta/<%= lead.token %>"
-                        title="Copiar link">
-                        📋 Copiar
+                      <button class="btn-copy-link btn-sm" data-url="<%= baseUrl %>/proposta/<%= lead.token %>" title="Copiar link">
+                        📋
                       </button>
                     </td>
-                    <td onclick="event.stopPropagation()">
+                    <td onclick="event.stopPropagation()" style="white-space:nowrap">
                       <a href="/admin/leads/<%= lead.id %>" class="btn-sm btn-outline">Ver</a>
+                      <% if (lead.status === 'not_viewed') { %>
+                        <form action="/admin/leads/<%= lead.id %>/invite" method="POST" style="display:inline">
+                          <button type="submit" class="btn-sm" style="background:#25D366;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer" title="Enviar convite WA">
+                            📲 Convidar
+                          </button>
+                        </form>
+                      <% } else if (lead.status === 'viewed') { %>
+                        <button class="btn-sm" style="background:#1a73e8;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer" onclick="event.stopPropagation();showFollowup(<%= lead.id %>, '<%= lead.name.split(' ')[0] %>')">
+                          🔄 Follow-up
+                        </button>
+                      <% } %>
                     </td>
                   </tr>
                 <% }) %>
@@ -163,24 +155,109 @@
           </div>
         <% } %>
       </div>
+
+      <!-- Planejamentos recentes -->
+      <% if (planejamentos && planejamentos.length > 0) { %>
+      <div class="table-card">
+        <div class="table-header">
+          <h2>Planejamentos Recentes</h2>
+          <a href="/admin/planejamentos" class="btn-sm btn-outline">Ver todos</a>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Título</th>
+                <th>Cliente</th>
+                <th>Status</th>
+                <th>Slides</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% planejamentos.slice(0,5).forEach(plan => { %>
+              <tr onclick="window.location='/admin/planejamentos/<%= plan.id %>'" style="cursor:pointer">
+                <td><strong><%= plan.title %></strong></td>
+                <td><%= plan.client_name || '<span class="text-muted">—</span>' %></td>
+                <td>
+                  <% if (plan.status === 'reviewed') { %><span class="badge badge-success">✅ Revisado</span>
+                  <% } else if (plan.status === 'sent') { %><span class="badge badge-warning">📤 Enviado</span>
+                  <% } else { %><span class="badge badge-secondary">✏️ Rascunho</span><% } %>
+                </td>
+                <td class="td-center"><%= plan.total_slides || 0 %></td>
+                <td onclick="event.stopPropagation()">
+                  <a href="/admin/planejamentos/<%= plan.id %>" class="btn-sm btn-outline">Ver</a>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <% } %>
     </main>
   </div>
   
   <!-- Toast notification -->
   <div id="toast" class="toast hidden">Link copiado!</div>
+
+  <!-- Follow-up Modal -->
+  <div id="followupModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:12px;padding:24px;max-width:380px;width:90%">
+      <h3 style="margin-bottom:4px">Follow-up para <span id="fupName"></span></h3>
+      <p style="color:#666;font-size:0.85rem;margin-bottom:16px">Escolha a categoria da mensagem:</p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button onclick="sendFollowup('article')" style="background:#1a73e8;color:#fff;border:none;padding:12px;border-radius:8px;font-size:0.9rem;cursor:pointer;text-align:left">
+          📰 Artigo / Conteúdo relevante
+        </button>
+        <button onclick="sendFollowup('result')" style="background:#4caf50;color:#fff;border:none;padding:12px;border-radius:8px;font-size:0.9rem;cursor:pointer;text-align:left">
+          🏆 Resultado / Case de sucesso
+        </button>
+        <button onclick="sendFollowup('urgency')" style="background:#ff9800;color:#fff;border:none;padding:12px;border-radius:8px;font-size:0.9rem;cursor:pointer;text-align:left">
+          ⏰ Urgência / Escassez
+        </button>
+      </div>
+      <button onclick="closeFollowup()" style="margin-top:12px;width:100%;background:#f0f0f0;border:none;padding:10px;border-radius:8px;cursor:pointer">Cancelar</button>
+    </div>
+  </div>
   
   <script>
-    // Copiar link
+    let currentLeadId = null;
+
     document.querySelectorAll('.btn-copy-link').forEach(btn => {
       btn.addEventListener('click', function() {
-        const url = this.dataset.url;
-        navigator.clipboard.writeText(url).then(() => {
+        navigator.clipboard.writeText(this.dataset.url).then(() => {
           const toast = document.getElementById('toast');
           toast.classList.remove('hidden');
           setTimeout(() => toast.classList.add('hidden'), 2500);
         });
       });
     });
+
+    function showFollowup(leadId, name) {
+      currentLeadId = leadId;
+      document.getElementById('fupName').textContent = name;
+      const modal = document.getElementById('followupModal');
+      modal.style.display = 'flex';
+    }
+
+    function closeFollowup() {
+      document.getElementById('followupModal').style.display = 'none';
+      currentLeadId = null;
+    }
+
+    function sendFollowup(category) {
+      if (!currentLeadId) return;
+      // Submeter form para redirect ao WA
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/admin/leads/${currentLeadId}/followup`;
+      const input = document.createElement('input');
+      input.type = 'hidden'; input.name = 'category'; input.value = category;
+      form.appendChild(input);
+      document.body.appendChild(form);
+      form.submit();
+    }
   </script>
 </body>
 </html>
