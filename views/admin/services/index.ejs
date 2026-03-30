@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Serviços & Preços — Envox Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .services-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media(max-width:900px){ .services-grid { grid-template-columns: 1fr; } }
+    .svc-card { background:#fff; border:1px solid #eee; border-radius:12px; overflow:hidden; }
+    .svc-card-header { background:#f8f9fa; padding:16px 20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; }
+    .svc-card-header h3 { font-size:1rem; font-weight:700; margin:0; }
+    .svc-table { width:100%; border-collapse:collapse; }
+    .svc-table th { background:#f8f9fa; padding:10px 16px; font-size:0.8rem; font-weight:600; color:#666; text-align:left; border-bottom:1px solid #eee; }
+    .svc-table td { padding:10px 16px; font-size:0.85rem; border-bottom:1px solid #f0f0f0; vertical-align:middle; }
+    .svc-table tr:last-child td { border-bottom:none; }
+    .svc-table tr:hover td { background:#fafafa; }
+    .inactive-row td { opacity:0.45; }
+    .inline-edit { display:none; background:#fffbe6; }
+    .inline-edit.open { display:table-row; }
+    .inline-edit td { padding:12px 16px; }
+    .inline-form { display:grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap:8px; align-items:end; }
+    .inline-form.wide { grid-template-columns: 2fr 3fr 1fr auto; }
+    input.svc-input, select.svc-input { padding:6px 10px; border:1px solid #ddd; border-radius:6px; font-family:inherit; font-size:0.85rem; width:100%; }
+    .btn-edit-svc { background:none; border:1px solid #ddd; border-radius:6px; padding:3px 8px; cursor:pointer; font-size:0.8rem; }
+    .btn-edit-svc:hover { border-color:#E91E63; color:#E91E63; }
+    .btn-del-svc { background:none; border:1px solid #fcc; border-radius:6px; padding:3px 8px; cursor:pointer; font-size:0.8rem; color:#dc3545; }
+    .btn-del-svc:hover { background:#dc3545; color:#fff; }
+    .keys-list { display:flex; flex-wrap:wrap; gap:4px; }
+    .key-chip { background:#e8f5e9; color:#2e7d32; border-radius:12px; padding:2px 8px; font-size:0.75rem; font-weight:600; }
+    .key-chip.monthly { background:#e3f2fd; color:#1565c0; }
+    .key-chip.onetime { background:#fff3e0; color:#e65100; }
+    .pct-badge { background:#E91E63; color:#fff; border-radius:12px; padding:2px 8px; font-size:0.82rem; font-weight:700; }
+    .rule-keys { font-size:0.8rem; color:#555; }
+    .add-form-section { background:#f8f9fa; border-radius:10px; padding:20px; margin-top:16px; }
+    .add-form-section h4 { margin:0 0 14px 0; font-size:0.95rem; color:#333; }
+    .form-grid-3 { display:grid; grid-template-columns: 2fr 1fr 1fr; gap:10px; }
+    .form-grid-4 { display:grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap:10px; }
+    .form-grid-2 { display:grid; grid-template-columns: 2fr 1fr; gap:10px; }
+    @media(max-width:700px){
+      .form-grid-3, .form-grid-4, .form-grid-2 { grid-template-columns:1fr; }
+      .inline-form, .inline-form.wide { grid-template-columns:1fr; }
+    }
+    label.form-label-sm { font-size:0.8rem; font-weight:600; color:#555; display:block; margin-bottom:3px; }
+    .checkboxes-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap:6px; margin:8px 0; }
+    .cb-item { display:flex; align-items:center; gap:6px; font-size:0.82rem; background:#fff; border:1px solid #eee; border-radius:6px; padding:6px 10px; cursor:pointer; }
+    .cb-item:hover { border-color:#E91E63; }
+    .cb-item input { margin:0; accent-color:#E91E63; }
+  </style>
+</head>
+<body>
+  <div class="top-bar"></div>
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <span class="brand-env">env</span><span class="brand-ox">ox</span>
+        <div class="brand-tagline">ADMIN</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/admin" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="/admin/leads/new" class="nav-item"><span class="nav-icon">➕</span> Novo Lead</a>
+        <a href="/admin/planejamentos" class="nav-item"><span class="nav-icon">📋</span> Planejamentos</a>
+        <a href="/admin/services" class="nav-item active"><span class="nav-icon">💰</span> Serviços & Preços</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/admin/logout" class="nav-item logout"><span class="nav-icon">🚪</span> Sair</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Serviços & Preços</h1>
+          <p class="page-subtitle">Gerencie os serviços, valores e regras de desconto do Montador de Plano</p>
+        </div>
+      </div>
+
+      <% if (success) { %><div class="alert alert-success"><span>✅</span> <%=success%></div><% } %>
+      <% if (error)   { %><div class="alert alert-error"><span>⚠️</span> <%=error%></div><% } %>
+
+      <div class="services-grid">
+
+        <!-- ── SERVIÇOS ────────────────────────────────── -->
+        <div class="svc-card" style="grid-column: 1 / -1">
+          <div class="svc-card-header">
+            <h3>📦 Serviços Cadastrados</h3>
+            <button class="btn-primary" style="font-size:0.8rem;padding:6px 14px" onclick="toggleAddSvc()">➕ Novo Serviço</button>
+          </div>
+
+          <table class="svc-table" id="svcTable">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Chave</th>
+                <th>Categoria</th>
+                <th>Preço</th>
+                <th>Unidade</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% services.forEach(svc => { %>
+              <tr class="<%= svc.active ? '' : 'inactive-row' %>" id="svc-row-<%= svc.id %>">
+                <td><strong><%= svc.name %></strong></td>
+                <td><code style="font-size:0.78rem;background:#f0f0f0;padding:2px 5px;border-radius:3px"><%= svc.key %></code></td>
+                <td><span class="key-chip <%= svc.category %>"><%= svc.category === 'monthly' ? '📅 Mensal' : '💳 Único' %></span></td>
+                <td><strong>R$ <%= (svc.price||0).toLocaleString('pt-BR') %></strong></td>
+                <td style="color:#888"><%= svc.unit %></td>
+                <td><%= svc.active ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-secondary">Inativo</span>' %></td>
+                <td style="white-space:nowrap">
+                  <button class="btn-edit-svc" onclick="toggleEditSvc(<%= svc.id %>)">✏️</button>
+                  <form action="/admin/services/<%= svc.id %>/delete" method="POST" style="display:inline" onsubmit="return confirm('Remover este serviço?')">
+                    <button type="submit" class="btn-del-svc">🗑️</button>
+                  </form>
+                </td>
+              </tr>
+              <tr class="inline-edit" id="svc-edit-<%= svc.id %>">
+                <td colspan="7">
+                  <form action="/admin/services/<%= svc.id %>/update" method="POST">
+                    <div class="inline-form">
+                      <div>
+                        <label class="form-label-sm">Nome</label>
+                        <input class="svc-input" type="text" name="name" value="<%= svc.name %>" required>
+                      </div>
+                      <div>
+                        <label class="form-label-sm">Preço (R$)</label>
+                        <input class="svc-input" type="number" name="price" value="<%= svc.price %>" step="0.01" min="0" required>
+                      </div>
+                      <div>
+                        <label class="form-label-sm">Unidade</label>
+                        <input class="svc-input" type="text" name="unit" value="<%= svc.unit %>">
+                      </div>
+                      <div>
+                        <label class="form-label-sm">Categoria</label>
+                        <select class="svc-input" name="category">
+                          <option value="monthly" <%= svc.category==='monthly'?'selected':'' %>>Mensal</option>
+                          <option value="onetime" <%= svc.category==='onetime'?'selected':'' %>>Único</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="form-label-sm">Status</label>
+                        <select class="svc-input" name="active">
+                          <option value="1" <%= svc.active?'selected':'' %>>Ativo</option>
+                          <option value="0" <%= !svc.active?'selected':'' %>>Inativo</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div style="margin-top:8px">
+                      <label class="form-label-sm">Descrição</label>
+                      <input class="svc-input" type="text" name="description" value="<%= svc.description||'' %>">
+                    </div>
+                    <div style="margin-top:10px;display:flex;gap:8px">
+                      <button type="submit" class="btn-primary" style="font-size:0.85rem;padding:6px 14px">💾 Salvar</button>
+                      <button type="button" class="btn-outline" style="font-size:0.85rem" onclick="toggleEditSvc(<%= svc.id %>)">Cancelar</button>
+                    </div>
+                  </form>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+
+          <!-- Adicionar novo serviço -->
+          <div class="add-form-section" id="addSvcForm" style="display:none">
+            <h4>➕ Adicionar Novo Serviço</h4>
+            <form action="/admin/services/create" method="POST">
+              <div class="form-grid-4" style="margin-bottom:10px">
+                <div>
+                  <label class="form-label-sm">Nome do serviço *</label>
+                  <input class="svc-input" type="text" name="name" placeholder="Ex: Social Media — 15 posts/mês" required>
+                </div>
+                <div>
+                  <label class="form-label-sm">Chave única * <small style="font-weight:400">(sem espaços)</small></label>
+                  <input class="svc-input" type="text" name="key" placeholder="social_15" required>
+                </div>
+                <div>
+                  <label class="form-label-sm">Preço (R$) *</label>
+                  <input class="svc-input" type="number" name="price" placeholder="2500" step="0.01" min="0" required>
+                </div>
+                <div>
+                  <label class="form-label-sm">Unidade</label>
+                  <input class="svc-input" type="text" name="unit" placeholder="/mês" value="/mês">
+                </div>
+              </div>
+              <div class="form-grid-2" style="margin-bottom:10px">
+                <div>
+                  <label class="form-label-sm">Descrição</label>
+                  <input class="svc-input" type="text" name="description" placeholder="Breve descrição do serviço">
+                </div>
+                <div>
+                  <label class="form-label-sm">Categoria</label>
+                  <select class="svc-input" name="category">
+                    <option value="monthly">📅 Mensal (recorrente)</option>
+                    <option value="onetime">💳 Único (pontual)</option>
+                  </select>
+                </div>
+              </div>
+              <button type="submit" class="btn-primary" style="font-size:0.85rem">✅ Criar Serviço</button>
+              <button type="button" class="btn-outline" style="font-size:0.85rem;margin-left:8px" onclick="toggleAddSvc()">Cancelar</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- ── REGRAS DE DESCONTO ─────────────────────── -->
+        <div class="svc-card" style="grid-column: 1 / -1">
+          <div class="svc-card-header">
+            <div>
+              <h3>🎁 Regras de Desconto por Combinação</h3>
+              <small style="color:#888">Quando o cliente selecionar esses serviços juntos, o desconto é aplicado no total</small>
+            </div>
+            <button class="btn-primary" style="font-size:0.8rem;padding:6px 14px" onclick="toggleAddRule()">➕ Nova Regra</button>
+          </div>
+
+          <% if (rules.length === 0) { %>
+            <div style="padding:24px;text-align:center;color:#aaa">Nenhuma regra de desconto cadastrada.</div>
+          <% } else { %>
+          <table class="svc-table">
+            <thead>
+              <tr>
+                <th>Nome da Regra</th>
+                <th>Serviços Combinados</th>
+                <th>Desconto</th>
+                <th>Descrição</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% rules.forEach(rule => { %>
+              <% const ruleKeys = (rule.service_keys||'').split(',').map(k=>k.trim()).filter(Boolean); %>
+              <tr class="<%= rule.active ? '' : 'inactive-row' %>" id="rule-row-<%= rule.id %>">
+                <td><strong><%= rule.name %></strong></td>
+                <td>
+                  <div class="keys-list">
+                    <% ruleKeys.forEach(k => { %>
+                      <% const svc = services.find(s => s.key === k); %>
+                      <span class="key-chip" title="<%= k %>"><%= svc ? svc.name.split('—')[0].trim() : k %></span>
+                    <% }) %>
+                  </div>
+                </td>
+                <td><span class="pct-badge">-<%= rule.discount_pct %>%</span></td>
+                <td style="color:#666;font-size:0.82rem"><%= rule.description || '—' %></td>
+                <td><%= rule.active ? '<span class="badge badge-success">Ativa</span>' : '<span class="badge badge-secondary">Inativa</span>' %></td>
+                <td style="white-space:nowrap">
+                  <button class="btn-edit-svc" onclick="toggleEditRule(<%= rule.id %>)">✏️</button>
+                  <form action="/admin/services/rules/<%= rule.id %>/delete" method="POST" style="display:inline" onsubmit="return confirm('Remover esta regra?')">
+                    <button type="submit" class="btn-del-svc">🗑️</button>
+                  </form>
+                </td>
+              </tr>
+              <tr class="inline-edit" id="rule-edit-<%= rule.id %>">
+                <td colspan="6">
+                  <form action="/admin/services/rules/<%= rule.id %>/update" method="POST">
+                    <div class="form-grid-3" style="margin-bottom:10px">
+                      <div>
+                        <label class="form-label-sm">Nome</label>
+                        <input class="svc-input" type="text" name="name" value="<%= rule.name %>" required>
+                      </div>
+                      <div>
+                        <label class="form-label-sm">Desconto (%)</label>
+                        <input class="svc-input" type="number" name="discount_pct" value="<%= rule.discount_pct %>" min="1" max="100" step="0.5" required>
+                      </div>
+                      <div>
+                        <label class="form-label-sm">Status</label>
+                        <select class="svc-input" name="active">
+                          <option value="1" <%= rule.active?'selected':'' %>>Ativa</option>
+                          <option value="0" <%= !rule.active?'selected':'' %>>Inativa</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div style="margin-bottom:10px">
+                      <label class="form-label-sm">Descrição</label>
+                      <input class="svc-input" type="text" name="description" value="<%= rule.description||'' %>">
+                    </div>
+                    <div style="margin-bottom:10px">
+                      <label class="form-label-sm">Serviços da combinação (marque os que ativam esta regra):</label>
+                      <div class="checkboxes-grid">
+                        <% services.filter(s=>s.active).forEach(svc => { %>
+                          <label class="cb-item">
+                            <input type="checkbox" name="service_keys" value="<%= svc.key %>"
+                              <%= ruleKeys.includes(svc.key) ? 'checked' : '' %>>
+                            <%= svc.name %>
+                          </label>
+                        <% }) %>
+                      </div>
+                    </div>
+                    <div style="display:flex;gap:8px">
+                      <button type="submit" class="btn-primary" style="font-size:0.85rem;padding:6px 14px">💾 Salvar</button>
+                      <button type="button" class="btn-outline" style="font-size:0.85rem" onclick="toggleEditRule(<%= rule.id %>)">Cancelar</button>
+                    </div>
+                  </form>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+          <% } %>
+
+          <!-- Adicionar nova regra -->
+          <div class="add-form-section" id="addRuleForm" style="display:none">
+            <h4>➕ Nova Regra de Desconto</h4>
+            <p style="font-size:0.82rem;color:#888;margin-bottom:12px">
+              Selecione 2 ou mais serviços. Quando o cliente selecionar <strong>todos</strong> eles no Montador, o desconto será aplicado no total.
+            </p>
+            <form action="/admin/services/rules/create" method="POST">
+              <div class="form-grid-3" style="margin-bottom:10px">
+                <div>
+                  <label class="form-label-sm">Nome da regra *</label>
+                  <input class="svc-input" type="text" name="name" placeholder="Ex: Social Media + Captação" required>
+                </div>
+                <div>
+                  <label class="form-label-sm">Desconto (%) *</label>
+                  <input class="svc-input" type="number" name="discount_pct" placeholder="30" min="1" max="100" step="0.5" required>
+                </div>
+                <div>
+                  <label class="form-label-sm">Descrição (opcional)</label>
+                  <input class="svc-input" type="text" name="description" placeholder="Ex: Trabalho de captação potencializa as redes">
+                </div>
+              </div>
+              <div style="margin-bottom:12px">
+                <label class="form-label-sm">Selecione os serviços da combinação (mín. 2) *</label>
+                <div class="checkboxes-grid">
+                  <% services.filter(s=>s.active).forEach(svc => { %>
+                    <label class="cb-item">
+                      <input type="checkbox" name="service_keys" value="<%= svc.key %>">
+                      <span><%= svc.name %> <small style="color:#999">(<%= svc.category==='monthly'?'mensal':'único' %>)</small></span>
+                    </label>
+                  <% }) %>
+                </div>
+              </div>
+              <button type="submit" class="btn-primary" style="font-size:0.85rem">✅ Criar Regra</button>
+              <button type="button" class="btn-outline" style="font-size:0.85rem;margin-left:8px" onclick="toggleAddRule()">Cancelar</button>
+            </form>
+          </div>
+        </div>
+
+      </div><!-- /services-grid -->
+    </main>
+  </div>
+
+  <script>
+    function toggleEditSvc(id) {
+      document.getElementById(`svc-edit-${id}`).classList.toggle('open');
+    }
+    function toggleEditRule(id) {
+      document.getElementById(`rule-edit-${id}`).classList.toggle('open');
+    }
+    function toggleAddSvc() {
+      const el = document.getElementById('addSvcForm');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+    function toggleAddRule() {
+      const el = document.getElementById('addRuleForm');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+  </script>
+</body>
+</html>

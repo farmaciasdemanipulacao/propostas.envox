@@ -69,13 +69,22 @@ router.get('/leads/new', requireAdmin, (req, res) => {
 });
 
 router.post('/leads', requireAdmin, (req, res) => {
-  const { name, whatsapp, email } = req.body;
+  const { name, whatsapp, email, discount_monthly, discount_onetime, discount_expires } = req.body;
   if (!name || !whatsapp || !email) {
     return res.render('admin/new-lead', { error: 'Todos os campos são obrigatórios.', success: null });
   }
   const token = uuidv4().replace(/-/g, '').substring(0, 12);
   try {
-    db.createLead(name, whatsapp.replace(/\D/g, ''), email, token);
+    const leadId = db.createLead(name, whatsapp.replace(/\D/g, ''), email, token);
+    // Aplicar desconto e prazo se informados
+    if ((discount_monthly || discount_onetime || discount_expires) && leadId) {
+      db.updateLeadDiscount(
+        leadId,
+        parseFloat(discount_monthly) || 0,
+        parseFloat(discount_onetime) || 0,
+        discount_expires || null
+      );
+    }
     return res.redirect(`/admin?success=Lead+${encodeURIComponent(name)}+cadastrado+com+sucesso!`);
   } catch (err) {
     console.error('Error creating lead:', err);
@@ -144,6 +153,22 @@ router.get('/leads/:id', requireAdmin, (req, res) => {
     success: req.query.success,
     error: req.query.error
   });
+});
+
+// ══ ATUALIZAR DESCONTO DO LEAD ════════════════════════════
+router.post('/leads/:id/discount', requireAdmin, (req, res) => {
+  const { discount_monthly, discount_onetime, discount_expires } = req.body;
+  try {
+    db.updateLeadDiscount(
+      parseInt(req.params.id),
+      parseFloat(discount_monthly) || 0,
+      parseFloat(discount_onetime) || 0,
+      discount_expires || null
+    );
+    return res.redirect(`/admin/leads/${req.params.id}?success=Condições+especiais+atualizadas!`);
+  } catch (err) {
+    return res.redirect(`/admin/leads/${req.params.id}?error=Erro+ao+atualizar+desconto`);
+  }
 });
 
 // ══ REENVIAR ALERTA WHATSAPP ══════════════════════════════

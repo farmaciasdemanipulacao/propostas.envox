@@ -79,7 +79,38 @@
                 <button class="btn-copy-link btn-sm" data-url="<%= baseUrl %>/proposta/<%= stats.lead.token %>">📋 Copiar</button>
               </span>
             </div>
+            <% if (stats.lead.discount_monthly > 0 || stats.lead.discount_onetime > 0) { %>
+            <div class="info-row" style="background:rgba(233,30,99,0.04);border-radius:8px;padding:0.5rem 0.75rem;margin-top:0.5rem">
+              <span class="info-label">🎉 Condição Especial</span>
+              <span class="info-value" style="font-size:0.82rem">
+                <% if (stats.lead.discount_monthly > 0) { %><span style="color:#E91E63;font-weight:700"><%= stats.lead.discount_monthly %>% recorrentes</span><% } %>
+                <% if (stats.lead.discount_onetime > 0) { %><% if (stats.lead.discount_monthly > 0) { %> · <% } %><span style="color:#E91E63;font-weight:700"><%= stats.lead.discount_onetime %>% pontuais</span><% } %>
+                <% if (stats.lead.discount_expires) { %><br><small style="color:#666">Prazo: <%= new Date(stats.lead.discount_expires + 'T12:00:00').toLocaleDateString('pt-BR') %></small><% } %>
+              </span>
+            </div>
+            <% } %>
           </div>
+          <!-- Editar descontos inline -->
+          <details style="margin-top:0.75rem">
+            <summary style="font-size:0.78rem;color:#E91E63;cursor:pointer;font-weight:600">✏️ Editar condições especiais</summary>
+            <form action="/admin/leads/<%= stats.lead.id %>/discount" method="POST" style="margin-top:0.75rem;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:end">
+              <div>
+                <label style="font-size:0.72rem;font-weight:600;color:#666;display:block;margin-bottom:3px">Desc. Recorrentes (%)</label>
+                <input type="number" name="discount_monthly" value="<%= stats.lead.discount_monthly || 0 %>" min="0" max="100" style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:0.82rem">
+              </div>
+              <div>
+                <label style="font-size:0.72rem;font-weight:600;color:#666;display:block;margin-bottom:3px">Desc. Pontuais (%)</label>
+                <input type="number" name="discount_onetime" value="<%= stats.lead.discount_onetime || 0 %>" min="0" max="100" style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:0.82rem">
+              </div>
+              <div>
+                <label style="font-size:0.72rem;font-weight:600;color:#666;display:block;margin-bottom:3px">Prazo</label>
+                <input type="date" name="discount_expires" value="<%= stats.lead.discount_expires || '' %>" style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:0.82rem">
+              </div>
+              <div style="grid-column:1/-1">
+                <button type="submit" style="background:#E91E63;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:0.8rem;cursor:pointer;font-weight:600;width:100%">💾 Salvar condições</button>
+              </div>
+            </form>
+          </details>
         </div>
         
         <div class="detail-card">

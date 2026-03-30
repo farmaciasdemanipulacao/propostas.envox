@@ -18,17 +18,13 @@
         <div class="brand-tagline">ADMIN</div>
       </div>
       <nav class="sidebar-nav">
-        <a href="/admin" class="nav-item">
-          <span class="nav-icon">📊</span> Dashboard
-        </a>
-        <a href="/admin/leads/new" class="nav-item active">
-          <span class="nav-icon">➕</span> Novo Lead
-        </a>
+        <a href="/admin" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="/admin/leads/new" class="nav-item active"><span class="nav-icon">➕</span> Novo Lead</a>
+        <a href="/admin/planejamentos" class="nav-item"><span class="nav-icon">📋</span> Planejamentos</a>
+        <a href="/admin/services" class="nav-item"><span class="nav-icon">💰</span> Serviços & Preços</a>
       </nav>
       <div class="sidebar-footer">
-        <a href="/admin/logout" class="nav-item logout">
-          <span class="nav-icon">🚪</span> Sair
-        </a>
+        <a href="/admin/logout" class="nav-item logout"><span class="nav-icon">🚪</span> Sair</a>
       </div>
     </aside>
     
@@ -72,6 +68,30 @@
             </div>
           </div>
           
+          <!-- DESCONTO E PRAZO -->
+          <div class="form-section-title" style="margin-top:1.25rem;margin-bottom:0.75rem;font-size:0.8rem;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:0.5px;padding-top:1rem;border-top:1px solid #eee">
+            Condições Especiais (opcional)
+          </div>
+          <div class="form-row form-row-3">
+            <div class="form-group">
+              <label for="discount_monthly">Desconto Recorrentes (%)</label>
+              <input type="number" id="discount_monthly" name="discount_monthly" 
+                placeholder="Ex: 15" min="0" max="100" step="1">
+              <small class="form-hint">Serviços mensais (Social Media, Ads, SDR)</small>
+            </div>
+            <div class="form-group">
+              <label for="discount_onetime">Desconto Pontuais (%)</label>
+              <input type="number" id="discount_onetime" name="discount_onetime" 
+                placeholder="Ex: 10" min="0" max="100" step="1">
+              <small class="form-hint">Trabalhos únicos (Website, Identidade Visual)</small>
+            </div>
+            <div class="form-group">
+              <label for="discount_expires">Prazo da Proposta (Validade)</label>
+              <input type="date" id="discount_expires" name="discount_expires">
+              <small class="form-hint">O desconto some após esta data</small>
+            </div>
+          </div>
+
           <div class="form-actions">
             <a href="/admin" class="btn-outline">Cancelar</a>
             <button type="submit" class="btn-primary">
@@ -88,6 +108,7 @@
           <li>O sistema gera um <strong>link único e exclusivo</strong> para esse lead</li>
           <li>Envie o link via WhatsApp ou email para o lead</li>
           <li>O lead acessa o link e se autentica com os dados cadastrados</li>
+          <li>Se definir desconto e prazo, o slide 12 e o montador exibem a condição especial</li>
           <li>Você recebe um alerta no WhatsApp quando ele visualizar a proposta</li>
           <li>Acompanhe o engajamento em tempo real no painel</li>
         </ol>

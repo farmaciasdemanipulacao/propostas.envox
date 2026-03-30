@@ -68,6 +68,51 @@ function initDatabase() {
     )
   `);
 
+  // ── SERVIÇOS E REGRAS DE DESCONTO ────────────────────────────────────
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS services (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      key TEXT UNIQUE NOT NULL,
+      category TEXT NOT NULL DEFAULT 'monthly',
+      description TEXT,
+      price REAL NOT NULL DEFAULT 0,
+      unit TEXT DEFAULT '/mês',
+      active INTEGER DEFAULT 1,
+      sort_order INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS discount_rules (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      service_keys TEXT NOT NULL,
+      discount_pct REAL NOT NULL,
+      description TEXT,
+      active INTEGER DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Seed serviços padrão se tabela vazia
+  const svcCount = database.prepare('SELECT COUNT(*) as c FROM services').get();
+  if (svcCount.c === 0) {
+    const ins = database.prepare(`INSERT INTO services (name, key, category, description, price, unit, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)`);
+    ins.run('Social Media — 6 posts/mês',  'social_6',   'monthly', 'Gestão de redes sociais com 6 posts mensais', 1170, '/mês', 1);
+    ins.run('Social Media — 9 posts/mês',  'social_9',   'monthly', 'Gestão de redes sociais com 9 posts mensais', 1470, '/mês', 2);
+    ins.run('Social Media — 12 posts/mês', 'social_12',  'monthly', 'Gestão de redes sociais com 12 posts mensais', 1970, '/mês', 3);
+    ins.run('Google Ads',                  'google_ads', 'monthly', 'Gestão completa de campanhas Google Ads', 1490, '/mês', 4);
+    ins.run('Meta Ads',                    'meta_ads',   'monthly', 'Facebook + Instagram Ads', 1490, '/mês', 5);
+    ins.run('Captação de Conteúdo',        'captacao',   'monthly', 'Sessão de captação presencial (4h)', 1200, '/sessão', 6);
+    ins.run('SDR 1 — 6h/dia seg-sex',      'sdr_1',      'monthly', 'Atendimento inbox 6h/dia, seg a sex', 990, '/mês', 7);
+    ins.run('SDR 2 — 8h/dia seg-sex',      'sdr_2',      'monthly', 'Atendimento inbox 8h/dia, seg a sex', 1770, '/mês', 8);
+    ins.run('SDR 3 — 11h às 20h seg-sex',  'sdr_3',      'monthly', 'Atendimento inbox 11h às 20h, seg a sex', 2180, '/mês', 9);
+    ins.run('Website até 5 páginas',       'web_5',      'onetime', 'Site profissional com até 5 páginas', 3999, 'único', 10);
+    ins.run('Website até 7 páginas',       'web_7',      'onetime', 'Site profissional com até 7 páginas', 4999, 'único', 11);
+  }
+
   // ── NOVAS TABELAS ──────────────────────────────────────────────────
 
   // Planos customizados montados pelo lead
@@ -169,10 +214,11 @@ function initDatabase() {
     )
   `);
 
-  // Migração: adicionar alert_sent à access_sessions se não existir
-  try {
-    database.exec(`ALTER TABLE access_sessions ADD COLUMN alert_sent INTEGER DEFAULT 0`);
-  } catch(e) { /* já existe */ }
+  // ── MIGRAÇÕES ─────────────────────────────────────────────────────
+  try { database.exec(`ALTER TABLE access_sessions ADD COLUMN alert_sent INTEGER DEFAULT 0`); } catch(e) {}
+  try { database.exec(`ALTER TABLE leads ADD COLUMN discount_monthly REAL DEFAULT 0`); } catch(e) {}
+  try { database.exec(`ALTER TABLE leads ADD COLUMN discount_onetime REAL DEFAULT 0`); } catch(e) {}
+  try { database.exec(`ALTER TABLE leads ADD COLUMN discount_expires TEXT`); } catch(e) {}
 
   console.log('✅ Banco de dados inicializado com sucesso');
 }
@@ -402,10 +448,59 @@ function getPlanejamentoStats(planejamentoId) {
   return { plan, slides, sessions, slideEvents, eventLog, totalDuration, totalAccesses: sessions.length };
 }
 
+// ══════════════════════════════════════════════════════════
+// SERVICES
+// ══════════════════════════════════════════════════════════
+function getAllServices(includeInactive = false) {
+  const q = includeInactive
+    ? 'SELECT * FROM services ORDER BY sort_order, id'
+    : 'SELECT * FROM services WHERE active=1 ORDER BY sort_order, id';
+  return getDb().prepare(q).all();
+}
+function getServiceById(id) { return getDb().prepare('SELECT * FROM services WHERE id=?').get(id); }
+function createService(name, key, category, description, price, unit, sortOrder) {
+  const r = getDb().prepare(`INSERT INTO services (name, key, category, description, price, unit, sort_order) VALUES (?,?,?,?,?,?,?)`).run(name, key, category, description||'', price, unit||'/mês', sortOrder||0);
+  return r.lastInsertRowid;
+}
+function updateService(id, name, category, description, price, unit, active) {
+  getDb().prepare(`UPDATE services SET name=?, category=?, description=?, price=?, unit=?, active=? WHERE id=?`).run(name, category, description||'', price, unit||'/mês', active?1:0, id);
+}
+function deleteService(id) { getDb().prepare('DELETE FROM services WHERE id=?').run(id); }
+
+// ══════════════════════════════════════════════════════════
+// DISCOUNT RULES
+// ══════════════════════════════════════════════════════════
+function getAllDiscountRules(includeInactive = false) {
+  const q = includeInactive
+    ? 'SELECT * FROM discount_rules ORDER BY id'
+    : 'SELECT * FROM discount_rules WHERE active=1 ORDER BY id';
+  return getDb().prepare(q).all();
+}
+function getDiscountRuleById(id) { return getDb().prepare('SELECT * FROM discount_rules WHERE id=?').get(id); }
+function createDiscountRule(name, serviceKeys, discountPct, description) {
+  const keysStr = Array.isArray(serviceKeys) ? serviceKeys.join(',') : serviceKeys;
+  const r = getDb().prepare(`INSERT INTO discount_rules (name, service_keys, discount_pct, description) VALUES (?,?,?,?)`).run(name, keysStr, discountPct, description||'');
+  return r.lastInsertRowid;
+}
+function updateDiscountRule(id, name, serviceKeys, discountPct, description, active) {
+  const keysStr = Array.isArray(serviceKeys) ? serviceKeys.join(',') : serviceKeys;
+  getDb().prepare(`UPDATE discount_rules SET name=?, service_keys=?, discount_pct=?, description=?, active=? WHERE id=?`).run(name, keysStr, discountPct, description||'', active?1:0, id);
+}
+function deleteDiscountRule(id) { getDb().prepare('DELETE FROM discount_rules WHERE id=?').run(id); }
+
+// ══════════════════════════════════════════════════════════
+// LEADS — update discount fields
+// ══════════════════════════════════════════════════════════
+function updateLeadDiscount(id, discountMonthly, discountOnetime, discountExpires) {
+  getDb().prepare(`UPDATE leads SET discount_monthly=?, discount_onetime=?, discount_expires=? WHERE id=?`).run(
+    discountMonthly||0, discountOnetime||0, discountExpires||null, id
+  );
+}
+
 module.exports = {
   getDb,
   // Leads
-  createLead, getLeadById, getLeadByToken, getAllLeads, getLeadStats,
+  createLead, getLeadById, getLeadByToken, getAllLeads, getLeadStats, updateLeadDiscount,
   // Sessions
   createSession, closeSession, getSessionById, markSessionAlertSent,
   // Slide Events
@@ -416,6 +511,9 @@ module.exports = {
   saveCustomPlan, markCustomPlanSent, getCustomPlansByLead,
   // Invites
   saveInvite, getInvitesByLead, countInvitesByType,
+  // Services & Discount Rules
+  getAllServices, getServiceById, createService, updateService, deleteService,
+  getAllDiscountRules, getDiscountRuleById, createDiscountRule, updateDiscountRule, deleteDiscountRule,
   // Planejamentos
   createPlanejamento, getPlanejamentoById, getPlanejamentoByToken,
   getAllPlanejamentos, approvePlanejamento, updatePlanejamentoStatus, markPlanejamentoReviewed,

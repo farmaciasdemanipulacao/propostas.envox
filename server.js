@@ -43,9 +43,11 @@ const proposalRouter = require('./routes/proposal');
 const apiRouter = require('./routes/api');
 const planejamentosRouter = require('./routes/planejamentos');
 const planejamentoClientRouter = require('./routes/planejamento-client');
+const servicesRouter = require('./routes/services');
 
 // IMPORTANTE: rotas mais específicas antes das genéricas
 app.use('/admin/planejamentos', planejamentosRouter);
+app.use('/admin/services', servicesRouter);
 app.use('/admin', adminRouter);
 app.use('/proposta', proposalRouter);
 app.use('/planejamento', planejamentoClientRouter);

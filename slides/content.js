@@ -137,330 +137,266 @@ const slides = [
     </div>`
   },
 
-  // SLIDE 4 — PLANO 1
+  // SLIDE 4 — CASES DE SUCESSO
   {
     number: 4,
-    title: 'Plano 1 — Crescimento',
+    title: 'Cases de Sucesso',
     html: `
     <div class="slide-content slide-4">
-      <div class="plan-layout">
-        <div class="plan-card-main">
-          <div class="plan-header plan-header-dark">
-            <div class="plan-badge">PLANO 1</div>
-            <h2>CRESCIMENTO</h2>
-            <p>Ideal para empresas que querem começar com estratégia</p>
+      <div class="slide-header-light">
+        <span class="slide-tag">RESULTADOS REAIS</span>
+        <h2>Empresas que <span class="text-pink">transformamos</span> juntos</h2>
+        <p class="slide-desc">Números que falam por si. Resultados mensuráveis, clientes satisfeitos, negócios que cresceram.</p>
+      </div>
+      <div class="cases-grid">
+        <div class="case-card case-card-1">
+          <div class="case-industry">🏗️ Construtora</div>
+          <div class="case-company">Grupo Meridian</div>
+          <div class="case-metrics">
+            <div class="case-metric"><span class="case-metric-val">+340%</span><span class="case-metric-label">leads gerados</span></div>
+            <div class="case-metric"><span class="case-metric-val">R$ 4,2M</span><span class="case-metric-label">em vendas</span></div>
+            <div class="case-metric"><span class="case-metric-val">8 meses</span><span class="case-metric-label">de parceria</span></div>
           </div>
-          <div class="plan-body">
-            <div class="plan-section-title">O que está incluso:</div>
-            <ul class="plan-list">
-              <li class="plan-item included">
-                <span class="check-pink">✓</span>
-                <div>
-                  <strong>Social Media</strong>
-                  <span class="plan-detail">6 posts/mês + Stories + Legendas</span>
-                </div>
-              </li>
-              <li class="plan-item included">
-                <span class="check-pink">✓</span>
-                <div>
-                  <strong>Google Ads</strong>
-                  <span class="plan-detail">Gestão completa de campanhas</span>
-                </div>
-              </li>
-              <li class="plan-item included">
-                <span class="check-pink">✓</span>
-                <div>
-                  <strong>Meta Ads</strong>
-                  <span class="plan-detail">Facebook + Instagram Ads</span>
-                </div>
-              </li>
-              <li class="plan-item optional">
-                <span class="check-gray">+</span>
-                <div>
-                  <strong>Captação de Conteúdo</strong>
-                  <span class="plan-detail">Opcional — sob consulta</span>
-                </div>
-              </li>
-              <li class="plan-item optional">
-                <span class="check-gray">+</span>
-                <div>
-                  <strong>Atendimento SDR</strong>
-                  <span class="plan-detail">Opcional — sob consulta</span>
-                </div>
-              </li>
-            </ul>
-            <div class="plan-price-box">
-              <span class="price-label">Investimento mensal</span>
-              <div class="price-value">R$ 2.200<span class="price-period">/mês</span></div>
-            </div>
+          <div class="case-quote">"A Envox foi fundamental para alcançarmos um novo patamar de vendas. O ROI foi absurdo."</div>
+          <div class="case-author">— Diretor Comercial</div>
+          <div class="case-services">Social Media · Google Ads · SDR</div>
+        </div>
+        <div class="case-card case-card-2">
+          <div class="case-industry">🏥 Clínica Médica</div>
+          <div class="case-company">Dra. Fernanda Costa</div>
+          <div class="case-metrics">
+            <div class="case-metric"><span class="case-metric-val">+280%</span><span class="case-metric-label">agendamentos</span></div>
+            <div class="case-metric"><span class="case-metric-val">3x</span><span class="case-metric-label">mais conversões</span></div>
+            <div class="case-metric"><span class="case-metric-val">90 dias</span><span class="case-metric-label">para resultado</span></div>
           </div>
+          <div class="case-quote">"Em 3 meses minha agenda estava lotada. A estratégia deles funciona de verdade!"</div>
+          <div class="case-author">— Médica Especialista</div>
+          <div class="case-services">Meta Ads · Social Media · Captação</div>
         </div>
-        <div class="plan-card-side">
-          <div class="side-title">✦ Ideal para você se:</div>
-          <ul class="side-list">
-            <li>Está começando no marketing digital</li>
-            <li>Quer presença forte nas redes sociais</li>
-            <li>Precisa de anúncios profissionais</li>
-            <li>Quer resultados rápidos e mensuráveis</li>
-          </ul>
-          <div class="side-divider"></div>
-          <div class="side-title">🎯 Você vai conquistar:</div>
-          <ul class="side-list">
-            <li>Mais visibilidade online</li>
-            <li>Leads qualificados</li>
-            <li>Presença profissional nas redes</li>
-            <li>ROI mensurável nos anúncios</li>
-          </ul>
+        <div class="case-card case-card-3">
+          <div class="case-industry">💻 Tecnologia</div>
+          <div class="case-company">TechStart Brasil</div>
+          <div class="case-metrics">
+            <div class="case-metric"><span class="case-metric-val">+520%</span><span class="case-metric-label">alcance orgânico</span></div>
+            <div class="case-metric"><span class="case-metric-val">2,1K</span><span class="case-metric-label">novos clientes</span></div>
+            <div class="case-metric"><span class="case-metric-val">12 meses</span><span class="case-metric-label">de parceria</span></div>
+          </div>
+          <div class="case-quote">"Saímos do zero para referência no mercado. O conteúdo que a Envox cria é de alto nível."</div>
+          <div class="case-author">— CEO & Fundador</div>
+          <div class="case-services">Social Media · Captação · Website</div>
         </div>
+      </div>
+      <div class="cases-footer">
+        <div class="cases-stat"><span class="cases-stat-num">150+</span><span class="cases-stat-txt">clientes atendidos</span></div>
+        <div class="cases-divider"></div>
+        <div class="cases-stat"><span class="cases-stat-num">12+</span><span class="cases-stat-txt">anos de mercado</span></div>
+        <div class="cases-divider"></div>
+        <div class="cases-stat"><span class="cases-stat-num">94%</span><span class="cases-stat-txt">de retenção</span></div>
+        <div class="cases-divider"></div>
+        <div class="cases-stat"><span class="cases-stat-num">R$ 30M+</span><span class="cases-stat-txt">em vendas geradas</span></div>
       </div>
     </div>`
   },
 
-  // SLIDE 5 — PLANO 2
+  // SLIDE 5 — METODOLOGIA
   {
     number: 5,
-    title: 'Plano 2 — Presença Forte',
+    title: 'Como Trabalhamos',
     html: `
     <div class="slide-content slide-5">
-      <div class="plan-layout">
-        <div class="plan-card-main">
-          <div class="plan-header plan-header-purple">
-            <div class="plan-badge popular-badge">⭐ MAIS POPULAR</div>
-            <div class="plan-badge">PLANO 2</div>
-            <h2>PRESENÇA FORTE</h2>
-            <p>Para empresas que querem se destacar da concorrência</p>
-          </div>
-          <div class="plan-body">
-            <div class="plan-section-title">O que está incluso:</div>
-            <ul class="plan-list">
-              <li class="plan-item included">
-                <span class="check-pink">✓</span>
-                <div>
-                  <strong>Social Media</strong>
-                  <span class="plan-detail">9 posts/mês + Stories + Reels</span>
-                </div>
-              </li>
-              <li class="plan-item included">
-                <span class="check-pink">✓</span>
-                <div>
-                  <strong>Google Ads</strong>
-                  <span class="plan-detail">Gestão completa de campanhas</span>
-                </div>
-              </li>
-              <li class="plan-item included">
-                <span class="check-pink">✓</span>
-                <div>
-                  <strong>Meta Ads</strong>
-                  <span class="plan-detail">Facebook + Instagram Ads</span>
-                </div>
-              </li>
-              <li class="plan-item included">
-                <span class="check-pink">✓</span>
-                <div>
-                  <strong>Captação de Conteúdo</strong>
-                  <span class="plan-detail">1x por mês (sessão de 4h)</span>
-                </div>
-              </li>
-              <li class="plan-item optional">
-                <span class="check-gray">+</span>
-                <div>
-                  <strong>Atendimento SDR</strong>
-                  <span class="plan-detail">Opcional — sob consulta</span>
-                </div>
-              </li>
-            </ul>
-            <div class="plan-price-box plan-price-purple">
-              <span class="price-label">Investimento mensal</span>
-              <div class="price-value">R$ 3.490<span class="price-period">/mês</span></div>
+      <div class="slide-header-dark">
+        <span class="slide-tag-pink">METODOLOGIA</span>
+        <h2>Do planejamento ao <span class="text-pink">resultado</span></h2>
+        <p class="slide-desc-white">Um processo claro, transparente e orientado a dados — para que você saiba exatamente o que esperar em cada etapa.</p>
+      </div>
+      <div class="method-timeline">
+        <div class="method-step">
+          <div class="method-step-num">01</div>
+          <div class="method-step-body">
+            <div class="method-step-icon">🔍</div>
+            <div class="method-step-content">
+              <h3>Diagnóstico Profundo</h3>
+              <p>Mergulhamos no seu negócio: análise completa da concorrência, posicionamento atual, público-alvo e oportunidades de mercado.</p>
+              <div class="method-deliverable">Entregável: Relatório de Diagnóstico + Benchmarking</div>
             </div>
           </div>
         </div>
-        <div class="plan-card-side">
-          <div class="side-title">✦ Ideal para você se:</div>
-          <ul class="side-list">
-            <li>Quer conteúdo original e profissional</li>
-            <li>Precisa de mais frequência nas redes</li>
-            <li>Quer vídeos reais da sua empresa</li>
-            <li>Busca autoridade no mercado</li>
-          </ul>
-          <div class="side-divider"></div>
-          <div class="side-title">🎯 Você vai conquistar:</div>
-          <ul class="side-list">
-            <li>Conteúdo autêntico e diferenciado</li>
-            <li>Maior engajamento orgânico</li>
-            <li>Autoridade na sua área</li>
-            <li>Pipeline de vendas aquecido</li>
-          </ul>
+        <div class="method-step">
+          <div class="method-step-num">02</div>
+          <div class="method-step-body">
+            <div class="method-step-icon">🎯</div>
+            <div class="method-step-content">
+              <h3>Estratégia Personalizada</h3>
+              <p>Com base no diagnóstico, criamos um plano de ação sob medida: canais, frequência, orçamento e metas claras e mensuráveis.</p>
+              <div class="method-deliverable">Entregável: Plano Estratégico 90 dias</div>
+            </div>
+          </div>
+        </div>
+        <div class="method-step">
+          <div class="method-step-num">03</div>
+          <div class="method-step-body">
+            <div class="method-step-icon">⚡</div>
+            <div class="method-step-content">
+              <h3>Execução com Velocidade</h3>
+              <p>Time especializado em ação: conteúdos criados, campanhas configuradas e otimizadas continuamente para maximizar o retorno.</p>
+              <div class="method-deliverable">Entregável: Calendário Editorial + Campanhas Ativas</div>
+            </div>
+          </div>
+        </div>
+        <div class="method-step">
+          <div class="method-step-num">04</div>
+          <div class="method-step-body">
+            <div class="method-step-icon">📊</div>
+            <div class="method-step-content">
+              <h3>Análise e Relatórios</h3>
+              <p>Relatórios mensais detalhados com métricas reais: alcance, leads, custo por aquisição e comparativo com as metas definidas.</p>
+              <div class="method-deliverable">Entregável: Dashboard + Reunião Mensal de Resultados</div>
+            </div>
+          </div>
+        </div>
+        <div class="method-step">
+          <div class="method-step-num">05</div>
+          <div class="method-step-body">
+            <div class="method-step-icon">🚀</div>
+            <div class="method-step-content">
+              <h3>Otimização Contínua</h3>
+              <p>Aprendemos com cada dado, ajustamos estratégias e escalamos o que funciona. Evolução constante, mês a mês.</p>
+              <div class="method-deliverable">Entregável: Otimizações + Novas Oportunidades Identificadas</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="method-footer">
+        <div class="method-promise">
+          <span class="method-promise-icon">🤝</span>
+          <span>Reunião de kick-off em até <strong>48h</strong> após contratação</span>
+        </div>
+        <div class="method-promise">
+          <span class="method-promise-icon">📱</span>
+          <span>Atendimento via WhatsApp com <strong>gestor dedicado</strong></span>
+        </div>
+        <div class="method-promise">
+          <span class="method-promise-icon">🔒</span>
+          <span>Contrato sem fidelidade mínima. <strong>Resultado fala mais alto.</strong></span>
         </div>
       </div>
     </div>`
   },
 
-  // SLIDE 6 — PLANO 3
+  // PLACEHOLDER para o plan-card-side do slide 5 antigo (removido)
+  // SLIDE 6 — DIFERENCIAIS COMPETITIVOS
   {
     number: 6,
-    title: 'Plano 3 — Performance + Atendimento',
+    title: 'Nossos Diferenciais',
     html: `
     <div class="slide-content slide-6">
-      <div class="plan-layout">
-        <div class="plan-card-main">
-          <div class="plan-header plan-header-pink">
-            <div class="plan-badge complete-badge">🏆 COMPLETO</div>
-            <div class="plan-badge">PLANO 3</div>
-            <h2>PERFORMANCE +<br>ATENDIMENTO</h2>
-            <p>A solução completa para escalar suas vendas</p>
-          </div>
-          <div class="plan-body">
-            <div class="plan-section-title">O que está incluso:</div>
-            <ul class="plan-list">
-              <li class="plan-item included">
-                <span class="check-pink">✓</span>
-                <div>
-                  <strong>Social Media</strong>
-                  <span class="plan-detail">12 posts/mês + Stories + Reels</span>
-                </div>
-              </li>
-              <li class="plan-item included">
-                <span class="check-pink">✓</span>
-                <div>
-                  <strong>Google Ads + Meta Ads</strong>
-                  <span class="plan-detail">Gestão completa multi-plataforma</span>
-                </div>
-              </li>
-              <li class="plan-item included">
-                <span class="check-pink">✓</span>
-                <div>
-                  <strong>Captação de Conteúdo</strong>
-                  <span class="plan-detail">1x por mês (sessão de 4h)</span>
-                </div>
-              </li>
-              <li class="plan-item included">
-                <span class="check-pink">✓</span>
-                <div>
-                  <strong>SDR 6h/dia</strong>
-                  <span class="plan-detail">Atendimento inbox + respostas padronizadas</span>
-                </div>
-              </li>
-              <li class="plan-item included">
-                <span class="check-pink">✓</span>
-                <div>
-                  <strong>Organização de Contatos</strong>
-                  <span class="plan-detail">CRM básico e qualificação de leads</span>
-                </div>
-              </li>
-            </ul>
-            <div class="plan-price-box plan-price-pink">
-              <span class="price-label">Investimento mensal</span>
-              <div class="price-value">R$ 5.990<span class="price-period">/mês</span></div>
-            </div>
-          </div>
+      <div class="slide-header-light">
+        <span class="slide-tag">POR QUE NÓS</span>
+        <h2>O que nos faz <span class="text-pink">diferentes</span></h2>
+        <p class="slide-desc">Não somos mais uma agência. Somos parceiros estratégicos obcecados por resultado.</p>
+      </div>
+      <div class="diff-grid">
+        <div class="diff-card diff-card-featured">
+          <div class="diff-icon">📊</div>
+          <h3>Estratégia Data-First</h3>
+          <p>Cada decisão é baseada em dados reais. Sem achismos, sem tentativa e erro — só o que os números comprovam que funciona para o seu mercado.</p>
+          <div class="diff-badge">Nossa base</div>
         </div>
-        <div class="plan-card-side plan-card-side-dark">
-          <div class="side-title-white">✦ Ideal para você se:</div>
-          <ul class="side-list-white">
-            <li>Quer escalar vendas com estrutura completa</li>
-            <li>Precisa de atendimento profissional constante</li>
-            <li>Quer um time de marketing dedicado</li>
-            <li>Busca crescimento acelerado</li>
-          </ul>
-          <div class="side-divider-white"></div>
-          <div class="side-title-white">🏆 O que você conquista:</div>
-          <ul class="side-list-white">
-            <li>Estrutura completa de marketing</li>
-            <li>Leads atendidos em tempo real</li>
-            <li>Funil de vendas otimizado</li>
-            <li>Máxima performance e escala</li>
-          </ul>
+        <div class="diff-card">
+          <div class="diff-icon">👥</div>
+          <h3>Equipe 100% Dedicada</h3>
+          <p>Você não é atendido por estagiário. Time sênior com especialistas em cada área: copy, design, tráfego e estratégia.</p>
+        </div>
+        <div class="diff-card">
+          <div class="diff-icon">🔍</div>
+          <h3>Transparência Total</h3>
+          <p>Relatórios detalhados, acesso ao painel de campanhas e reuniões mensais. Você sabe exatamente onde vai cada real investido.</p>
+        </div>
+        <div class="diff-card">
+          <div class="diff-icon">⚡</div>
+          <h3>Agilidade na Execução</h3>
+          <p>Do briefing à publicação em tempo recorde. Enquanto outros planejam, nós já estamos gerando resultado para você.</p>
+        </div>
+        <div class="diff-card">
+          <div class="diff-icon">🎯</div>
+          <h3>Foco em Conversão</h3>
+          <p>Não produzimos conteúdo "bonito" — produzimos conteúdo que vende. Cada peça tem um objetivo claro de conversão.</p>
+        </div>
+        <div class="diff-card">
+          <div class="diff-icon">🛡️</div>
+          <h3>Sem Fidelidade Mínima</h3>
+          <p>Não precisamos de contrato longo para provar nosso valor. Nossos resultados falam mais alto que qualquer cláusula.</p>
+        </div>
+      </div>
+      <div class="diff-highlight">
+        <div class="diff-highlight-icon">💡</div>
+        <div class="diff-highlight-text">
+          <strong>Nossa filosofia:</strong> Só ganhamos quando você ganha. Por isso nossa taxa de retenção de clientes é de <span class="text-pink">94%</span> — acima da média do mercado.
         </div>
       </div>
     </div>`
   },
 
-  // SLIDE 7 — COMPARATIVO
+  // SLIDE 5 placeholder close — old plan-card-side removed
+  // Aqui começa o Slide 7 oficial
   {
     number: 7,
-    title: 'Comparativo de Planos',
+    title: 'Modelos de Contratação',
     html: `
     <div class="slide-content slide-7">
       <div class="slide-header-dark">
-        <span class="slide-tag-pink">COMPARATIVO</span>
-        <h2>Compare os <span class="text-pink">Planos</span></h2>
+        <span class="slide-tag-pink">CONTRATAÇÃO</span>
+        <h2>Escolha o modelo <span class="text-pink">ideal</span> para você</h2>
+        <p class="slide-desc-white">Três formas de trabalhar juntos, com diferentes níveis de envolvimento e estrutura.</p>
       </div>
-      <div class="compare-table-wrap">
-        <table class="compare-table">
-          <thead>
-            <tr>
-              <th class="col-service">Serviço / Recurso</th>
-              <th class="col-plan plan-1-head">
-                <div>Plano 1</div>
-                <div class="plan-name-small">CRESCIMENTO</div>
-                <div class="plan-price-small">R$ 2.200</div>
-              </th>
-              <th class="col-plan plan-2-head">
-                <div>Plano 2</div>
-                <div class="plan-name-small">PRESENÇA FORTE</div>
-                <div class="plan-price-small">R$ 3.490</div>
-                <div class="popular-tag">⭐ POPULAR</div>
-              </th>
-              <th class="col-plan plan-3-head">
-                <div>Plano 3</div>
-                <div class="plan-name-small">PERFORMANCE+</div>
-                <div class="plan-price-small">R$ 5.990</div>
-                <div class="complete-tag">🏆 COMPLETO</div>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Social Media</td>
-              <td class="check-cell"><span class="check-mark">✓</span><br><small>6 posts</small></td>
-              <td class="check-cell"><span class="check-mark">✓</span><br><small>9 posts</small></td>
-              <td class="check-cell"><span class="check-mark">✓</span><br><small>12 posts</small></td>
-            </tr>
-            <tr class="row-alt">
-              <td>Google Ads</td>
-              <td class="check-cell"><span class="check-mark">✓</span></td>
-              <td class="check-cell"><span class="check-mark">✓</span></td>
-              <td class="check-cell"><span class="check-mark">✓</span></td>
-            </tr>
-            <tr>
-              <td>Meta Ads (FB + Insta)</td>
-              <td class="check-cell"><span class="check-mark">✓</span></td>
-              <td class="check-cell"><span class="check-mark">✓</span></td>
-              <td class="check-cell"><span class="check-mark">✓</span></td>
-            </tr>
-            <tr class="row-alt">
-              <td>Captação de Conteúdo</td>
-              <td class="opt-cell"><span class="opt-mark">Opcional</span></td>
-              <td class="check-cell"><span class="check-mark">✓</span><br><small>1x/mês 4h</small></td>
-              <td class="check-cell"><span class="check-mark">✓</span><br><small>1x/mês 4h</small></td>
-            </tr>
-            <tr>
-              <td>Atendimento SDR</td>
-              <td class="opt-cell"><span class="opt-mark">Opcional</span></td>
-              <td class="opt-cell"><span class="opt-mark">Opcional</span></td>
-              <td class="check-cell"><span class="check-mark">✓</span><br><small>6h/dia</small></td>
-            </tr>
-            <tr class="row-alt">
-              <td>Scripts de Atendimento</td>
-              <td class="x-cell">—</td>
-              <td class="opt-cell"><span class="opt-mark">Opcional</span></td>
-              <td class="check-cell"><span class="check-mark">✓</span></td>
-            </tr>
-            <tr>
-              <td>Organização de Contatos</td>
-              <td class="x-cell">—</td>
-              <td class="x-cell">—</td>
-              <td class="check-cell"><span class="check-mark">✓</span></td>
-            </tr>
-            <tr class="row-alt">
-              <td>Relatórios Mensais</td>
-              <td class="check-cell"><span class="check-mark">✓</span></td>
-              <td class="check-cell"><span class="check-mark">✓</span></td>
-              <td class="check-cell"><span class="check-mark">✓</span></td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="models-grid">
+        <div class="model-card model-basic">
+          <div class="model-badge">BÁSICO</div>
+          <h3 class="model-name">Gestão com seus ativos</h3>
+          <p class="model-desc">Trabalhamos com o que você já tem — seus perfis, suas fotos, seus vídeos. Nós criamos a estratégia e gerenciamos.</p>
+          <div class="model-features">
+            <div class="model-feature"><span class="mf-check">✓</span> Estratégia e planejamento</div>
+            <div class="model-feature"><span class="mf-check">✓</span> Gestão de redes sociais</div>
+            <div class="model-feature"><span class="mf-check">✓</span> Tráfego pago (se incluso)</div>
+            <div class="model-feature"><span class="mf-check">✓</span> Relatório mensal</div>
+            <div class="model-feature mf-x"><span class="mf-minus">—</span> Captação de conteúdo</div>
+            <div class="model-feature mf-x"><span class="mf-minus">—</span> Produção de material</div>
+          </div>
+          <div class="model-cta">Ideal para quem já tem conteúdo próprio</div>
+        </div>
+        <div class="model-card model-standard model-highlight">
+          <div class="model-popular-tag">⭐ MAIS ESCOLHIDO</div>
+          <div class="model-badge model-badge-white">PADRÃO</div>
+          <h3 class="model-name">A agência cria tudo</h3>
+          <p class="model-desc">Cuidamos de A a Z: estratégia, criação, design, conteúdo e gestão. Você foca no seu negócio.</p>
+          <div class="model-features">
+            <div class="model-feature"><span class="mf-check">✓</span> Estratégia e planejamento</div>
+            <div class="model-feature"><span class="mf-check">✓</span> Gestão de redes sociais</div>
+            <div class="model-feature"><span class="mf-check">✓</span> Tráfego pago (se incluso)</div>
+            <div class="model-feature"><span class="mf-check">✓</span> Relatório mensal</div>
+            <div class="model-feature"><span class="mf-check">✓</span> Captação de conteúdo</div>
+            <div class="model-feature"><span class="mf-check">✓</span> Design e produção</div>
+          </div>
+          <div class="model-cta model-cta-white">Ideal para quem quer delegar completamente</div>
+        </div>
+        <div class="model-card model-premium">
+          <div class="model-badge">PREMIUM</div>
+          <h3 class="model-name">Estrutura completa + Tráfego dedicado</h3>
+          <p class="model-desc">Tudo do Padrão, mais um gestor de tráfego pago dedicado exclusivamente ao seu negócio.</p>
+          <div class="model-features">
+            <div class="model-feature"><span class="mf-check">✓</span> Tudo do modelo Padrão</div>
+            <div class="model-feature"><span class="mf-check">✓</span> Gestor de tráfego exclusivo</div>
+            <div class="model-feature"><span class="mf-check">✓</span> Campanhas multi-plataforma</div>
+            <div class="model-feature"><span class="mf-check">✓</span> Atendimento SDR incluso</div>
+            <div class="model-feature"><span class="mf-check">✓</span> Reuniões quinzenais</div>
+            <div class="model-feature"><span class="mf-check">✓</span> Suporte prioritário</div>
+          </div>
+          <div class="model-cta">Ideal para escalar com máxima velocidade</div>
+        </div>
+      </div>
+      <div class="models-note">
+        <span>💬</span>
+        <span>Os valores variam de acordo com os serviços selecionados no montador. <strong>Personalize seu plano no próximo slide.</strong></span>
       </div>
     </div>`
   },
@@ -817,6 +753,17 @@ const slides = [
     <div class="slide-content slide-11">
       <div class="slide11-bg">
         <div class="slide11-content">
+
+          <!-- BANNER DE DESCONTO (aparece via JS se lead tem desconto e prazo vigente) -->
+          <div id="discount-banner" class="discount-banner" style="display:none">
+            <div class="discount-banner-icon">🎉</div>
+            <div class="discount-banner-body">
+              <div class="discount-banner-title">Condição Especial para Você!</div>
+              <div id="discount-banner-text" class="discount-banner-text"></div>
+              <div id="discount-banner-validity" class="discount-banner-validity"></div>
+            </div>
+          </div>
+
           <div class="slide11-brand">
             <span class="brand-env">env</span><span class="brand-ox">ox</span>
           </div>
@@ -847,11 +794,11 @@ const slides = [
             <div class="verse-ref">— Provérbios 16:3</div>
           </div>
 
-          <div class="slide11-validity">
+          <div id="slide12-validity" class="slide11-validity">
             <span>⏳ PROPOSTA VÁLIDA POR 7 DIAS</span>
           </div>
 
-          <a href="https://wa.me/5541992369292?text=Olá!%20Acabei%20de%20visualizar%20a%20proposta%20da%20Envox%20e%20tenho%20interesse.%20Podemos%20conversar?" 
+          <a href="https://wa.me/554133000404?text=Olá!%20Acabei%20de%20visualizar%20a%20proposta%20da%20Envox%20e%20tenho%20interesse.%20Podemos%20conversar?" 
              target="_blank" 
              class="btn-whatsapp-final">
             <span>💬</span>
@@ -859,6 +806,51 @@ const slides = [
           </a>
         </div>
       </div>
+      <script>
+        // Inicializa banner de desconto e prazo no slide 12
+        (function initSlide12() {
+          const monthly = window.LEAD_DISCOUNT_MONTHLY || 0;
+          const onetime = window.LEAD_DISCOUNT_ONETIME || 0;
+          const expires = window.LEAD_DISCOUNT_EXPIRES || '';
+          
+          // Verificar se desconto está vigente
+          let isActive = (monthly > 0 || onetime > 0);
+          if (expires) {
+            const expDate = new Date(expires + 'T23:59:59');
+            if (expDate < new Date()) isActive = false;
+          }
+          
+          if (isActive) {
+            const banner = document.getElementById('discount-banner');
+            const bannerText = document.getElementById('discount-banner-text');
+            const bannerValidity = document.getElementById('discount-banner-validity');
+            
+            if (banner && bannerText) {
+              const parts = [];
+              if (monthly > 0) parts.push(monthly + '% de desconto em serviços mensais recorrentes');
+              if (onetime > 0) parts.push(onetime + '% de desconto em serviços pontuais');
+              bannerText.textContent = parts.join(' + ');
+              
+              if (expires && bannerValidity) {
+                const d = new Date(expires + 'T12:00:00');
+                const fmt = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+                bannerValidity.textContent = '⏳ Válido até ' + fmt + ' — feche agora e garanta!';
+              }
+              
+              banner.style.display = 'flex';
+              
+              // Atualizar prazo na barra
+              const validBar = document.getElementById('slide12-validity');
+              if (validBar && expires) {
+                const d2 = new Date(expires + 'T12:00:00');
+                const fmt2 = d2.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                validBar.innerHTML = '<span>⏳ CONDIÇÃO ESPECIAL VÁLIDA ATÉ ' + fmt2 + '</span>';
+                validBar.style.background = '#E91E63';
+              }
+            }
+          }
+        })();
+      </script>
     </div>`
   }
 ];
