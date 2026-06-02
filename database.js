@@ -284,6 +284,7 @@ function createLead(name, whatsapp, email, token) {
 }
 function getLeadById(id) { return getDb().prepare('SELECT * FROM leads WHERE id = ?').get(id); }
 function getLeadByToken(token) { return getDb().prepare('SELECT * FROM leads WHERE token = ?').get(token); }
+function getLeadByEmail(email) { return getDb().prepare('SELECT * FROM leads WHERE LOWER(email) = LOWER(?)').get(email); }
 
 function getAllLeads() {
   return getDb().prepare(`
@@ -665,7 +666,7 @@ function getLatestProposalAction(leadId) {
 module.exports = {
   getDb,
   // Leads
-  createLead, getLeadById, getLeadByToken, getAllLeads, getLeadStats, updateLeadDiscount,
+  createLead, getLeadById, getLeadByToken, getLeadByEmail, getAllLeads, getLeadStats, updateLeadDiscount,
   // Proposal Items & Content
   saveProposalItems, getProposalItemsByLead, deleteProposalItems, updateLeadProposalContent,
   updateLeadProposalMode, updateLead, deleteLead, archiveLead, markProposalSent,

@@ -3,6 +3,46 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database');
 const slides = require('../slides/content');
+const emailService = require('../services/email');
+
+// ── Shared token viewer — DEVE VIR ANTES de /:token ─────────────────────────
+// GET /proposta/s/:sharedToken — acesso via link compartilhado (auto-login)
+router.get('/s/:sharedToken', (req, res) => {
+  const { sharedToken } = req.params;
+  const sharedRecord = db.getSharedLeadByToken(sharedToken);
+
+  if (!sharedRecord) {
+    return res.render('proposal/auth', {
+      token: null,
+      error: 'Link de compartilhamento inválido ou expirado. Entre em contato com a Envox.',
+      validToken: false
+    });
+  }
+
+  const lead = db.getLeadById(sharedRecord.lead_id);
+  if (!lead) {
+    return res.render('proposal/auth', {
+      token: null,
+      error: 'Proposta não encontrada. Entre em contato com a Envox.',
+      validToken: false
+    });
+  }
+
+  if (!req.session.authenticatedTokens) req.session.authenticatedTokens = [];
+  if (!req.session.authenticatedTokens.includes(lead.token)) {
+    req.session.authenticatedTokens.push(lead.token);
+  }
+  req.session.sharedAccess = req.session.sharedAccess || {};
+  req.session.sharedAccess[lead.token] = { sharedToken, name: sharedRecord.shared_name };
+
+  db.logEvent(lead.id, null, 'shared_view', {
+    shared_token: sharedToken,
+    viewer_name: sharedRecord.shared_name,
+    viewer_email: sharedRecord.shared_email
+  });
+
+  return res.redirect(`/proposta/${lead.token}/view`);
+});
 
 // GET /proposta/:token — tela de autenticação
 router.get('/:token', (req, res) => {
@@ -141,8 +181,8 @@ router.post('/action', (req, res) => {
   }
 });
 
-// ── API: Share Proposal (add secondary viewer) ───────────────────────────────
-router.post('/share', (req, res) => {
+// ── API: Share Proposal (add secondary viewer + email + auto-lead) ──────────
+router.post('/share', async (req, res) => {
   const { token, lead_id, name, whatsapp, email } = req.body;
 
   if (!token || !name || !whatsapp || !email) {
@@ -156,16 +196,55 @@ router.post('/share', (req, res) => {
     return res.status(404).json({ error: 'Lead not found' });
   }
 
+  const cleanEmail    = email.trim().toLowerCase();
+  const cleanWhatsapp = whatsapp.replace(/\D/g, '');
+  const cleanName     = name.trim();
+
   try {
+    // 1. Gerar token compartilhado
     const sharedToken = uuidv4().replace(/-/g, '').substring(0, 16);
     const sharedId = db.addSharedLead(
       resolvedLeadId,
-      name,
-      whatsapp.replace(/\D/g, ''),
-      email.trim().toLowerCase(),
+      cleanName,
+      cleanWhatsapp,
+      cleanEmail,
       sharedToken
     );
-    db.logEvent(resolvedLeadId, null, 'proposal_shared', { shared_with: email, name });
+
+    // 2. Auto-cadastrar como lead no painel (se ainda não existe)
+    let sharedLeadRecord = db.getLeadByEmail ? db.getLeadByEmail(cleanEmail) : null;
+    if (!sharedLeadRecord) {
+      try {
+        const newLeadToken = uuidv4().replace(/-/g, '').substring(0, 16);
+        db.createLead(cleanName, cleanWhatsapp, cleanEmail, newLeadToken);
+        sharedLeadRecord = db.getLeadByToken(newLeadToken);
+        console.log(`[ProposalShare] Auto-cadastrou lead: ${cleanName} <${cleanEmail}>`);
+      } catch (leadErr) {
+        // Se já existe (unique constraint), ignora
+        console.log(`[ProposalShare] Lead já existe para ${cleanEmail}, ignorando criação.`);
+      }
+    }
+
+    // 3. Montar link de acesso com o token compartilhado
+    const baseUrl   = (process.env.BASE_URL || 'https://envox.com.br').replace(/\/$/, '');
+    const shareLink = `${baseUrl}/proposta/s/${sharedToken}`;
+
+    // 4. Enviar email com link de acesso (não-bloqueante)
+    emailService.sendSharedProposalEmail({
+      to:         cleanEmail,
+      toName:     cleanName,
+      fromName:   lead ? lead.name : 'um colega',
+      shareLink,
+      whatsapp:   cleanWhatsapp,
+    }).then(result => {
+      if (result && result.ok) {
+        console.log(`[ProposalShare] Email enviado para ${cleanEmail}`);
+      } else if (result && !result.skipped) {
+        console.warn(`[ProposalShare] Falha ao enviar email para ${cleanEmail}:`, result.error);
+      }
+    }).catch(err => console.error('[ProposalShare] Email error:', err));
+
+    db.logEvent(resolvedLeadId, null, 'proposal_shared', { shared_with: cleanEmail, name: cleanName });
 
     return res.json({ success: true, sharedId, sharedToken });
   } catch (err) {

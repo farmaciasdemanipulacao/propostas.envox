@@ -10,17 +10,29 @@
   let dwCurrentAction = null;
   let dwSubmitted = false;
 
-  window.toggleDecisionWidget = function () {
+  // Open widget and optionally pre-select an action
+  window.toggleDecisionWidget = function (preAction) {
     const widget = document.getElementById('decisionWidget');
-    const toggle = document.getElementById('decisionToggle');
     if (!widget) return;
     const isHidden = widget.classList.contains('hidden');
     if (isHidden) {
       widget.classList.remove('hidden');
-      if (toggle) toggle.classList.remove('show');
-    } else {
+    } else if (!preAction) {
       widget.classList.add('hidden');
-      if (toggle) toggle.classList.add('show');
+    }
+    if (preAction) {
+      widget.classList.remove('hidden');
+      window.dwSelectAction(preAction);
+    }
+  };
+
+  // Quick-action from the persistent pill buttons — open widget + pre-select
+  window.dwQuickAction = function (action) {
+    window.toggleDecisionWidget(action);
+    // Smooth scroll so widget is visible
+    const widget = document.getElementById('decisionWidget');
+    if (widget) {
+      setTimeout(() => widget.scrollIntoView({ behavior: 'smooth', block: 'end' }), 150);
     }
   };
 
@@ -28,22 +40,13 @@
     if (dwSubmitted) return;
     dwCurrentAction = action;
 
-    // Show correct form panel
     const formCounter = document.getElementById('dwFormCounter');
     const formReject  = document.getElementById('dwFormReject');
     const dwForm      = document.getElementById('dwForm');
 
     if (formCounter) formCounter.style.display = action === 'counter' ? 'block' : 'none';
     if (formReject)  formReject.style.display  = action === 'reject'  ? 'block' : 'none';
-
-    if (dwForm) {
-      if (action === 'accept') {
-        // No extra fields for accept — show submit immediately
-        dwForm.classList.add('show');
-      } else {
-        dwForm.classList.add('show');
-      }
-    }
+    if (dwForm) dwForm.classList.add('show');
 
     // Highlight selected button
     document.querySelectorAll('.dw-btn').forEach(btn => {
@@ -86,9 +89,9 @@
     .then(r => r.json())
     .then(data => {
       dwSubmitted = true;
-      const dwSuccess = document.getElementById('dwSuccess');
-      const dwBody    = document.getElementById('dwBody');
-      const dwForm    = document.getElementById('dwForm');
+      const dwSuccess    = document.getElementById('dwSuccess');
+      const dwBody       = document.getElementById('dwBody');
+      const dwForm       = document.getElementById('dwForm');
       const dwSuccessMsg = document.getElementById('dwSuccessMsg');
 
       if (dwBody) dwBody.style.display = 'none';
@@ -96,11 +99,17 @@
 
       const msgs = {
         accept:  '✅ Proposta aceita! Entraremos em contato para dar andamento.',
-        counter:  '🔄 Contra-proposta enviada! Vamos analisar e retornar.',
+        counter: '🔄 Contra-proposta enviada! Vamos analisar e retornar.',
         reject:  '❌ Proposta rejeitada. Obrigado pelo feedback.'
       };
       if (dwSuccessMsg) dwSuccessMsg.textContent = msgs[dwCurrentAction] || '✅ Decisão registrada!';
       if (dwSuccess) dwSuccess.classList.add('show');
+
+      // Disable quick buttons too
+      document.querySelectorAll('.dw-quick-btn').forEach(b => {
+        b.disabled = true;
+        b.style.opacity = '0.4';
+      });
     })
     .catch(err => {
       console.error('[DecisionWidget] Error:', err);
@@ -128,15 +137,19 @@
     const email    = (document.getElementById('swEmail')?.value || '').trim();
 
     if (!name || !whatsapp || !email) {
-      alert('Preencha todos os campos para compartilhar a proposta.');
+      alert('Preencha todos os campos para enviar o acesso.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      alert('Por favor, informe um e-mail válido.');
       return;
     }
 
     const token  = window.PROPOSAL_TOKEN;
     const leadId = window.PROPOSAL_LEAD_ID;
 
-    const submitBtn = document.querySelector('.sw-submit');
-    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Enviando...'; }
+    const submitBtn = document.getElementById('swSubmitBtn');
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '📨 Enviando...'; submitBtn.classList.add('sw-sending'); }
 
     fetch('/proposta/share', {
       method: 'POST',
@@ -145,24 +158,28 @@
     })
     .then(r => r.json())
     .then(data => {
-      const sw = document.getElementById('swSuccess');
-      if (sw) sw.classList.add('show');
-      if (submitBtn) submitBtn.style.display = 'none';
-      // Clear fields
-      ['swName','swWhatsapp','swEmail'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-      });
+      if (data.success) {
+        const sw = document.getElementById('swSuccess');
+        if (sw) sw.classList.add('show');
+        if (submitBtn) submitBtn.style.display = 'none';
+        // Clear fields
+        ['swName', 'swWhatsapp', 'swEmail'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+      } else {
+        alert('Erro ao enviar: ' + (data.error || 'tente novamente.'));
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '📤 Enviar Link de Acesso'; submitBtn.classList.remove('sw-sending'); }
+      }
     })
     .catch(err => {
       console.error('[ShareWidget] Error:', err);
-      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '📤 Enviar Acesso'; }
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '📤 Enviar Link de Acesso'; submitBtn.classList.remove('sw-sending'); }
     });
   };
 
-  // ─── SYNC WITH PROPOSAL SCROLL (listen for slide changes) ────────────────
+  // ─── SYNC WITH PROPOSAL SCROLL ────────────────────────────────────────────
 
-  // Intercept scrollToSlide to keep widget page label updated
   const _origScrollToSlide = window.scrollToSlide;
   window.scrollToSlide = function (index) {
     updateDwPageLabel(index);
@@ -170,15 +187,8 @@
     if (_origScrollToSlide) _origScrollToSlide(index);
   };
 
-  // Observer to track current slide
   document.addEventListener('DOMContentLoaded', function () {
-    // Start with widget visible after a short delay
-    setTimeout(() => {
-      const toggle = document.getElementById('decisionToggle');
-      if (toggle) toggle.classList.add('show');
-    }, 2000);
-
-    // Track slide number via intersection (sync with proposal.js)
+    // Track slide number via IntersectionObserver
     const sections = document.querySelectorAll('.page-section');
     if (!sections.length) return;
 

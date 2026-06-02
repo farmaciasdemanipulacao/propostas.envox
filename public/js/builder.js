@@ -186,25 +186,53 @@
 
     tableHTML += `</tbody></table></div>`;
 
-    // Summary cards
+    // Summary cards — Investimento à direita, opções de pagamento abaixo
     let summaryCards = '<div class="budget-summary-cards">';
     if (monthlyItems.length > 0) {
+      const discNote = discActive && discM > 0 ? ` · Desconto de ${discM}% aplicado` : '';
+      // Calcular valor à vista com 10% de desconto (se não houver desconto especial)
+      const avistaPct = (discActive && discM > 0) ? 0 : 10;
+      const avistaBRL = grandMonthly * (1 - avistaPct / 100);
       summaryCards += `
-        <div class="budget-summary-card highlight">
-          <div class="budget-summary-label">Investimento Mensal</div>
+        <div class="budget-summary-card" style="flex:1;min-width:120px">
+          <div class="budget-summary-label">Serviços Mensais</div>
+          <div style="font-size:0.8rem;color:#555;margin-top:0.25rem">${monthlyItems.length} serviço${monthlyItems.length !== 1 ? 's' : ''} selecionado${monthlyItems.length !== 1 ? 's' : ''}</div>
+          ${discActive && discM > 0 ? `<div style="font-size:0.72rem;color:#E91E63;margin-top:0.35rem;font-weight:700">✅ Desconto de ${discM}% aplicado</div>` : ''}
+        </div>
+        <div class="budget-summary-card highlight" style="flex:1.3;text-align:right">
+          <div class="budget-summary-label">💳 Investimento Mensal</div>
           <div class="budget-summary-value">${fmtBRL(grandMonthly)}</div>
-          <div class="budget-summary-note">por mês${discActive && discM > 0 ? ' · Desconto de ' + discM + '% aplicado' : ''}</div>
+          <div class="budget-summary-note">por mês${discNote}</div>
         </div>`;
     }
     if (onetimeItems.length > 0) {
       summaryCards += `
-        <div class="budget-summary-card">
-          <div class="budget-summary-label">Investimento Único</div>
-          <div class="budget-summary-value" style="color:#1565C0">${fmtBRL(grandOnetime)}</div>
-          <div class="budget-summary-note">pagamento único${discActive && discO > 0 ? ' · Desconto de ' + discO + '% aplicado' : ''}</div>
+        <div class="budget-summary-card highlight-right" style="flex:1.3;text-align:right">
+          <div class="budget-summary-label">💳 Investimento Único</div>
+          <div class="budget-summary-value">${fmtBRL(grandOnetime)}</div>
+          <div class="budget-summary-note">pagamento único${discActive && discO > 0 ? ` · Desconto de ${discO}% aplicado` : ''}</div>
         </div>`;
     }
     summaryCards += '</div>';
+
+    // Opções de pagamento (à vista vs mensal) — somente para serviços mensais
+    let paymentOptions = '';
+    if (monthlyItems.length > 0 && !(discActive && discM > 0)) {
+      const avista3 = grandMonthly * 3 * 0.90; // 3 meses à vista com 10% off
+      paymentOptions = `
+        <div class="budget-payment-options">
+          <div class="budget-payment-card payment-mensal" style="flex:1">
+            <div class="budget-payment-badge">Mensal</div>
+            <div class="budget-payment-value">${fmtBRL(grandMonthly)}</div>
+            <div class="budget-payment-note">por mês · sem fidelidade</div>
+          </div>
+          <div class="budget-payment-card payment-avista" style="flex:1">
+            <div class="budget-payment-badge">À Vista (3 meses) 💰</div>
+            <div class="budget-payment-value">${fmtBRL(avista3)}</div>
+            <div class="budget-payment-note">10% de desconto · <strong>${fmtBRL(grandMonthly * 3 - avista3)}</strong> de economia</div>
+          </div>
+        </div>`; 
+    }
 
     // Sections: desc, scope, timeline
     let sectionsHTML = '';
@@ -252,6 +280,7 @@
       <div class="admin-proposal-view">
         ${tableHTML}
         ${summaryCards}
+        ${paymentOptions}
       </div>
       ${sectionsHTML}
       ${ctaHTML}`;

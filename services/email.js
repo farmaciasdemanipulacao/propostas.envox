@@ -142,6 +142,58 @@ async function sendProposalNotification(lead) {
   });
 }
 
+// ── Template: Proposta compartilhada ─────────────────────────────────────
+
+async function sendSharedProposalEmail({ to, toName, fromName, shareLink, whatsapp }) {
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #eee;border-radius:8px;overflow:hidden">
+      <div style="background:#1a1a2e;padding:24px 32px;text-align:center">
+        <span style="font-size:1.8rem;font-weight:900;color:#fff;letter-spacing:-1px">env<span style="color:#E91E63">ox</span></span>
+      </div>
+      <div style="padding:32px;background:#ffffff">
+        <h1 style="font-size:1.25rem;color:#1a1a2e;margin:0 0 12px;font-family:Arial,sans-serif">
+          Olá, ${toName}! 👋
+        </h1>
+        <p style="color:#555;font-size:0.95rem;line-height:1.65;margin:0 0 16px">
+          <strong>${fromName}</strong> compartilhou uma proposta da <strong>Envox Agência Digital</strong> com você para análise.
+        </p>
+        <p style="color:#555;font-size:0.92rem;line-height:1.6;margin:0 0 24px">
+          Clique no botão abaixo para visualizar todos os detalhes da proposta. O acesso é exclusivo para você.
+        </p>
+        <div style="text-align:center;margin:28px 0">
+          <a href="${shareLink}"
+             style="display:inline-block;padding:14px 36px;background:#E91E63;color:#ffffff;
+                    text-decoration:none;border-radius:8px;font-weight:700;font-size:1rem;
+                    font-family:Arial,sans-serif">
+            📋 Visualizar Proposta
+          </a>
+        </div>
+        <div style="background:#f8f9fa;border-radius:8px;padding:16px 20px;margin-top:16px">
+          <p style="margin:0;font-size:0.82rem;color:#666;font-family:Arial,sans-serif">
+            <strong>Seus dados de acesso:</strong><br>
+            • WhatsApp: <strong>${whatsapp}</strong><br>
+            • E-mail: <strong>${to}</strong>
+          </p>
+        </div>
+        <p style="margin:20px 0 0;font-size:0.82rem;color:#aaa;word-break:break-all">
+          Link direto: <a href="${shareLink}" style="color:#E91E63">${shareLink}</a>
+        </p>
+      </div>
+      <div style="padding:16px 32px;background:#f8f9fa;text-align:center;font-size:0.75rem;color:#aaa">
+        © ${new Date().getFullYear()} Envox Agência Digital · Curitiba, PR<br>
+        Este email foi enviado automaticamente — não é necessário responder.
+      </div>
+    </div>
+  `;
+
+  return sendMail({
+    to,
+    subject: `📋 ${fromName} compartilhou uma proposta Envox com você`,
+    html,
+    text: `Olá ${toName},\n\n${fromName} compartilhou uma proposta da Envox com você.\n\nAcesse: ${shareLink}\n\nSeus dados de acesso:\n- WhatsApp: ${whatsapp}\n- E-mail: ${to}\n\n— Envox Agência Digital`,
+  });
+}
+
 // ── Template: Email de teste ──────────────────────────────────────────────────
 
 async function sendTestEmail(toEmail) {
@@ -171,5 +223,6 @@ module.exports = {
   verifyConnection,
   sendMail,
   sendProposalNotification,
+  sendSharedProposalEmail,
   sendTestEmail,
 };

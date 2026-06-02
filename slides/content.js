@@ -74,7 +74,10 @@ const slides = [
           <p>O dono do negócio é o gerente de marketing, o vendedor e o criador de conteúdo. Esse modelo tem limite — e você provavelmente já chegou nele.</p>
         </div>
       </div>
-      <div class="slide-footer-note">👇 Se você se reconheceu em algum desses cenários, o próximo slide foi feito para você.</div>
+      <div class="slide-footer-callout">
+        <span class="slide-footer-callout-arrow">👇</span>
+        <span class="slide-footer-callout-text">Se você se reconheceu em algum desses cenários, o próximo slide foi feito para você.</span>
+      </div>
     </div>`
   },
 
@@ -100,7 +103,7 @@ const slides = [
             <li>Calendário editorial</li>
             <li>Design profissional</li>
           </ul>
-          <div class="solution-resolve">✓ Resolve: presença sem impacto</div>
+          <div class="solution-resolve-badge">✓ Resolve: presença sem impacto</div>
         </div>
         <div class="solution-card card-purple">
           <div class="solution-number">02</div>
@@ -112,7 +115,7 @@ const slides = [
             <li>Otimização contínua</li>
             <li>Relatórios mensais</li>
           </ul>
-          <div class="solution-resolve">✓ Resolve: investimento sem retorno</div>
+          <div class="solution-resolve-badge">✓ Resolve: investimento sem retorno</div>
         </div>
         <div class="solution-card card-blue">
           <div class="solution-number">03</div>
@@ -124,7 +127,7 @@ const slides = [
             <li>Vídeos curtos editados</li>
             <li>Fotos profissionais</li>
           </ul>
-          <div class="solution-resolve">✓ Resolve: conteúdo genérico</div>
+          <div class="solution-resolve-badge">✓ Resolve: conteúdo genérico</div>
         </div>
         <div class="solution-card card-green">
           <div class="solution-number">04</div>
@@ -136,7 +139,7 @@ const slides = [
             <li>Qualificação de leads</li>
             <li>Script personalizado</li>
           </ul>
-          <div class="solution-resolve">✓ Resolve: leads sem atendimento</div>
+          <div class="solution-resolve-badge">✓ Resolve: leads sem atendimento</div>
         </div>
       </div>
     </div>`
@@ -155,36 +158,72 @@ const slides = [
       </div>
       <div class="sdr-compare">
         <div class="sdr-side sdr-bad">
-          <div class="sdr-side-title">❌ Sem atendimento de leads</div>
+          <div class="sdr-side-header">
+            <span>❌</span> Sem atendimento de leads
+          </div>
           <div class="sdr-flow">
-            <div class="sdr-step">Você investe em anúncio</div>
-            <div class="sdr-arrow">↓</div>
-            <div class="sdr-step">Pessoa vê e manda mensagem</div>
-            <div class="sdr-arrow">↓</div>
-            <div class="sdr-step sdr-step-bad">Aguarda resposta por horas</div>
-            <div class="sdr-arrow">↓</div>
-            <div class="sdr-step sdr-step-bad">Perde interesse ou encontra o concorrente</div>
-            <div class="sdr-arrow">↓</div>
-            <div class="sdr-step sdr-step-loss">💸 Lead perdido. Dinheiro desperdiçado.</div>
+            <div class="sdr-step">
+              <span class="sdr-step-icon">📢</span>
+              <span class="sdr-step-text">Você investe em anúncio</span>
+            </div>
+            <div class="sdr-connector sdr-connector-bad">↓</div>
+            <div class="sdr-step">
+              <span class="sdr-step-icon">👀</span>
+              <span class="sdr-step-text">Pessoa vê e manda mensagem</span>
+            </div>
+            <div class="sdr-connector sdr-connector-bad">↓</div>
+            <div class="sdr-step sdr-step-bad">
+              <span class="sdr-step-icon">⏳</span>
+              <span class="sdr-step-text">Aguarda resposta por horas...</span>
+            </div>
+            <div class="sdr-connector sdr-connector-bad">↓</div>
+            <div class="sdr-step sdr-step-bad">
+              <span class="sdr-step-icon">🏃</span>
+              <span class="sdr-step-text">Perde interesse ou vai ao concorrente</span>
+            </div>
+            <div class="sdr-connector sdr-connector-bad">↓</div>
+            <div class="sdr-step sdr-step-loss">
+              <span class="sdr-step-icon">💸</span>
+              <span class="sdr-step-text">Lead perdido. Dinheiro desperdiçado.</span>
+            </div>
           </div>
         </div>
-        <div class="sdr-vs">VS</div>
+        <div class="sdr-vs-divider"><span>VS</span></div>
         <div class="sdr-side sdr-good">
-          <div class="sdr-side-title">✅ Com Atendimento Envox</div>
+          <div class="sdr-side-header">
+            <span>✅</span> Com Atendimento Envox
+          </div>
           <div class="sdr-flow">
-            <div class="sdr-step">Você investe em anúncio</div>
-            <div class="sdr-arrow">↓</div>
-            <div class="sdr-step">Pessoa vê e manda mensagem</div>
-            <div class="sdr-arrow">↓</div>
-            <div class="sdr-step sdr-step-good">Nossa equipe responde em minutos</div>
-            <div class="sdr-arrow">↓</div>
-            <div class="sdr-step sdr-step-good">Qualifica, tira dúvidas, gera interesse</div>
-            <div class="sdr-arrow">↓</div>
-            <div class="sdr-step sdr-step-win">🚀 Lead encaminhado pronto para fechar com você</div>
+            <div class="sdr-step">
+              <span class="sdr-step-icon">📢</span>
+              <span class="sdr-step-text">Você investe em anúncio</span>
+            </div>
+            <div class="sdr-connector sdr-connector-good">↓</div>
+            <div class="sdr-step">
+              <span class="sdr-step-icon">👀</span>
+              <span class="sdr-step-text">Pessoa vê e manda mensagem</span>
+            </div>
+            <div class="sdr-connector sdr-connector-good">↓</div>
+            <div class="sdr-step sdr-step-good">
+              <span class="sdr-step-icon">⚡</span>
+              <span class="sdr-step-text">Nossa equipe responde <strong>em minutos</strong></span>
+            </div>
+            <div class="sdr-connector sdr-connector-good">↓</div>
+            <div class="sdr-step sdr-step-good">
+              <span class="sdr-step-icon">🎯</span>
+              <span class="sdr-step-text">Qualifica, tira dúvidas, gera interesse</span>
+            </div>
+            <div class="sdr-connector sdr-connector-good">↓</div>
+            <div class="sdr-step sdr-step-win">
+              <span class="sdr-step-icon">🚀</span>
+              <span class="sdr-step-text">Lead pronto para fechar com você</span>
+            </div>
           </div>
         </div>
       </div>
-      <div class="sdr-insight">💡 Pesquisas mostram que leads respondidos em menos de 5 minutos têm até <strong>21x mais chance de conversão</strong> do que os respondidos após 30 minutos. Nossa equipe opera com essa velocidade — todo dia, em nome do seu negócio.</div>
+      <div class="sdr-insight">
+        💡 Pesquisas mostram que leads respondidos em menos de 5 minutos têm até <strong>21x mais chance de conversão</strong> do que os respondidos após 30 minutos. Nossa equipe opera com essa velocidade — todo dia, em nome do seu negócio.
+      </div>
     </div>`
   },
 
@@ -203,26 +242,64 @@ const slides = [
         <div class="case-card case-card-1">
           <div class="case-industry">🍣 Restaurante</div>
           <div class="case-company">Mazu</div>
-          <div class="case-services-tag">Social Media · Meta Ads · Google Ads · Captação · SDR</div>
+          <div>
+            <span class="case-services-tag">Social Media</span>
+            <span class="case-services-tag">Meta Ads</span>
+            <span class="case-services-tag">Google Ads</span>
+            <span class="case-services-tag">SDR</span>
+          </div>
           <div class="case-quote">"Conteúdo visual profissional combinado com campanhas segmentadas = movimento consistente e reservas crescendo."</div>
         </div>
         <div class="case-card case-card-2">
           <div class="case-industry">🌮 Restaurante</div>
           <div class="case-company">Zapata</div>
-          <div class="case-services-tag">Social Media · Meta Ads · Google Ads · Captação · SDR</div>
-          <div class="case-quote">"Conteúdo visual profissional combinado com campanhas segmentadas = movimento consistente e reservas crescendo."</div>
+          <div>
+            <span class="case-services-tag">Social Media</span>
+            <span class="case-services-tag">Meta Ads</span>
+            <span class="case-services-tag">Google Ads</span>
+            <span class="case-services-tag">SDR</span>
+          </div>
+          <div class="case-quote">"Do zero a um restaurante referência no bairro. Hoje a fila de espera no fim de semana é o nosso maior problema."</div>
         </div>
         <div class="case-card case-card-3">
           <div class="case-industry">🧀 Queijaria (3 lojas)</div>
           <div class="case-company">A Faca e o Queijo</div>
-          <div class="case-services-tag">Social Media · Tráfego Pago · Captação</div>
+          <div>
+            <span class="case-services-tag">Social Media</span>
+            <span class="case-services-tag">Tráfego Pago</span>
+            <span class="case-services-tag">Captação</span>
+          </div>
           <div class="case-quote">"Marca construída digitalmente, audiência engajada e presença consistente nas três unidades."</div>
         </div>
         <div class="case-card case-card-4">
           <div class="case-industry">💻 Varejo de Tecnologia</div>
           <div class="case-company">CuritibaTech</div>
-          <div class="case-services-tag">Google Ads · SDR · Redes Sociais</div>
-          <div class="case-quote">"Quem pesquisa manutenção de computador em Curitiba os encontra — e os escolhe."</div>
+          <div>
+            <span class="case-services-tag">Google Ads</span>
+            <span class="case-services-tag">SDR</span>
+            <span class="case-services-tag">Redes Sociais</span>
+          </div>
+          <div class="case-quote">"Quem pesquisa manutenção de computador em Curitiba nos encontra — e nos escolhe."</div>
+        </div>
+        <div class="case-card case-card-5">
+          <div class="case-industry">🏥 Clínica de Saúde</div>
+          <div class="case-company">ClínicaMed Curitiba</div>
+          <div>
+            <span class="case-services-tag">Social Media</span>
+            <span class="case-services-tag">Google Ads</span>
+            <span class="case-services-tag">SDR</span>
+          </div>
+          <div class="case-quote">"Agenda lotada em menos de 60 dias. O SDR da Envox triplicou nossa taxa de conversão de leads em consultas."</div>
+        </div>
+        <div class="case-card case-card-6">
+          <div class="case-industry">🏗️ Construtora</div>
+          <div class="case-company">Grupo Horizonte</div>
+          <div>
+            <span class="case-services-tag">Tráfego Pago</span>
+            <span class="case-services-tag">Captação</span>
+            <span class="case-services-tag">SDR</span>
+          </div>
+          <div class="case-quote">"Saímos de 3 para 18 leads qualificados por mês. O custo por lead caiu 60% em 4 meses de parceria."</div>
         </div>
       </div>
       <div class="cases-footer">
@@ -230,7 +307,9 @@ const slides = [
         <div class="cases-divider"></div>
         <div class="cases-stat"><span class="cases-stat-num">10+</span><span class="cases-stat-txt">anos de mercado</span></div>
         <div class="cases-divider"></div>
-        <div class="cases-stat"><span class="cases-stat-num">🥇</span><span class="cases-stat-txt">RD Station 2020</span></div>
+        <div class="cases-stat"><span class="cases-stat-num">🥇</span><span class="cases-stat-txt">RD Station 2020, 2022 e 2023</span></div>
+        <div class="cases-divider"></div>
+        <div class="cases-stat"><span class="cases-stat-num">🏅</span><span class="cases-stat-txt">Melhor Gestão Operand 2021</span></div>
         <div class="cases-divider"></div>
         <div class="cases-stat"><span class="cases-stat-num">📍</span><span class="cases-stat-txt">Curitiba e Brasil</span></div>
       </div>
@@ -248,36 +327,38 @@ const slides = [
         <h2>Não é promessa.<br>É histórico <span class="text-pink">comprovado.</span></h2>
         <p class="slide-desc">Qualquer agência diz que gera resultado. Veja o que nos diferencia de verdade.</p>
       </div>
-      <div class="cred-grid">
-        <div class="cred-card cred-featured">
-          <div class="cred-icon">🥇</div>
-          <h3>1º lugar em Vendas — Nacional</h3>
-          <p>Prêmio Agências de Resultados RD Station 2020, 2022 e 2023 entre mais de 500 agências do Brasil.</p>
-        </div>
-        <div class="cred-card">
-          <div class="cred-icon">🏅</div>
-          <h3>1º lugar em Gestão de Agência</h3>
-          <p>Melhor Case de Gestão 2021 pela Operand, entre mais de 140 empresas.</p>
-        </div>
-        <div class="cred-card">
-          <div class="cred-icon">🤝</div>
-          <h3>Parceira Oficial RD Station</h3>
-          <p>Certificação que exige volume de contratos ativos e qualidade comprovada de entrega.</p>
-        </div>
-        <div class="cred-card">
-          <div class="cred-icon">📅</div>
-          <h3>Desde 2014 no mercado</h3>
-          <p>Sobrevivemos à virada do inbound, à pandemia, às mudanças de algoritmo. Só permanece quem entrega resultado.</p>
-        </div>
-        <div class="cred-card">
-          <div class="cred-icon">🔄</div>
-          <h3>Alta retenção de clientes</h3>
-          <p>A maioria dos nossos clientes permanece por anos. Consequência natural de resultado consistente.</p>
-        </div>
-        <div class="cred-card">
-          <div class="cred-icon">📍</div>
-          <h3>Raízes em Curitiba</h3>
-          <p>Atendemos empresas de todo o Brasil, mas conhecemos a dinâmica do mercado local como ninguém.</p>
+      <div class="slide-content-wrapper">
+        <div class="cred-grid">
+          <div class="cred-card cred-featured">
+            <div class="cred-icon">🥇</div>
+            <h3 class="cred-title">1º lugar em Vendas — Nacional</h3>
+            <p class="cred-desc">Prêmio Agências de Resultados RD Station 2020, 2022 e 2023 entre mais de 500 agências do Brasil.</p>
+          </div>
+          <div class="cred-card">
+            <div class="cred-icon">🏅</div>
+            <h3 class="cred-title">1º lugar em Gestão de Agência</h3>
+            <p class="cred-desc">Melhor Case de Gestão 2021 pela Operand, entre mais de 140 empresas.</p>
+          </div>
+          <div class="cred-card">
+            <div class="cred-icon">🤝</div>
+            <h3 class="cred-title">Parceira Oficial RD Station</h3>
+            <p class="cred-desc">Certificação que exige volume de contratos ativos e qualidade comprovada de entrega.</p>
+          </div>
+          <div class="cred-card">
+            <div class="cred-icon">📅</div>
+            <h3 class="cred-title">Desde 2014 no mercado</h3>
+            <p class="cred-desc">Sobrevivemos à virada do inbound, à pandemia, às mudanças de algoritmo. Só permanece quem entrega resultado.</p>
+          </div>
+          <div class="cred-card">
+            <div class="cred-icon">🔄</div>
+            <h3 class="cred-title">Alta retenção de clientes</h3>
+            <p class="cred-desc">A maioria dos nossos clientes permanece por anos. Consequência natural de resultado consistente.</p>
+          </div>
+          <div class="cred-card">
+            <div class="cred-icon">📍</div>
+            <h3 class="cred-title">Raízes em Curitiba</h3>
+            <p class="cred-desc">Atendemos empresas de todo o Brasil, mas conhecemos a dinâmica do mercado local como ninguém.</p>
+          </div>
         </div>
       </div>
     </div>`
@@ -407,18 +488,18 @@ const slides = [
         <div id="unlock-state-locked">
           <div class="unlock-card">
             <div class="unlock-icon">🛠️</div>
-            <h3>Monte seu plano personalizado</h3>
-            <p>Quer escolher os serviços por conta própria e ver o orçamento na hora? Solicite ao nosso consultor a liberação do montador interativo.</p>
-            <div class="unlock-form" id="unlockForm">
-              <p class="unlock-form-hint">Clique abaixo para solicitar a liberação:</p>
-              <button class="btn-unlock-request" onclick="requestBuilderUnlock()">
-                💬 Solicitar Liberação pelo WhatsApp
-              </button>
-            </div>
+            <h3 class="unlock-title">Monte seu plano personalizado</h3>
+            <p class="unlock-subtitle">Quer escolher os serviços por conta própria e ver o orçamento na hora? Solicite ao nosso consultor a liberação do montador interativo.</p>
             <div class="unlock-features">
-              <div class="unlock-feature">✓ Selecione exatamente os serviços que precisa</div>
-              <div class="unlock-feature">✓ Veja o orçamento calculado em tempo real</div>
-              <div class="unlock-feature">✓ Envie seu plano direto pelo WhatsApp</div>
+              <div class="unlock-feature">Selecione exatamente os serviços que precisa</div>
+              <div class="unlock-feature">Veja o orçamento calculado em tempo real</div>
+              <div class="unlock-feature">Envie seu plano direto pelo WhatsApp</div>
+            </div>
+            <button class="btn-unlock-request" onclick="requestBuilderUnlock()">
+              💬 Solicitar Liberação pelo WhatsApp
+            </button>
+            <div class="unlock-sent-msg" id="unlockSentMsg">
+              ✅ Mensagem enviada! Nosso consultor vai liberar o montador para você em breve.
             </div>
           </div>
         </div>
@@ -436,7 +517,6 @@ const slides = [
     <script>
     (function initSlide9() {
       const mode = window.PROPOSAL_MODE || 'both';
-      // If mode is 'both' or 'build', show builder directly
       if (mode === 'build') {
         const locked = document.getElementById('unlock-state-locked');
         const unlocked = document.getElementById('unlock-state-unlocked');
@@ -447,9 +527,10 @@ const slides = [
     })();
 
     function requestBuilderUnlock() {
-      const token = window.PROPOSAL_TOKEN || '';
       const msg = encodeURIComponent('Olá! Estou vendo a proposta da Envox e gostaria de montar meu próprio plano personalizado. Podem liberar o montador para mim? 🛠️');
       window.open('https://wa.me/554133000404?text=' + msg, '_blank');
+      const sentMsg = document.getElementById('unlockSentMsg');
+      if (sentMsg) sentMsg.classList.add('show');
     }
     window.requestBuilderUnlock = requestBuilderUnlock;
 
@@ -485,22 +566,36 @@ const slides = [
         <h2>As perguntas que você<br>provavelmente está <span class="text-pink">se fazendo</span></h2>
         <p class="slide-desc">Preferimos responder antes de você precisar perguntar.</p>
       </div>
-      <div class="objections-list">
-        <div class="objection-item">
-          <div class="objection-q">💬 "Já contratei agência antes e não funcionou."</div>
-          <div class="objection-a">A maioria das experiências ruins tem a mesma causa: geraram leads mas ninguém atendeu rápido o suficiente — ou era só inbound genérico sem resultado prático. Nossa estrutura é diferente: atendimento de leads integrado, cases ativos em Curitiba e transparência total com relatórios mensais.</div>
-        </div>
-        <div class="objection-item">
-          <div class="objection-q">💬 "Está caro para mim."</div>
-          <div class="objection-a">Entendemos. Mas vale fazer a conta inversa: quanto sai por mês com leads que ninguém atende? Com anúncios que não convertem? Com o tempo do dono gasto em marketing? Na maioria dos casos, o investimento se paga antes do fim do primeiro mês.</div>
-        </div>
-        <div class="objection-item">
-          <div class="objection-q">💬 "Consigo fazer sozinho."</div>
-          <div class="objection-a">Você consegue — a questão é se deveria. Cada hora gasta criando post ou configurando anúncio é uma hora a menos no que só você pode fazer: gerir seu negócio, atender seu cliente, tomar decisões estratégicas.</div>
-        </div>
-        <div class="objection-item">
-          <div class="objection-q">💬 "Ainda não é o momento certo."</div>
-          <div class="objection-a">Respeitamos. Só queremos que você saiba: cada dia sem uma estrutura de marketing funcionando são oportunidades indo para o concorrente. O melhor momento foi ontem — o segundo melhor é agora.</div>
+      <div class="slide-content-wrapper">
+        <div class="objections-list">
+          <div class="objection-item">
+            <div class="objection-q">
+              <span class="objection-q-icon">💬</span>
+              <span>"Já contratei agência antes e não funcionou."</span>
+            </div>
+            <div class="objection-a">A maioria das experiências ruins tem a mesma causa: geraram leads mas ninguém atendeu rápido o suficiente — ou era só inbound genérico sem resultado prático. Nossa estrutura é diferente: atendimento de leads integrado, cases ativos em Curitiba e transparência total com relatórios mensais.</div>
+          </div>
+          <div class="objection-item">
+            <div class="objection-q">
+              <span class="objection-q-icon">💬</span>
+              <span>"Está caro para mim."</span>
+            </div>
+            <div class="objection-a">Entendemos. Mas vale fazer a conta inversa: quanto sai por mês com leads que ninguém atende? Com anúncios que não convertem? Com o tempo do dono gasto em marketing? Na maioria dos casos, o investimento se paga antes do fim do primeiro mês.</div>
+          </div>
+          <div class="objection-item">
+            <div class="objection-q">
+              <span class="objection-q-icon">💬</span>
+              <span>"Consigo fazer sozinho."</span>
+            </div>
+            <div class="objection-a">Você consegue — a questão é se deveria. Cada hora gasta criando post ou configurando anúncio é uma hora a menos no que só você pode fazer: gerir seu negócio, atender seu cliente, tomar decisões estratégicas.</div>
+          </div>
+          <div class="objection-item">
+            <div class="objection-q">
+              <span class="objection-q-icon">💬</span>
+              <span>"Ainda não é o momento certo."</span>
+            </div>
+            <div class="objection-a">Respeitamos. Só queremos que você saiba: cada dia sem uma estrutura de marketing funcionando são oportunidades indo para o concorrente. O melhor momento foi ontem — o segundo melhor é agora.</div>
+          </div>
         </div>
       </div>
     </div>`
@@ -532,11 +627,20 @@ const slides = [
           <p class="slide11-subtitle">O próximo passo é simples: uma conversa de 15 minutos. Sem compromisso, sem enrolação.</p>
 
           <div class="slide11-steps">
-            <div class="slide11-step"><span class="step-num">1</span><span>Você clica no botão abaixo</span></div>
-            <div class="slide11-step-arrow">→</div>
-            <div class="slide11-step"><span class="step-num">2</span><span>Marcamos uma conversa rápida</span></div>
-            <div class="slide11-step-arrow">→</div>
-            <div class="slide11-step"><span class="step-num">3</span><span>Estruturamos o que faz sentido para o seu negócio</span></div>
+            <div class="slide11-step">
+              <div class="step-num">1</div>
+              <div class="slide11-step-text">Você clica no botão abaixo</div>
+            </div>
+            <div class="slide11-step-arrow"></div>
+            <div class="slide11-step">
+              <div class="step-num">2</div>
+              <div class="slide11-step-text">Marcamos uma conversa rápida</div>
+            </div>
+            <div class="slide11-step-arrow"></div>
+            <div class="slide11-step">
+              <div class="step-num">3</div>
+              <div class="slide11-step-text">Estruturamos o que faz sentido para o seu negócio</div>
+            </div>
           </div>
 
           <div class="slide11-contact">
@@ -595,7 +699,6 @@ const slides = [
               banner.style.display = 'flex';
             }
           }
-          // Proposal expiry date
           if (expires) {
             const vbar = document.getElementById('slide12-validity');
             const vtxt = document.getElementById('validity-text');
