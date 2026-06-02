@@ -211,6 +211,92 @@ router.post('/leads/:id/invite', requireAdmin, (req, res) => {
   res.redirect(waLink);
 });
 
+// ══ ADMIN PROPOSALS ══════════════════════════════════════
+
+// GET /admin/proposals/new — render builder form
+router.get('/proposals/new', requireAdmin, (req, res) => {
+  const leads    = db.getAllLeads();
+  const services = db.getAllServices(false); // active only
+  const selectedLeadId = req.query.lead_id || null;
+  res.render('admin/proposals/new', {
+    leads,
+    services,
+    selectedLeadId,
+    error:    req.query.error   || null,
+    success:  req.query.success || null,
+    formData: null
+  });
+});
+
+// POST /admin/proposals — save proposal items + content
+router.post('/proposals', requireAdmin, (req, res) => {
+  const { lead_id, proposal_items, proposal_description, proposal_scope, proposal_timeline } = req.body;
+
+  if (!lead_id) {
+    const leads    = db.getAllLeads();
+    const services = db.getAllServices(false);
+    return res.render('admin/proposals/new', {
+      leads, services, selectedLeadId: null,
+      error: 'Selecione um lead.',
+      success: null,
+      formData: req.body
+    });
+  }
+
+  const leadId = parseInt(lead_id);
+  const lead   = db.getLeadById(leadId);
+  if (!lead) {
+    return res.redirect('/admin/proposals/new?error=Lead+não+encontrado');
+  }
+
+  // Parse items
+  let items = [];
+  try {
+    items = proposal_items ? JSON.parse(proposal_items) : [];
+  } catch (e) {
+    items = [];
+  }
+
+  try {
+    // Save items (replaces previous)
+    db.saveProposalItems(leadId, items);
+
+    // Save content fields
+    db.updateLeadProposalContent(
+      leadId,
+      proposal_description || '',
+      proposal_scope       || '',
+      proposal_timeline    || ''
+    );
+
+    return res.redirect(`/admin/proposals/new?lead_id=${leadId}&success=Proposta+salva+com+sucesso!`);
+  } catch (err) {
+    console.error('[Proposals] Error saving proposal:', err);
+    const leads    = db.getAllLeads();
+    const services = db.getAllServices(false);
+    return res.render('admin/proposals/new', {
+      leads, services, selectedLeadId: leadId,
+      error: 'Erro ao salvar proposta: ' + err.message,
+      success: null,
+      formData: req.body
+    });
+  }
+});
+
+// GET /admin/proposals/preview — redirect to lead's actual proposal view (admin shortcut)
+router.get('/proposals/preview', requireAdmin, (req, res) => {
+  const leadId = parseInt(req.query.lead_id);
+  if (!leadId) return res.redirect('/admin/proposals/new?error=Lead+inválido');
+  const lead = db.getLeadById(leadId);
+  if (!lead || !lead.token) return res.redirect('/admin/proposals/new?error=Lead+ou+token+não+encontrado');
+  // Authenticate admin as this lead temporarily
+  if (!req.session.authenticatedTokens) req.session.authenticatedTokens = [];
+  if (!req.session.authenticatedTokens.includes(lead.token)) {
+    req.session.authenticatedTokens.push(lead.token);
+  }
+  res.redirect(`/proposta/${lead.token}/view`);
+});
+
 // ══ FOLLOW-UP VIA WHATSAPP ════════════════════════════════
 router.post('/leads/:id/followup', requireAdmin, (req, res) => {
   const lead = db.getLeadById(req.params.id);

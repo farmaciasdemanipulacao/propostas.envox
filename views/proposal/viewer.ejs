@@ -9,72 +9,86 @@
   <link rel="stylesheet" href="/css/proposal.css">
 </head>
 <body class="proposal-body">
-  <!-- Progress Bar Top -->
-  <div class="progress-bar-top">
-    <div class="progress-fill" id="progressFill"></div>
-  </div>
-  
-  <!-- Header -->
-  <header class="proposal-header">
+
+  <!-- ── FIXED HEADER ── -->
+  <header class="proposal-header" id="proposalHeader">
     <div class="header-brand">
       <span class="brand-env">env</span><span class="brand-ox">ox</span>
     </div>
     <div class="header-info">
       <span class="header-lead">Proposta para: <strong><%= lead.name %></strong></span>
     </div>
-    <div class="header-slide-counter">
-      <span id="currentSlideNum">1</span> / <%= slides.length %>
+    <div class="header-right">
+      <div class="header-slide-counter">
+        <span id="currentSlideNum">1</span>&nbsp;/&nbsp;<%= slides.length %>
+      </div>
     </div>
   </header>
-  
-  <!-- Slides Container -->
-  <div class="slides-container" id="slidesContainer">
+
+  <!-- ── PROGRESS BAR ── -->
+  <div class="progress-bar-top" id="progressBarTop">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+
+  <!-- ── STEP NAV SIDEBAR (floating) ── -->
+  <nav class="step-nav" id="stepNav">
     <% slides.forEach((slide, index) => { %>
-      <div class="slide" 
-           id="slide-<%= slide.number %>" 
-           data-slide="<%= slide.number %>"
-           data-index="<%= index %>"
-           style="display: <%= index === 0 ? 'flex' : 'none' %>">
-        <%- slide.html %>
-      </div>
+      <button class="step-dot <%= index === 0 ? 'step-dot-active' : '' %>"
+              data-index="<%= index %>"
+              title="<%= slide.title %>"
+              onclick="scrollToSlide(<%= index %>)">
+        <span class="step-dot-num"><%= index + 1 %></span>
+      </button>
     <% }) %>
-  </div>
-  
-  <!-- Navigation -->
-  <div class="proposal-nav">
-    <button class="nav-btn nav-prev" id="btnPrev" disabled>
-      <span>←</span>
+  </nav>
+
+  <!-- ── PAGES CONTAINER ── -->
+  <main class="pages-container" id="pagesContainer">
+    <% slides.forEach((slide, index) => { %>
+      <section class="page-section" 
+               id="page-<%= index %>"
+               data-index="<%= index %>"
+               data-slide="<%= slide.number %>">
+        <%- slide.html %>
+      </section>
+    <% }) %>
+  </main>
+
+  <!-- ── PREV / NEXT FLOATING BUTTONS ── -->
+  <div class="page-nav-btns" id="pageNavBtns">
+    <button class="page-nav-btn page-nav-prev" id="btnPrev" onclick="navigatePage(-1)" disabled title="Seção anterior">
+      <span>↑</span>
     </button>
-    
-    <!-- Dots -->
-    <div class="nav-dots" id="navDots">
-      <% slides.forEach((slide, index) => { %>
-        <button class="dot <%= index === 0 ? 'dot-active' : '' %>" 
-                data-index="<%= index %>"
-                title="<%= slide.title %>">
-        </button>
-      <% }) %>
-    </div>
-    
-    <button class="nav-btn nav-next" id="btnNext">
-      <span>→</span>
+    <button class="page-nav-btn page-nav-next" id="btnNext" onclick="navigatePage(1)" title="Próxima seção">
+      <span>↓</span>
     </button>
   </div>
-  
-  <!-- Slide Title Bar -->
-  <div class="slide-title-bar">
+
+  <!-- ── SLIDE TITLE TOAST ── -->
+  <div class="slide-title-toast" id="slideTitleToast">
     <span id="slideTitleText"><%= slides[0].title %></span>
   </div>
 
-  <!-- Data attrs for JS -->
+  <!-- ── JS GLOBALS ── -->
   <script>
-    window.PROPOSAL_TOKEN = '<%= token %>';
+    window.PROPOSAL_TOKEN   = '<%= token %>';
     window.PROPOSAL_LEAD_ID = '<%= lead.id %>';
-    window.TOTAL_SLIDES = <%= slides.length %>;
-    window.SLIDE_TITLES = <%- JSON.stringify(slides.map(s => s.title)) %>;
-    window.LEAD_DISCOUNT_MONTHLY = <%= lead.discount_monthly || 0 %>;
-    window.LEAD_DISCOUNT_ONETIME = <%= lead.discount_onetime || 0 %>;
-    window.LEAD_DISCOUNT_EXPIRES = '<%= lead.discount_expires || "" %>';
+    window.TOTAL_SLIDES     = <%= slides.length %>;
+    window.SLIDE_TITLES     = <%- JSON.stringify(slides.map(s => s.title)) %>;
+    window.LEAD_DISCOUNT_MONTHLY  = <%= lead.discount_monthly || 0 %>;
+    window.LEAD_DISCOUNT_ONETIME  = <%= lead.discount_onetime || 0 %>;
+    window.LEAD_DISCOUNT_EXPIRES  = '<%= lead.discount_expires || "" %>';
+    <% if (lead.proposal_items) { %>
+    window.PROPOSAL_ITEMS = <%- JSON.stringify(lead.proposal_items || []) %>;
+    window.PROPOSAL_DESC  = <%- JSON.stringify(lead.proposal_description || '') %>;
+    window.PROPOSAL_SCOPE = <%- JSON.stringify(lead.proposal_scope || '') %>;
+    window.PROPOSAL_TIMELINE = <%- JSON.stringify(lead.proposal_timeline || '') %>;
+    <% } else { %>
+    window.PROPOSAL_ITEMS = [];
+    window.PROPOSAL_DESC  = '';
+    window.PROPOSAL_SCOPE = '';
+    window.PROPOSAL_TIMELINE = '';
+    <% } %>
   </script>
   <script src="/js/tracking.js"></script>
   <script src="/js/proposal.js"></script>

@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criar Proposta — Envox Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    /* ── Proposal Builder Extras ──────────────────────────────── */
+    .proposal-builder-grid {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .proposal-builder-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Services catalog */
+    .services-catalog {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #eee;
+      overflow: hidden;
+    }
+    .catalog-header {
+      padding: 1rem 1.25rem;
+      background: #f8f9fa;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .catalog-header h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin: 0;
+    }
+    .catalog-filter {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .filter-btn {
+      padding: 0.25rem 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      background: #fff;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #666;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: Poppins, sans-serif;
+    }
+    .filter-btn.active, .filter-btn:hover {
+      background: #1a1a2e;
+      color: #fff;
+      border-color: #1a1a2e;
+    }
+
+    .catalog-body {
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    /* Service row */
+    .svc-row {
+      display: grid;
+      grid-template-columns: 24px 1fr auto auto auto;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 0.75rem;
+      border-radius: 8px;
+      border: 1.5px solid #eee;
+      background: #fafafa;
+      transition: all 0.15s;
+    }
+    .svc-row:hover { border-color: #E91E63; background: #fff; }
+    .svc-row.selected { border-color: #E91E63; background: #fff9fb; }
+    .svc-row.hidden-filter { display: none; }
+
+    .svc-check {
+      width: 18px; height: 18px;
+      accent-color: #E91E63;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .svc-info { min-width: 0; }
+    .svc-name {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #1a1a2e;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .svc-desc {
+      font-size: 0.7rem;
+      color: #888;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .svc-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+    .svc-badge.monthly { background: #e8f5e9; color: #2e7d32; }
+    .svc-badge.onetime { background: #e3f2fd; color: #1565c0; }
+
+    /* Editable price & qty in row */
+    .svc-price-field, .svc-qty-field {
+      width: 72px;
+      padding: 0.3rem 0.45rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-family: Poppins, sans-serif;
+      text-align: right;
+      background: #fff;
+      color: #1a1a2e;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .svc-price-field:focus, .svc-qty-field:focus { border-color: #E91E63; }
+    .svc-qty-field { width: 46px; text-align: center; }
+    .svc-price-field:disabled, .svc-qty-field:disabled {
+      background: #f5f5f5; color: #bbb; cursor: not-allowed;
+    }
+
+    /* Budget preview sidebar */
+    .budget-preview {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #eee;
+      position: sticky;
+      top: 80px;
+    }
+    .budget-preview-header {
+      padding: 0.9rem 1.1rem;
+      background: #1a1a2e;
+      color: #fff;
+      border-radius: 12px 12px 0 0;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+    .budget-preview-body {
+      padding: 0.75rem 1rem;
+      min-height: 120px;
+    }
+    .preview-empty {
+      color: #bbb;
+      font-size: 0.78rem;
+      text-align: center;
+      padding: 2rem 0;
+    }
+    .preview-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.5rem;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid #f5f5f5;
+      font-size: 0.78rem;
+    }
+    .preview-item-name { color: #333; font-weight: 500; flex: 1; min-width: 0; }
+    .preview-item-price { color: #E91E63; font-weight: 700; white-space: nowrap; }
+    .preview-total-block {
+      padding: 0.75rem 0 0.25rem;
+      border-top: 2px solid #eee;
+      margin-top: 0.25rem;
+    }
+    .preview-total-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      padding: 0.2rem 0;
+    }
+    .preview-total-row.main {
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: #1a1a2e;
+    }
+    .preview-total-row.onetime { color: #1565c0; }
+    .preview-total-row .t-val { color: #E91E63; }
+
+    /* Content sections */
+    .content-sections-card {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #eee;
+      padding: 1.25rem;
+      margin-top: 1.25rem;
+    }
+    .content-sections-card h3 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin: 0 0 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid #eee;
+    }
+    .content-field { margin-bottom: 1.1rem; }
+    .content-field label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #555;
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .content-field textarea {
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+      font-size: 0.83rem;
+      font-family: Poppins, sans-serif;
+      color: #1a1a2e;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.15s;
+      box-sizing: border-box;
+    }
+    .content-field textarea:focus { border-color: #E91E63; }
+    .content-field small { font-size: 0.7rem; color: #999; }
+
+    /* Lead selector */
+    .lead-select-card {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #eee;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .lead-select-card h3 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin: 0 0 1rem;
+    }
+    .lead-select-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 600px) { .lead-select-grid { grid-template-columns: 1fr; } }
+
+    select.form-control {
+      width: 100%;
+      padding: 0.55rem 0.8rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.83rem;
+      font-family: Poppins, sans-serif;
+      color: #1a1a2e;
+      background: #fff;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    select.form-control:focus { border-color: #E91E63; }
+
+    .selected-lead-info {
+      margin-top: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: #f0fff4;
+      border-radius: 8px;
+      border: 1px solid #c8e6c9;
+      font-size: 0.8rem;
+      color: #2e7d32;
+      display: none;
+    }
+    .selected-lead-info.visible { display: block; }
+
+    /* Discount preview inside sidebar */
+    .disc-preview {
+      font-size: 0.72rem;
+      color: #2e7d32;
+      background: #e8f5e9;
+      border-radius: 6px;
+      padding: 0.4rem 0.7rem;
+      margin-top: 0.5rem;
+    }
+
+    /* Form actions */
+    .form-actions-sticky {
+      position: sticky;
+      bottom: 0;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(6px);
+      border-top: 1px solid #eee;
+      padding: 0.9rem 0;
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      justify-content: flex-end;
+      z-index: 10;
+    }
+
+    /* Category section label in catalog */
+    .catalog-category-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #999;
+      padding: 0.5rem 0.25rem 0.2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar"></div>
+
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <span class="brand-env">env</span><span class="brand-ox">ox</span>
+        <div class="brand-tagline">ADMIN</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/admin" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="/admin/leads/new" class="nav-item"><span class="nav-icon">➕</span> Novo Lead</a>
+        <a href="/admin/proposals/new" class="nav-item active"><span class="nav-icon">📝</span> Criar Proposta</a>
+        <a href="/admin/planejamentos" class="nav-item"><span class="nav-icon">📋</span> Planejamentos</a>
+        <a href="/admin/services" class="nav-item"><span class="nav-icon">💰</span> Serviços & Preços</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/admin/logout" class="nav-item logout"><span class="nav-icon">🚪</span> Sair</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Criar Proposta</h1>
+          <p class="page-subtitle">Selecione os serviços, ajuste valores e adicione conteúdo para o cliente</p>
+        </div>
+        <a href="/admin" class="btn-outline">← Voltar</a>
+      </div>
+
+      <% if (error) { %>
+        <div class="alert alert-error"><span>⚠️</span> <%= error %></div>
+      <% } %>
+      <% if (success) { %>
+        <div class="alert alert-success"><span>✅</span> <%= success %></div>
+      <% } %>
+
+      <form id="proposalForm" action="/admin/proposals" method="POST">
+
+        <!-- ── Lead selector ── -->
+        <div class="lead-select-card">
+          <h3>👤 Selecionar Lead</h3>
+          <div class="lead-select-grid">
+            <div class="form-group" style="margin:0">
+              <label for="lead_id" style="font-size:0.78rem;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.4px;display:block;margin-bottom:0.35rem">Lead *</label>
+              <select id="lead_id" name="lead_id" class="form-control" required onchange="onLeadChange(this)">
+                <option value="">— Selecione um lead —</option>
+                <% leads.forEach(lead => { %>
+                  <option value="<%= lead.id %>"
+                    data-name="<%= lead.name %>"
+                    data-wa="<%= lead.whatsapp %>"
+                    data-disc-m="<%= lead.discount_monthly || 0 %>"
+                    data-disc-o="<%= lead.discount_onetime || 0 %>"
+                    data-disc-exp="<%= lead.discount_expires || '' %>"
+                    <%= selectedLeadId == lead.id ? 'selected' : '' %>>
+                    <%= lead.name %> — <%= lead.whatsapp %>
+                  </option>
+                <% }) %>
+              </select>
+            </div>
+            <div id="leadInfoBox" class="selected-lead-info">
+              <strong id="leadInfoName"></strong><br>
+              <span id="leadInfoDisc"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Builder grid: catalog + preview ── -->
+        <div class="proposal-builder-grid">
+
+          <!-- LEFT: Services catalog + content sections -->
+          <div>
+            <!-- Services catalog -->
+            <div class="services-catalog">
+              <div class="catalog-header">
+                <h3>🛒 Catálogo de Serviços</h3>
+                <div class="catalog-filter">
+                  <button type="button" class="filter-btn active" onclick="filterCatalog('all', this)">Todos</button>
+                  <button type="button" class="filter-btn" onclick="filterCatalog('monthly', this)">Recorrentes</button>
+                  <button type="button" class="filter-btn" onclick="filterCatalog('onetime', this)">Pontuais</button>
+                </div>
+              </div>
+
+              <div class="catalog-body" id="catalogBody">
+
+                <!-- Monthly services header -->
+                <% const monthlyServices = services.filter(s => s.category === 'monthly' && s.active); %>
+                <% const onetimeServices = services.filter(s => s.category === 'onetime' && s.active); %>
+
+                <% if (monthlyServices.length > 0) { %>
+                  <div class="catalog-category-label" data-cat="monthly">📅 Serviços Recorrentes (mensais)</div>
+                  <% monthlyServices.forEach((svc, i) => { %>
+                    <div class="svc-row" id="svc-row-<%= svc.id %>" data-id="<%= svc.id %>" data-cat="monthly">
+                      <input type="checkbox"
+                             class="svc-check"
+                             id="svc-<%= svc.id %>"
+                             onchange="onSvcToggle(<%= svc.id %>)"
+                             data-name="<%= svc.name.replace(/"/g, '&quot;') %>"
+                             data-desc="<%= (svc.description||'').replace(/"/g, '&quot;') %>"
+                             data-default-price="<%= svc.price %>"
+                             data-unit="<%= svc.unit || '/mês' %>"
+                             data-cat="<%= svc.category %>">
+                      <div class="svc-info">
+                        <div class="svc-name"><%= svc.name %></div>
+                        <% if (svc.description) { %>
+                          <div class="svc-desc"><%= svc.description %></div>
+                        <% } %>
+                      </div>
+                      <span class="svc-badge monthly">mensal</span>
+                      <input type="number"
+                             class="svc-qty-field"
+                             id="qty-<%= svc.id %>"
+                             value="1"
+                             min="1" max="99"
+                             disabled
+                             title="Quantidade"
+                             onchange="updatePreview()"
+                             oninput="updatePreview()">
+                      <input type="number"
+                             class="svc-price-field"
+                             id="price-<%= svc.id %>"
+                             value="<%= svc.price %>"
+                             min="0" step="1"
+                             disabled
+                             title="Preço unitário (R$)"
+                             onchange="updatePreview()"
+                             oninput="updatePreview()">
+                    </div>
+                  <% }) %>
+                <% } %>
+
+                <% if (onetimeServices.length > 0) { %>
+                  <div class="catalog-category-label" data-cat="onetime">💳 Serviços Pontuais (pagamento único)</div>
+                  <% onetimeServices.forEach((svc, i) => { %>
+                    <div class="svc-row" id="svc-row-<%= svc.id %>" data-id="<%= svc.id %>" data-cat="onetime">
+                      <input type="checkbox"
+                             class="svc-check"
+                             id="svc-<%= svc.id %>"
+                             onchange="onSvcToggle(<%= svc.id %>)"
+                             data-name="<%= svc.name.replace(/"/g, '&quot;') %>"
+                             data-desc="<%= (svc.description||'').replace(/"/g, '&quot;') %>"
+                             data-default-price="<%= svc.price %>"
+                             data-unit="<%= svc.unit || 'único' %>"
+                             data-cat="<%= svc.category %>">
+                      <div class="svc-info">
+                        <div class="svc-name"><%= svc.name %></div>
+                        <% if (svc.description) { %>
+                          <div class="svc-desc"><%= svc.description %></div>
+                        <% } %>
+                      </div>
+                      <span class="svc-badge onetime">único</span>
+                      <input type="number"
+                             class="svc-qty-field"
+                             id="qty-<%= svc.id %>"
+                             value="1"
+                             min="1" max="99"
+                             disabled
+                             title="Quantidade"
+                             onchange="updatePreview()"
+                             oninput="updatePreview()">
+                      <input type="number"
+                             class="svc-price-field"
+                             id="price-<%= svc.id %>"
+                             value="<%= svc.price %>"
+                             min="0" step="1"
+                             disabled
+                             title="Preço unitário (R$)"
+                             onchange="updatePreview()"
+                             oninput="updatePreview()">
+                    </div>
+                  <% }) %>
+                <% } %>
+
+                <% if (services.length === 0) { %>
+                  <div style="text-align:center;padding:2rem;color:#bbb;font-size:0.82rem">
+                    Nenhum serviço cadastrado.<br>
+                    <a href="/admin/services" style="color:#E91E63">Cadastrar serviços →</a>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+
+            <!-- Content sections -->
+            <div class="content-sections-card">
+              <h3>📝 Conteúdo da Proposta (opcional)</h3>
+
+              <div class="content-field">
+                <label for="proposal_description">📄 Descrição</label>
+                <textarea id="proposal_description" name="proposal_description"
+                  rows="4"
+                  placeholder="Descreva a proposta de forma geral. Ex: Esta proposta foi preparada especialmente para a empresa X, com foco em crescimento orgânico e aumento de conversões no digital..."><%= formData ? formData.proposal_description || '' : '' %></textarea>
+                <small>Apresentação geral da proposta para o cliente</small>
+              </div>
+
+              <div class="content-field">
+                <label for="proposal_scope">🎯 Escopo</label>
+                <textarea id="proposal_scope" name="proposal_scope"
+                  rows="4"
+                  placeholder="Liste o que está incluído no escopo. Ex:&#10;• Gestão completa das redes sociais&#10;• 9 posts mensais (feed + stories)&#10;• Relatório mensal de performance..."><%= formData ? formData.proposal_scope || '' : '' %></textarea>
+                <small>O que está incluído no escopo desta proposta</small>
+              </div>
+
+              <div class="content-field">
+                <label for="proposal_timeline">📅 Cronograma</label>
+                <textarea id="proposal_timeline" name="proposal_timeline"
+                  rows="4"
+                  placeholder="Descreva o cronograma ou prazos. Ex:&#10;• Semana 1: Onboarding e reunião de briefing&#10;• Semana 2: Criação dos primeiros conteúdos&#10;• Mês 1: Campanha piloto rodando..."><%= formData ? formData.proposal_timeline || '' : '' %></textarea>
+                <small>Prazos, etapas e cronograma de entrega</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Budget preview sidebar -->
+          <div>
+            <div class="budget-preview">
+              <div class="budget-preview-header">
+                📊 Resumo do Orçamento
+              </div>
+              <div class="budget-preview-body" id="budgetPreviewBody">
+                <p class="preview-empty">Selecione serviços ao lado para montar o orçamento</p>
+              </div>
+              <div style="padding:0 1rem 1rem">
+                <div id="discountPreviewBlock" style="display:none">
+                  <div class="disc-preview" id="discountPreviewText"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hidden inputs will be injected here by JS before submit -->
+            <div id="hiddenItemsContainer"></div>
+          </div>
+        </div>
+
+        <!-- Sticky footer actions -->
+        <div class="form-actions-sticky">
+          <a href="/admin" class="btn-outline">Cancelar</a>
+          <button type="button" class="btn-outline" onclick="previewProposal()" id="btnPreview" style="display:none">
+            👁️ Ver Proposta
+          </button>
+          <button type="submit" class="btn-primary" id="btnSave">
+            💾 Salvar Proposta
+          </button>
+        </div>
+
+      </form>
+    </main>
+  </div>
+
+  <!-- DATA from server -->
+  <script>
+    // Services data from DB (for JS use)
+    const SERVICES_DATA = <%- JSON.stringify(services) %>;
+    const LEADS_DATA    = <%- JSON.stringify(leads) %>;
+    let currentLeadDiscount = { monthly: 0, onetime: 0, expires: '' };
+  </script>
+
+  <script>
+    // ── Lead selector ─────────────────────────────────────────────────
+    function onLeadChange(sel) {
+      const opt = sel.options[sel.selectedIndex];
+      const infoBox = document.getElementById('leadInfoBox');
+      const infoName = document.getElementById('leadInfoName');
+      const infoDisc = document.getElementById('leadInfoDisc');
+      const discBlock = document.getElementById('discountPreviewBlock');
+      const discText  = document.getElementById('discountPreviewText');
+      const btnPreview = document.getElementById('btnPreview');
+
+      if (!opt || !opt.value) {
+        infoBox.classList.remove('visible');
+        currentLeadDiscount = { monthly: 0, onetime: 0, expires: '' };
+        discBlock.style.display = 'none';
+        btnPreview.style.display = 'none';
+        return;
+      }
+
+      const discM   = parseFloat(opt.dataset.discM) || 0;
+      const discO   = parseFloat(opt.dataset.discO) || 0;
+      const discExp = opt.dataset.discExp || '';
+      currentLeadDiscount = { monthly: discM, onetime: discO, expires: discExp };
+
+      infoName.textContent = opt.dataset.name || '';
+      let discStr = '';
+      let discActive = (discM > 0 || discO > 0);
+      if (discActive && discExp) {
+        const exp = new Date(discExp + 'T23:59:59');
+        if (exp < new Date()) { discActive = false; discStr = '⚠️ Desconto expirado'; }
+      }
+      if (discActive) {
+        const parts = [];
+        if (discM > 0) parts.push(`${discM}% em mensais`);
+        if (discO > 0) parts.push(`${discO}% em pontuais`);
+        discStr = '✅ Desconto: ' + parts.join(' · ');
+        if (discExp) discStr += ` (válido até ${discExp})`;
+        discBlock.style.display = 'block';
+        discText.textContent = discStr;
+      } else {
+        discBlock.style.display = 'none';
+      }
+
+      infoDisc.textContent = discStr;
+      infoBox.classList.add('visible');
+      btnPreview.style.display = sel.value ? 'inline-flex' : 'none';
+      updatePreview();
+    }
+
+    // ── Toggle service checkbox ───────────────────────────────────────
+    function onSvcToggle(svcId) {
+      const chk   = document.getElementById('svc-' + svcId);
+      const row   = document.getElementById('svc-row-' + svcId);
+      const priceF = document.getElementById('price-' + svcId);
+      const qtyF   = document.getElementById('qty-' + svcId);
+
+      const checked = chk.checked;
+      row.classList.toggle('selected', checked);
+      priceF.disabled = !checked;
+      qtyF.disabled   = !checked;
+
+      if (checked) {
+        // Reset price to default when first checked
+        priceF.value = chk.dataset.defaultPrice;
+        qtyF.value   = 1;
+        priceF.focus();
+      }
+      updatePreview();
+    }
+
+    // ── Catalog filter ────────────────────────────────────────────────
+    function filterCatalog(cat, btn) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      document.querySelectorAll('.svc-row').forEach(row => {
+        if (cat === 'all' || row.dataset.cat === cat) {
+          row.classList.remove('hidden-filter');
+        } else {
+          row.classList.add('hidden-filter');
+        }
+      });
+      // Show/hide category labels
+      document.querySelectorAll('.catalog-category-label').forEach(lbl => {
+        if (cat === 'all' || lbl.dataset.cat === cat) {
+          lbl.style.display = '';
+        } else {
+          lbl.style.display = 'none';
+        }
+      });
+    }
+
+    // ── Update budget preview ─────────────────────────────────────────
+    function fmtBRL(v) {
+      return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+
+    function updatePreview() {
+      const previewBody = document.getElementById('budgetPreviewBody');
+      const checkedBoxes = document.querySelectorAll('.svc-check:checked');
+
+      if (checkedBoxes.length === 0) {
+        previewBody.innerHTML = '<p class="preview-empty">Selecione serviços ao lado para montar o orçamento</p>';
+        return;
+      }
+
+      let monthlyTotal = 0;
+      let onetimeTotal = 0;
+      let html = '';
+
+      checkedBoxes.forEach(chk => {
+        const svcId = chk.id.replace('svc-', '');
+        const priceF = document.getElementById('price-' + svcId);
+        const qtyF   = document.getElementById('qty-' + svcId);
+        const price  = parseFloat(priceF?.value) || 0;
+        const qty    = parseInt(qtyF?.value) || 1;
+        const total  = price * qty;
+        const cat    = chk.dataset.cat;
+        const name   = chk.dataset.name;
+        const unit   = chk.dataset.unit;
+
+        if (cat === 'onetime') onetimeTotal += total;
+        else monthlyTotal += total;
+
+        html += `<div class="preview-item">
+          <span class="preview-item-name">${name}${qty > 1 ? ' ×' + qty : ''}</span>
+          <span class="preview-item-price">${fmtBRL(total)}</span>
+        </div>`;
+      });
+
+      // Totals
+      const discM = currentLeadDiscount.monthly || 0;
+      const discO = currentLeadDiscount.onetime  || 0;
+      let discActive = (discM > 0 || discO > 0);
+      if (currentLeadDiscount.expires) {
+        const exp = new Date(currentLeadDiscount.expires + 'T23:59:59');
+        if (exp < new Date()) discActive = false;
+      }
+
+      html += '<div class="preview-total-block">';
+      if (monthlyTotal > 0) {
+        html += `<div class="preview-total-row main">
+          <span>Mensal</span>
+          <span class="t-val">${fmtBRL(monthlyTotal)}<span style="font-size:0.65rem;opacity:0.6">/mês</span></span>
+        </div>`;
+        if (discActive && discM > 0) {
+          const after = Math.round(monthlyTotal * (1 - discM / 100));
+          html += `<div class="preview-total-row" style="font-size:0.72rem;color:#2e7d32">
+            <span>Com ${discM}% desc.</span>
+            <span>${fmtBRL(after)}/mês</span>
+          </div>`;
+        }
+      }
+      if (onetimeTotal > 0) {
+        html += `<div class="preview-total-row onetime main">
+          <span>Único</span>
+          <span class="t-val" style="color:#1565c0">${fmtBRL(onetimeTotal)}</span>
+        </div>`;
+        if (discActive && discO > 0) {
+          const after = Math.round(onetimeTotal * (1 - discO / 100));
+          html += `<div class="preview-total-row" style="font-size:0.72rem;color:#2e7d32">
+            <span>Com ${discO}% desc.</span>
+            <span>${fmtBRL(after)}</span>
+          </div>`;
+        }
+      }
+      html += '</div>';
+
+      previewBody.innerHTML = html;
+    }
+
+    // ── Inject hidden fields for selected items before submit ─────────
+    document.getElementById('proposalForm').addEventListener('submit', function(e) {
+      const leadSel = document.getElementById('lead_id');
+      if (!leadSel.value) {
+        e.preventDefault();
+        alert('Por favor, selecione um lead.');
+        return;
+      }
+
+      // Build items JSON
+      const items = [];
+      document.querySelectorAll('.svc-check:checked').forEach(chk => {
+        const svcId = chk.id.replace('svc-', '');
+        const priceF = document.getElementById('price-' + svcId);
+        const qtyF   = document.getElementById('qty-' + svcId);
+        const svc = SERVICES_DATA.find(s => s.id == svcId);
+
+        items.push({
+          service_id: parseInt(svcId),
+          name: chk.dataset.name,
+          description: chk.dataset.desc,
+          price: parseFloat(priceF?.value) || 0,
+          qty: parseInt(qtyF?.value) || 1,
+          unit: chk.dataset.unit,
+          category: chk.dataset.cat,
+          sort_order: items.length
+        });
+      });
+
+      // Inject as hidden input
+      const container = document.getElementById('hiddenItemsContainer');
+      container.innerHTML = '';
+      const hiddenItems = document.createElement('input');
+      hiddenItems.type  = 'hidden';
+      hiddenItems.name  = 'proposal_items';
+      hiddenItems.value = JSON.stringify(items);
+      container.appendChild(hiddenItems);
+    });
+
+    // ── Preview button: opens lead's proposal in new tab ─────────────
+    function previewProposal() {
+      const leadId = document.getElementById('lead_id').value;
+      if (!leadId) return;
+      const lead = LEADS_DATA.find(l => l.id == leadId);
+      if (!lead || !lead.token) {
+        alert('Lead sem token de proposta gerado ainda.');
+        return;
+      }
+      // Open admin direct preview with a flash message
+      window.open('/admin/proposals/preview?lead_id=' + leadId, '_blank');
+    }
+
+    // Init: trigger lead change if pre-selected
+    const preSelected = document.getElementById('lead_id').value;
+    if (preSelected) onLeadChange(document.getElementById('lead_id'));
+  </script>
+</body>
+</html>

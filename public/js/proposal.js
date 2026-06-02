@@ -1,178 +1,168 @@
 /**
- * proposal.js — Navegação de Slides da Proposta Envox
+ * proposal.js — Step-by-step vertical page navigation
+ * Scrolls to each page-section, tracks current slide, updates progress/dots
  */
-(function() {
+(function () {
   'use strict';
 
-  const totalSlides = window.TOTAL_SLIDES || 11;
-  const slideTitles = window.SLIDE_TITLES || [];
-  
-  let currentIndex  = 0;
-  let isAnimating   = false;
+  const totalSlides  = window.TOTAL_SLIDES || 12;
+  const slideTitles  = window.SLIDE_TITLES || [];
 
-  // DOM Elements
-  const btnPrev       = document.getElementById('btnPrev');
-  const btnNext       = document.getElementById('btnNext');
-  const navDots       = document.querySelectorAll('.dot');
+  let currentIndex   = 0;
+  let isScrolling    = false;
+  let scrollTimeout  = null;
+  let titleTimeout   = null;
+
+  // DOM
+  const container     = document.getElementById('pagesContainer');
   const progressFill  = document.getElementById('progressFill');
   const slideCountEl  = document.getElementById('currentSlideNum');
   const slideTitleEl  = document.getElementById('slideTitleText');
+  const titleToast    = document.getElementById('slideTitleToast');
+  const btnPrev       = document.getElementById('btnPrev');
+  const btnNext       = document.getElementById('btnNext');
+  const stepDots      = document.querySelectorAll('.step-dot');
 
-  // ====== SHOW SLIDE ======
-  function showSlide(index, direction) {
-    if (isAnimating) return;
-    if (index < 0 || index >= totalSlides) return;
-    
-    isAnimating = true;
-    
-    // Hide current
-    const currentSlide = document.querySelector(`.slide[data-index="${currentIndex}"]`);
-    if (currentSlide) {
-      currentSlide.style.display = 'none';
-    }
-    
-    // Show new
-    const newSlide = document.querySelector(`.slide[data-index="${index}"]`);
-    if (newSlide) {
-      newSlide.style.display = 'flex';
-      newSlide.style.animation = 'none';
-      newSlide.offsetHeight; // reflow
-      
-      if (direction === 'back') {
-        newSlide.classList.add('going-back');
-        newSlide.style.animation = '';
-      } else {
-        newSlide.classList.remove('going-back');
-        newSlide.style.animation = '';
-      }
-    }
-    
-    const prevIndex = currentIndex;
-    currentIndex = index;
-    
-    // Update UI
-    updateUI();
-    
-    // Track slide
-    if (window.Tracking) {
-      window.Tracking.trackSlide(index + 1);
-    }
-    
-    setTimeout(() => {
-      isAnimating = false;
-      if (newSlide) {
-        newSlide.classList.remove('going-back');
-      }
-    }, 350);
+  // ── Get all page sections ──────────────────────────────────────────
+  function getPages() {
+    return Array.from(document.querySelectorAll('.page-section'));
   }
 
-  function updateUI() {
-    const slideNum = currentIndex + 1;
-    const progress = (slideNum / totalSlides) * 100;
-    
+  // ── Scroll to a specific page ─────────────────────────────────────
+  function scrollToSlide(index) {
+    const pages = getPages();
+    if (index < 0 || index >= pages.length) return;
+    const target = pages[index];
+    if (!target) return;
+
+    isScrolling = true;
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      isScrolling = false;
+    }, 700);
+
+    setCurrentIndex(index);
+  }
+  window.scrollToSlide = scrollToSlide;
+
+  // ── Navigate relative to current ──────────────────────────────────
+  function navigatePage(delta) {
+    const pages = getPages();
+    const next = currentIndex + delta;
+    if (next >= 0 && next < pages.length) {
+      scrollToSlide(next);
+    }
+  }
+  window.navigatePage = navigatePage;
+
+  // ── Update UI for current index ───────────────────────────────────
+  function setCurrentIndex(idx) {
+    currentIndex = idx;
+    const slideNum  = idx + 1;
+    const progress  = (slideNum / totalSlides) * 100;
+
     // Progress bar
     if (progressFill) progressFill.style.width = progress + '%';
-    
+
     // Counter
     if (slideCountEl) slideCountEl.textContent = slideNum;
-    
-    // Title
-    if (slideTitleEl && slideTitles[currentIndex]) {
-      slideTitleEl.textContent = slideTitles[currentIndex];
+
+    // Title toast
+    if (slideTitleEl && slideTitles[idx]) {
+      slideTitleEl.textContent = slideTitles[idx];
     }
-    
-    // Buttons
-    if (btnPrev) btnPrev.disabled = currentIndex === 0;
-    if (btnNext) btnNext.disabled = currentIndex === totalSlides - 1;
-    
-    // Dots
-    navDots.forEach((dot, i) => {
-      dot.classList.toggle('dot-active', i === currentIndex);
+    showTitleToast();
+
+    // Prev/Next buttons
+    if (btnPrev) btnPrev.disabled = idx === 0;
+    if (btnNext) btnNext.disabled = idx === totalSlides - 1;
+
+    // Step dots
+    stepDots.forEach((dot, i) => {
+      dot.classList.toggle('step-dot-active',   i === idx);
+      dot.classList.toggle('step-dot-visited',  i < idx);
     });
+
+    // Track slide
+    if (window.Tracking) {
+      window.Tracking.trackSlide(slideNum);
+    }
   }
 
-  // ====== NAVIGATION EVENTS ======
-  if (btnNext) {
-    btnNext.addEventListener('click', () => {
-      if (currentIndex < totalSlides - 1) {
-        showSlide(currentIndex + 1, 'forward');
-      }
-    });
+  // ── Show title toast briefly ──────────────────────────────────────
+  function showTitleToast() {
+    if (!titleToast) return;
+    titleToast.classList.add('toast-visible');
+    clearTimeout(titleTimeout);
+    titleTimeout = setTimeout(() => {
+      titleToast.classList.remove('toast-visible');
+    }, 2200);
   }
 
-  if (btnPrev) {
-    btnPrev.addEventListener('click', () => {
-      if (currentIndex > 0) {
-        showSlide(currentIndex - 1, 'back');
-      }
+  // ── IntersectionObserver: detect which section is in view ─────────
+  function initObserver() {
+    const pages = getPages();
+    if (!pages.length) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      if (isScrolling) return;
+      entries.forEach(entry => {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.35) {
+          const idx = parseInt(entry.target.dataset.index, 10);
+          if (!isNaN(idx) && idx !== currentIndex) {
+            setCurrentIndex(idx);
+          }
+        }
+      });
+    }, {
+      root: null,
+      rootMargin: '-15% 0px -15% 0px',
+      threshold: [0.35]
     });
+
+    pages.forEach(p => observer.observe(p));
   }
 
-  // Dot navigation
-  navDots.forEach((dot, i) => {
-    dot.addEventListener('click', () => {
-      if (i !== currentIndex) {
-        showSlide(i, i > currentIndex ? 'forward' : 'back');
-      }
-    });
-  });
-
-  // ====== KEYBOARD NAVIGATION ======
+  // ── Keyboard navigation ───────────────────────────────────────────
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+    const active = document.activeElement;
+    // Don't hijack if user is typing in an input/textarea/select
+    if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) return;
+
+    if (e.key === 'ArrowDown' || e.key === 'PageDown') {
       e.preventDefault();
-      if (currentIndex < totalSlides - 1) showSlide(currentIndex + 1, 'forward');
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      navigatePage(1);
+    } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
       e.preventDefault();
-      if (currentIndex > 0) showSlide(currentIndex - 1, 'back');
+      navigatePage(-1);
     }
   });
 
-  // ====== TOUCH/SWIPE NAVIGATION ======
-  let touchStartX = 0;
+  // ── Touch swipe (vertical) ────────────────────────────────────────
   let touchStartY = 0;
-
-  document.addEventListener('touchstart', (e) => {
-    touchStartX = e.touches[0].clientX;
+  document.addEventListener('touchstart', e => {
     touchStartY = e.touches[0].clientY;
   }, { passive: true });
 
-  document.addEventListener('touchend', (e) => {
-    const dx = e.changedTouches[0].clientX - touchStartX;
+  document.addEventListener('touchend', e => {
     const dy = e.changedTouches[0].clientY - touchStartY;
-
-    // Only horizontal swipes
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
-      if (dx < 0 && currentIndex < totalSlides - 1) {
-        showSlide(currentIndex + 1, 'forward');
-      } else if (dx > 0 && currentIndex > 0) {
-        showSlide(currentIndex - 1, 'back');
-      }
+    if (Math.abs(dy) > 60) {
+      navigatePage(dy < 0 ? 1 : -1);
     }
   }, { passive: true });
 
-  // ====== MOUSE WHEEL ======
-  let wheelTimeout;
-  document.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    clearTimeout(wheelTimeout);
-    wheelTimeout = setTimeout(() => {
-      if (e.deltaY > 30 && currentIndex < totalSlides - 1) {
-        showSlide(currentIndex + 1, 'forward');
-      } else if (e.deltaY < -30 && currentIndex > 0) {
-        showSlide(currentIndex - 1, 'back');
-      }
-    }, 50);
-  }, { passive: false });
-
-  // ====== INIT ======
+  // ── Init ──────────────────────────────────────────────────────────
   function init() {
-    updateUI();
-    
-    // Initial track (slide 1)
+    setCurrentIndex(0);
+    initObserver();
+
+    // Show title on load
+    setTimeout(showTitleToast, 600);
+
     if (window.Tracking) {
-      // Tracking is initialized in tracking.js
-      console.log('[Proposal] Slide viewer initialized');
+      console.log('[Proposal] Step-by-step viewer initialized');
     }
   }
 

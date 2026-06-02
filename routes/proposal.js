@@ -82,9 +82,19 @@ router.get('/:token/view', (req, res) => {
       !req.session.authenticatedTokens.includes(token)) {
     return res.redirect(`/proposta/${token}`);
   }
+
+  // Attach proposal items and content fields to the lead object
+  const proposalItems = db.getProposalItemsByLead(lead.id);
+  const enrichedLead  = {
+    ...lead,
+    proposal_items:       proposalItems.length > 0 ? proposalItems : null,
+    proposal_description: lead.proposal_description || null,
+    proposal_scope:       lead.proposal_scope       || null,
+    proposal_timeline:    lead.proposal_timeline     || null,
+  };
   
   res.render('proposal/viewer', { 
-    lead, 
+    lead:   enrichedLead, 
     slides,
     token
   });

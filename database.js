@@ -214,11 +214,32 @@ function initDatabase() {
     )
   `);
 
+  // ── TABELA: proposal_items ─────────────────────────────────────────
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS proposal_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      lead_id INTEGER NOT NULL,
+      service_id INTEGER,
+      name TEXT NOT NULL,
+      description TEXT DEFAULT '',
+      price REAL NOT NULL DEFAULT 0,
+      qty INTEGER NOT NULL DEFAULT 1,
+      unit TEXT DEFAULT '/mês',
+      category TEXT DEFAULT 'monthly',
+      sort_order INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (lead_id) REFERENCES leads(id)
+    )
+  `);
+
   // ── MIGRAÇÕES ─────────────────────────────────────────────────────
   try { database.exec(`ALTER TABLE access_sessions ADD COLUMN alert_sent INTEGER DEFAULT 0`); } catch(e) {}
   try { database.exec(`ALTER TABLE leads ADD COLUMN discount_monthly REAL DEFAULT 0`); } catch(e) {}
   try { database.exec(`ALTER TABLE leads ADD COLUMN discount_onetime REAL DEFAULT 0`); } catch(e) {}
   try { database.exec(`ALTER TABLE leads ADD COLUMN discount_expires TEXT`); } catch(e) {}
+  try { database.exec(`ALTER TABLE leads ADD COLUMN proposal_description TEXT`); } catch(e) {}
+  try { database.exec(`ALTER TABLE leads ADD COLUMN proposal_scope TEXT`); } catch(e) {}
+  try { database.exec(`ALTER TABLE leads ADD COLUMN proposal_timeline TEXT`); } catch(e) {}
 
   console.log('✅ Banco de dados inicializado com sucesso');
 }
@@ -497,10 +518,58 @@ function updateLeadDiscount(id, discountMonthly, discountOnetime, discountExpire
   );
 }
 
+// ══════════════════════════════════════════════════════════
+// PROPOSAL ITEMS
+// ══════════════════════════════════════════════════════════
+function saveProposalItems(leadId, items) {
+  const database = getDb();
+  // Delete existing items for this lead before re-inserting
+  database.prepare(`DELETE FROM proposal_items WHERE lead_id = ?`).run(leadId);
+  if (!items || items.length === 0) return;
+  const ins = database.prepare(`
+    INSERT INTO proposal_items (lead_id, service_id, name, description, price, qty, unit, category, sort_order)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  const insertMany = database.transaction((rows) => {
+    rows.forEach((item, idx) => {
+      ins.run(
+        leadId,
+        item.service_id || null,
+        item.name || '',
+        item.description || '',
+        parseFloat(item.price) || 0,
+        parseInt(item.qty) || 1,
+        item.unit || '/mês',
+        item.category || 'monthly',
+        item.sort_order != null ? item.sort_order : idx
+      );
+    });
+  });
+  insertMany(items);
+}
+
+function getProposalItemsByLead(leadId) {
+  return getDb().prepare(`
+    SELECT * FROM proposal_items WHERE lead_id = ? ORDER BY sort_order, id
+  `).all(leadId);
+}
+
+function deleteProposalItems(leadId) {
+  getDb().prepare(`DELETE FROM proposal_items WHERE lead_id = ?`).run(leadId);
+}
+
+function updateLeadProposalContent(leadId, description, scope, timeline) {
+  getDb().prepare(`
+    UPDATE leads SET proposal_description=?, proposal_scope=?, proposal_timeline=? WHERE id=?
+  `).run(description||null, scope||null, timeline||null, leadId);
+}
+
 module.exports = {
   getDb,
   // Leads
   createLead, getLeadById, getLeadByToken, getAllLeads, getLeadStats, updateLeadDiscount,
+  // Proposal Items & Content
+  saveProposalItems, getProposalItemsByLead, deleteProposalItems, updateLeadProposalContent,
   // Sessions
   createSession, closeSession, getSessionById, markSessionAlertSent,
   // Slide Events
