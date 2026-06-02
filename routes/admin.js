@@ -6,6 +6,7 @@ const { requireAdmin } = require('../middleware/auth');
 const { calculateInterestLevel, getInterestLabel } = require('../services/interest');
 const { sendWhatsAppAlert, buildAlertData } = require('../services/whatsapp');
 const { getInviteMessage, getFollowupMessage, buildWhatsAppLink } = require('../services/invites');
+const emailService = require('../services/email');
 
 // ══ LOGIN ════════════════════════════════════════════════
 router.get('/login', (req, res) => {
@@ -26,6 +27,33 @@ router.post('/login', (req, res) => {
 router.get('/logout', (req, res) => {
   req.session.destroy();
   res.redirect('/admin/login');
+});
+
+// ══ EMAIL TEST ═══════════════════════════════════════════
+// GET /admin/email-test — verifica conexão SMTP
+router.get('/email-test', requireAdmin, async (req, res) => {
+  const verify = await emailService.verifyConnection();
+  return res.json({
+    configured: emailService.isConfigured(),
+    smtp_verify: verify,
+    config: {
+      host: process.env.EMAIL_HOST || '(não definido)',
+      port: process.env.EMAIL_PORT || '(não definido)',
+      user: process.env.EMAIL_USER || '(não definido)',
+      pass: process.env.EMAIL_PASS ? '✓ definido' : '✗ não definido',
+      from: process.env.EMAIL_FROM || '(não definido)',
+    }
+  });
+});
+
+// POST /admin/email-test — envia email de teste para o endereço informado
+router.post('/email-test', requireAdmin, async (req, res) => {
+  const to = (req.body.to || '').trim();
+  if (!to || !to.includes('@')) {
+    return res.json({ ok: false, error: 'Email de destino inválido' });
+  }
+  const result = await emailService.sendTestEmail(to);
+  return res.json(result);
 });
 
 // ══ DASHBOARD ════════════════════════════════════════════
@@ -278,12 +306,13 @@ router.post('/proposals', requireAdmin, async (req, res) => {
 
     // Mark proposal as sent and notify via email
     db.markProposalSent(leadId);
-    try {
-      const emailService = require('../services/email');
-      await emailService.sendProposalNotification(lead);
-    } catch(emailErr) {
-      console.warn('[Proposals] Email notification failed (non-fatal):', emailErr.message);
-    }
+    emailService.sendProposalNotification(lead).then(result => {
+      if (result.ok) {
+        console.log(`[Proposals] Email enviado para ${lead.email}`);
+      } else if (!result.skipped) {
+        console.warn(`[Proposals] Email falhou para ${lead.email}:`, result.error);
+      }
+    }).catch(e => console.warn('[Proposals] Email exception:', e.message));
 
     db.logEvent(leadId, null, 'proposal_created', { mode, items_count: items.length });
 

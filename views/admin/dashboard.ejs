@@ -57,6 +57,29 @@
         </div>
       </div>
       
+      <!-- Email Test Panel -->
+      <div class="table-card" style="margin-bottom:1.5rem" id="emailTestPanel">
+        <div class="table-header" style="cursor:pointer;user-select:none" onclick="toggleEmailPanel()">
+          <h2>📧 Testar Configuração de Email</h2>
+          <span style="font-size:0.78rem;color:#888" id="emailPanelToggle">▼ expandir</span>
+        </div>
+        <div id="emailPanelBody" style="display:none;padding:1rem 1.25rem;border-top:1px solid #f0f0f0">
+          <div style="display:grid;grid-template-columns:1fr auto auto;gap:0.75rem;align-items:center;max-width:560px">
+            <input type="email" id="emailTestTo" placeholder="email para teste ex: gustavo@envox.com.br"
+              style="padding:0.55rem 0.85rem;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.83rem;font-family:Poppins,sans-serif;outline:none">
+            <button onclick="checkSmtp()"
+              style="padding:0.55rem 1rem;border:1.5px solid #1a1a2e;background:#1a1a2e;color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:Poppins,sans-serif;white-space:nowrap">
+              🔍 Testar Conexão
+            </button>
+            <button onclick="sendTestEmail()"
+              style="padding:0.55rem 1rem;border:1.5px solid #E91E63;background:#E91E63;color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:Poppins,sans-serif;white-space:nowrap">
+              📤 Enviar Teste
+            </button>
+          </div>
+          <div id="emailTestResult" style="margin-top:0.85rem;font-size:0.82rem;display:none;padding:0.75rem 1rem;border-radius:8px"></div>
+        </div>
+      </div>
+
       <!-- Leads Table -->
       <div class="table-card">
         <div class="table-header">
@@ -243,6 +266,71 @@
       form.appendChild(input);
       document.body.appendChild(form);
       form.submit();
+    }
+
+    // ── Email Test Panel ────────────────────────────────────────────
+    function toggleEmailPanel() {
+      const body   = document.getElementById('emailPanelBody');
+      const toggle = document.getElementById('emailPanelToggle');
+      const open   = body.style.display === 'none';
+      body.style.display  = open ? 'block' : 'none';
+      toggle.textContent  = open ? '▲ recolher' : '▼ expandir';
+    }
+
+    function showEmailResult(msg, ok) {
+      const el = document.getElementById('emailTestResult');
+      el.style.display    = 'block';
+      el.style.background = ok ? 'rgba(46,125,50,0.08)'  : 'rgba(220,38,38,0.08)';
+      el.style.border     = ok ? '1.5px solid rgba(46,125,50,0.25)' : '1.5px solid rgba(220,38,38,0.25)';
+      el.style.color      = ok ? '#2e7d32' : '#b71c1c';
+      el.innerHTML        = msg;
+    }
+
+    async function checkSmtp() {
+      showEmailResult('🔄 Verificando conexão SMTP...', true);
+      try {
+        const r = await fetch('/admin/email-test');
+        const d = await r.json();
+        if (d.smtp_verify && d.smtp_verify.ok) {
+          showEmailResult(`✅ <strong>Conexão OK!</strong> SMTP pronto para enviar.<br>
+            <small style="opacity:0.7">Host: ${d.config.host} · Porta: ${d.config.port} · User: ${d.config.user}</small>`, true);
+        } else {
+          const err = d.smtp_verify ? d.smtp_verify.error : 'Credenciais não configuradas';
+          showEmailResult(`❌ <strong>Falha na conexão:</strong> ${err}<br>
+            <small style="opacity:0.7">Verifique EMAIL_HOST, EMAIL_PORT, EMAIL_USER e EMAIL_PASS no .env</small>`, false);
+        }
+      } catch(e) {
+        showEmailResult('❌ Erro ao chamar rota de teste: ' + e.message, false);
+      }
+    }
+
+    async function sendTestEmail() {
+      const to = document.getElementById('emailTestTo').value.trim();
+      if (!to || !to.includes('@')) {
+        showEmailResult('⚠️ Informe um endereço de email válido no campo acima.', false);
+        return;
+      }
+      showEmailResult(`🔄 Enviando email de teste para <strong>${to}</strong>...`, true);
+      try {
+        const r = await fetch('/admin/email-test', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to })
+        });
+        const d = await r.json();
+        if (d.ok) {
+          showEmailResult(`✅ <strong>Email enviado com sucesso!</strong><br>
+            Verifique a caixa de entrada de <strong>${to}</strong>.<br>
+            <small style="opacity:0.7">MessageId: ${d.messageId || '—'} | ${d.response || ''}</small>`, true);
+        } else if (d.skipped) {
+          showEmailResult('⚠️ Email não enviado — credenciais SMTP não configuradas no .env', false);
+        } else {
+          showEmailResult(`❌ <strong>Falha no envio:</strong> ${d.error || 'erro desconhecido'}<br>
+            <small style="opacity:0.7">Código: ${d.code || '—'}</small>`, false);
+        }
+      } catch(e) {
+        showEmailResult('❌ Erro ao chamar rota de envio: ' + e.message, false);
+      }
     }
   </script>
 </body>
