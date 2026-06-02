@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editar Proposta — <%= lead.name %> — Envox Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .proposal-builder-grid { display:grid;grid-template-columns:1fr 300px;gap:1.5rem;align-items:start; }
+    @media(max-width:900px){.proposal-builder-grid{grid-template-columns:1fr;}}
+    .services-catalog{background:#fff;border-radius:12px;border:1px solid #eee;overflow:hidden;}
+    .catalog-header{padding:1rem 1.25rem;background:#f8f9fa;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;gap:1rem;}
+    .catalog-header h3{font-size:0.9rem;font-weight:700;color:#1a1a2e;margin:0;}
+    .catalog-filter{display:flex;gap:0.5rem;}
+    .filter-btn{padding:0.25rem 0.75rem;border:1px solid #ddd;border-radius:20px;background:#fff;font-size:0.72rem;font-weight:600;color:#666;cursor:pointer;transition:all 0.15s;font-family:Poppins,sans-serif;}
+    .filter-btn.active,.filter-btn:hover{background:#1a1a2e;color:#fff;border-color:#1a1a2e;}
+    .catalog-body{padding:0.75rem;display:flex;flex-direction:column;gap:0.5rem;}
+    .svc-row{display:grid;grid-template-columns:24px 1fr auto auto auto;align-items:center;gap:0.75rem;padding:0.65rem 0.75rem;border-radius:8px;border:1.5px solid #eee;background:#fafafa;transition:all 0.15s;}
+    .svc-row:hover{border-color:#E91E63;background:#fff;}
+    .svc-row.selected{border-color:#E91E63;background:#fff9fb;}
+    .svc-row.hidden-filter{display:none;}
+    .svc-check{width:18px;height:18px;accent-color:#E91E63;cursor:pointer;flex-shrink:0;}
+    .svc-info{min-width:0;}
+    .svc-name{font-size:0.82rem;font-weight:600;color:#1a1a2e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .svc-desc{font-size:0.7rem;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .svc-badge{font-size:0.65rem;font-weight:700;padding:2px 7px;border-radius:10px;flex-shrink:0;}
+    .svc-badge.monthly{background:#e8f5e9;color:#2e7d32;}
+    .svc-badge.onetime{background:#e3f2fd;color:#1565c0;}
+    .svc-price-field,.svc-qty-field{width:72px;padding:0.3rem 0.45rem;border:1px solid #ddd;border-radius:6px;font-size:0.75rem;font-family:Poppins,sans-serif;text-align:right;background:#fff;color:#1a1a2e;outline:none;transition:border-color 0.15s;}
+    .svc-price-field:focus,.svc-qty-field:focus{border-color:#E91E63;}
+    .svc-qty-field{width:46px;text-align:center;}
+    .svc-price-field:disabled,.svc-qty-field:disabled{background:#f5f5f5;color:#bbb;cursor:not-allowed;}
+    .budget-preview{background:#fff;border-radius:12px;border:1px solid #eee;position:sticky;top:80px;}
+    .budget-preview-header{padding:0.9rem 1.1rem;background:#1a1a2e;color:#fff;border-radius:12px 12px 0 0;font-size:0.82rem;font-weight:700;}
+    .budget-preview-body{padding:0.75rem 1rem;min-height:100px;}
+    .preview-empty{color:#bbb;font-size:0.78rem;text-align:center;padding:2rem 0;}
+    .preview-item{display:flex;justify-content:space-between;align-items:baseline;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid #f5f5f5;font-size:0.78rem;}
+    .preview-item-name{color:#333;font-weight:500;flex:1;min-width:0;}
+    .preview-item-price{color:#E91E63;font-weight:700;white-space:nowrap;}
+    .preview-total-block{padding:0.75rem 0 0.25rem;border-top:2px solid #eee;margin-top:0.25rem;}
+    .preview-total-row{display:flex;justify-content:space-between;font-size:0.8rem;padding:0.2rem 0;}
+    .preview-total-row.main{font-weight:800;font-size:0.9rem;color:#1a1a2e;}
+    .content-sections-card{background:#fff;border-radius:12px;border:1px solid #eee;padding:1.25rem;margin-top:1.25rem;}
+    .content-sections-card h3{font-size:0.85rem;font-weight:700;color:#1a1a2e;margin:0 0 1rem;padding-bottom:0.75rem;border-bottom:1px solid #eee;}
+    .content-field{margin-bottom:1.1rem;}
+    .content-field label{display:block;font-size:0.78rem;font-weight:700;color:#555;margin-bottom:0.35rem;text-transform:uppercase;letter-spacing:0.4px;}
+    .content-field textarea{width:100%;border:1px solid #ddd;border-radius:8px;padding:0.6rem 0.8rem;font-size:0.83rem;font-family:Poppins,sans-serif;color:#1a1a2e;resize:vertical;outline:none;transition:border-color 0.15s;box-sizing:border-box;}
+    .content-field textarea:focus{border-color:#E91E63;}
+    .form-actions-sticky{position:sticky;bottom:0;background:rgba(255,255,255,0.95);backdrop-filter:blur(6px);border-top:1px solid #eee;padding:0.9rem 0;margin-top:1.5rem;display:flex;gap:0.75rem;align-items:center;justify-content:flex-end;z-index:10;}
+    .catalog-category-label{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#999;padding:0.5rem 0.25rem 0.2rem;}
+    .lead-info-box{background:#f0fff4;border:1px solid #c8e6c9;border-radius:10px;padding:0.85rem 1rem;font-size:0.82rem;color:#2e7d32;margin-bottom:1.25rem;}
+  </style>
+</head>
+<body>
+  <div class="top-bar"></div>
+  <div class="admin-layout">
+    <%- include('../_sidebar', { active: 'proposals' }) %>
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Editar Proposta</h1>
+          <p class="page-subtitle"><%= lead.name %> — <%= lead.email %></p>
+        </div>
+        <div class="header-actions">
+          <a href="/admin/proposals/preview?lead_id=<%= lead.id %>" class="btn-outline" target="_blank">👁️ Ver Proposta</a>
+          <a href="/admin/proposals" class="btn-outline">← Propostas</a>
+        </div>
+      </div>
+
+      <% if (success) { %><div class="alert alert-success"><span>✅</span> <%= success %></div><% } %>
+      <% if (error) { %><div class="alert alert-error"><span>⚠️</span> <%= error %></div><% } %>
+
+      <!-- Lead Info -->
+      <div class="lead-info-box">
+        👤 <strong><%= lead.name %></strong> &nbsp;·&nbsp; 📱 <%= lead.whatsapp %>
+        &nbsp;·&nbsp; 📧 <%= lead.email %>
+        <% if (lead.discount_monthly > 0 || lead.discount_onetime > 0) { %>
+          &nbsp;·&nbsp; 🎉 Desconto:
+          <% if (lead.discount_monthly > 0) { %><%= lead.discount_monthly %>% mensais<% } %>
+          <% if (lead.discount_onetime > 0) { %> / <%= lead.discount_onetime %>% pontuais<% } %>
+        <% } %>
+      </div>
+
+      <form id="proposalForm" action="/admin/proposals/<%= lead.id %>/edit" method="POST">
+
+        <!-- Mode Selector -->
+        <div class="form-card" style="margin-bottom:1.25rem">
+          <h3 style="font-size:0.85rem;font-weight:700;color:#1a1a2e;margin:0 0 1rem">🎛️ Tipo de Proposta</h3>
+          <div style="display:flex;gap:1rem;flex-wrap:wrap">
+            <% const currentMode = lead.proposal_mode || 'both'; %>
+            <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;padding:0.75rem 1rem;border:2px solid <%= currentMode === 'ready' ? '#E91E63' : '#eee' %>;border-radius:10px;flex:1;min-width:140px" id="mode-label-ready">
+              <input type="radio" name="proposal_mode" value="ready" onchange="updateModeLabel()" style="accent-color:#E91E63" <%= currentMode === 'ready' ? 'checked' : '' %>>
+              <div>
+                <div style="font-size:0.83rem;font-weight:700;color:#1a1a2e">📋 Proposta Pronta</div>
+                <div style="font-size:0.7rem;color:#888">Somente proposta configurada aqui</div>
+              </div>
+            </label>
+            <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;padding:0.75rem 1rem;border:2px solid <%= currentMode === 'build' ? '#E91E63' : '#eee' %>;border-radius:10px;flex:1;min-width:140px" id="mode-label-build">
+              <input type="radio" name="proposal_mode" value="build" onchange="updateModeLabel()" <%= currentMode === 'build' ? 'checked' : '' %>>
+              <div>
+                <div style="font-size:0.83rem;font-weight:700;color:#1a1a2e">🔧 Montar Proposta</div>
+                <div style="font-size:0.7rem;color:#888">Cliente monta o próprio orçamento</div>
+              </div>
+            </label>
+            <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;padding:0.75rem 1rem;border:2px solid <%= currentMode === 'both' ? '#E91E63' : '#eee' %>;border-radius:10px;flex:1;min-width:140px;background:<%= currentMode === 'both' ? 'rgba(233,30,99,0.04)' : '' %>" id="mode-label-both">
+              <input type="radio" name="proposal_mode" value="both" onchange="updateModeLabel()" <%= currentMode === 'both' ? 'checked' : '' %>>
+              <div>
+                <div style="font-size:0.83rem;font-weight:700;color:#1a1a2e">✨ As 2 Opções</div>
+                <div style="font-size:0.7rem;color:#888">Proposta pronta + opção de montar</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Builder Grid -->
+        <div class="proposal-builder-grid">
+          <div>
+            <div class="services-catalog">
+              <div class="catalog-header">
+                <h3>🛒 Serviços da Proposta</h3>
+                <div class="catalog-filter">
+                  <button type="button" class="filter-btn active" onclick="filterCatalog('all',this)">Todos</button>
+                  <button type="button" class="filter-btn" onclick="filterCatalog('monthly',this)">Recorrentes</button>
+                  <button type="button" class="filter-btn" onclick="filterCatalog('onetime',this)">Pontuais</button>
+                </div>
+              </div>
+              <div class="catalog-body" id="catalogBody">
+                <% const monthlyServices = services.filter(s => s.category === 'monthly' && s.active); %>
+                <% const onetimeServices = services.filter(s => s.category === 'onetime' && s.active); %>
+
+                <% if (monthlyServices.length > 0) { %>
+                  <div class="catalog-category-label" data-cat="monthly">📅 Serviços Recorrentes</div>
+                  <% monthlyServices.forEach(svc => {
+                       const existingItem = proposalItems.find(i => i.service_id === svc.id);
+                       const isChecked = !!existingItem;
+                  %>
+                  <div class="svc-row <%= isChecked ? 'selected' : '' %>" id="svc-row-<%= svc.id %>" data-id="<%= svc.id %>" data-cat="monthly">
+                    <input type="checkbox" class="svc-check" id="svc-<%= svc.id %>"
+                      onchange="onSvcToggle(<%= svc.id %>)"
+                      data-name="<%= svc.name.replace(/"/g,'&quot;') %>"
+                      data-desc="<%= (svc.description||'').replace(/"/g,'&quot;') %>"
+                      data-default-price="<%= svc.price %>"
+                      data-unit="<%= svc.unit || '/mês' %>"
+                      data-cat="<%= svc.category %>"
+                      <%= isChecked ? 'checked' : '' %>>
+                    <div class="svc-info">
+                      <div class="svc-name"><%= svc.name %></div>
+                      <% if (svc.description) { %><div class="svc-desc"><%= svc.description %></div><% } %>
+                    </div>
+                    <span class="svc-badge monthly">mensal</span>
+                    <input type="number" class="svc-qty-field" id="qty-<%= svc.id %>"
+                      value="<%= existingItem ? existingItem.qty : 1 %>"
+                      min="1" max="99" <%= isChecked ? '' : 'disabled' %>
+                      onchange="updatePreview()" oninput="updatePreview()">
+                    <input type="number" class="svc-price-field" id="price-<%= svc.id %>"
+                      value="<%= existingItem ? existingItem.price : svc.price %>"
+                      min="0" step="1" <%= isChecked ? '' : 'disabled' %>
+                      onchange="updatePreview()" oninput="updatePreview()">
+                  </div>
+                  <% }) %>
+                <% } %>
+
+                <% if (onetimeServices.length > 0) { %>
+                  <div class="catalog-category-label" data-cat="onetime">💳 Serviços Pontuais</div>
+                  <% onetimeServices.forEach(svc => {
+                       const existingItem = proposalItems.find(i => i.service_id === svc.id);
+                       const isChecked = !!existingItem;
+                  %>
+                  <div class="svc-row <%= isChecked ? 'selected' : '' %>" id="svc-row-<%= svc.id %>" data-id="<%= svc.id %>" data-cat="onetime">
+                    <input type="checkbox" class="svc-check" id="svc-<%= svc.id %>"
+                      onchange="onSvcToggle(<%= svc.id %>)"
+                      data-name="<%= svc.name.replace(/"/g,'&quot;') %>"
+                      data-desc="<%= (svc.description||'').replace(/"/g,'&quot;') %>"
+                      data-default-price="<%= svc.price %>"
+                      data-unit="<%= svc.unit || 'único' %>"
+                      data-cat="<%= svc.category %>"
+                      <%= isChecked ? 'checked' : '' %>>
+                    <div class="svc-info">
+                      <div class="svc-name"><%= svc.name %></div>
+                      <% if (svc.description) { %><div class="svc-desc"><%= svc.description %></div><% } %>
+                    </div>
+                    <span class="svc-badge onetime">único</span>
+                    <input type="number" class="svc-qty-field" id="qty-<%= svc.id %>"
+                      value="<%= existingItem ? existingItem.qty : 1 %>"
+                      min="1" max="99" <%= isChecked ? '' : 'disabled' %>
+                      onchange="updatePreview()" oninput="updatePreview()">
+                    <input type="number" class="svc-price-field" id="price-<%= svc.id %>"
+                      value="<%= existingItem ? existingItem.price : svc.price %>"
+                      min="0" step="1" <%= isChecked ? '' : 'disabled' %>
+                      onchange="updatePreview()" oninput="updatePreview()">
+                  </div>
+                  <% }) %>
+                <% } %>
+              </div>
+            </div>
+
+            <div class="content-sections-card">
+              <h3>📝 Conteúdo da Proposta</h3>
+              <div class="content-field">
+                <label>📄 Descrição</label>
+                <textarea name="proposal_description" rows="4"><%= lead.proposal_description || '' %></textarea>
+              </div>
+              <div class="content-field">
+                <label>🎯 Escopo</label>
+                <textarea name="proposal_scope" rows="4"><%= lead.proposal_scope || '' %></textarea>
+              </div>
+              <div class="content-field">
+                <label>📅 Cronograma</label>
+                <textarea name="proposal_timeline" rows="4"><%= lead.proposal_timeline || '' %></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="budget-preview">
+              <div class="budget-preview-header">📊 Resumo do Orçamento</div>
+              <div class="budget-preview-body" id="budgetPreviewBody">
+                <p class="preview-empty">Selecione serviços para ver resumo</p>
+              </div>
+            </div>
+            <div id="hiddenItemsContainer"></div>
+          </div>
+        </div>
+
+        <div class="form-actions-sticky">
+          <a href="/admin/proposals" class="btn-outline">Cancelar</a>
+          <button type="submit" class="btn-primary">💾 Salvar Alterações</button>
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <script>
+    const SERVICES_DATA = <%- JSON.stringify(services) %>;
+    const PROPOSAL_ITEMS_DATA = <%- JSON.stringify(proposalItems) %>;
+
+    function updateModeLabel() {
+      const radios = document.querySelectorAll('input[name="proposal_mode"]');
+      radios.forEach(r => {
+        const lbl = document.getElementById('mode-label-' + r.value);
+        if (lbl) {
+          lbl.style.borderColor = r.checked ? '#E91E63' : '#eee';
+          lbl.style.background  = r.checked ? 'rgba(233,30,99,0.04)' : '';
+        }
+      });
+    }
+
+    function onSvcToggle(svcId) {
+      const chk   = document.getElementById('svc-' + svcId);
+      const row   = document.getElementById('svc-row-' + svcId);
+      const priceF = document.getElementById('price-' + svcId);
+      const qtyF   = document.getElementById('qty-' + svcId);
+      const checked = chk.checked;
+      row.classList.toggle('selected', checked);
+      priceF.disabled = !checked;
+      qtyF.disabled   = !checked;
+      if (checked) { priceF.value = chk.dataset.defaultPrice; qtyF.value = 1; }
+      updatePreview();
+    }
+
+    function filterCatalog(cat, btn) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.svc-row').forEach(row => {
+        row.classList.toggle('hidden-filter', cat !== 'all' && row.dataset.cat !== cat);
+      });
+      document.querySelectorAll('.catalog-category-label').forEach(lbl => {
+        lbl.style.display = (cat === 'all' || lbl.dataset.cat === cat) ? '' : 'none';
+      });
+    }
+
+    function fmtBRL(v) { return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits:0, maximumFractionDigits:0 }); }
+
+    function updatePreview() {
+      const previewBody = document.getElementById('budgetPreviewBody');
+      const checkedBoxes = document.querySelectorAll('.svc-check:checked');
+      if (checkedBoxes.length === 0) {
+        previewBody.innerHTML = '<p class="preview-empty">Selecione serviços ao lado</p>';
+        return;
+      }
+      let monthlyTotal = 0, onetimeTotal = 0, html = '';
+      checkedBoxes.forEach(chk => {
+        const svcId = chk.id.replace('svc-', '');
+        const price = parseFloat(document.getElementById('price-' + svcId)?.value) || 0;
+        const qty   = parseInt(document.getElementById('qty-' + svcId)?.value) || 1;
+        const total = price * qty;
+        if (chk.dataset.cat === 'onetime') onetimeTotal += total;
+        else monthlyTotal += total;
+        html += `<div class="preview-item"><span class="preview-item-name">${chk.dataset.name}${qty>1?' ×'+qty:''}</span><span class="preview-item-price">${fmtBRL(total)}</span></div>`;
+      });
+      html += '<div class="preview-total-block">';
+      if (monthlyTotal > 0) html += `<div class="preview-total-row main"><span>Mensal</span><span style="color:#E91E63">${fmtBRL(monthlyTotal)}/mês</span></div>`;
+      if (onetimeTotal > 0) html += `<div class="preview-total-row main"><span>Único</span><span style="color:#1565c0">${fmtBRL(onetimeTotal)}</span></div>`;
+      html += '</div>';
+      previewBody.innerHTML = html;
+    }
+
+    document.getElementById('proposalForm').addEventListener('submit', function(e) {
+      const items = [];
+      document.querySelectorAll('.svc-check:checked').forEach(chk => {
+        const svcId = chk.id.replace('svc-', '');
+        items.push({
+          service_id: parseInt(svcId),
+          name: chk.dataset.name,
+          description: chk.dataset.desc,
+          price: parseFloat(document.getElementById('price-' + svcId)?.value) || 0,
+          qty: parseInt(document.getElementById('qty-' + svcId)?.value) || 1,
+          unit: chk.dataset.unit,
+          category: chk.dataset.cat,
+          sort_order: items.length
+        });
+      });
+      const container = document.getElementById('hiddenItemsContainer');
+      container.innerHTML = '';
+      const input = document.createElement('input');
+      input.type  = 'hidden';
+      input.name  = 'proposal_items';
+      input.value = JSON.stringify(items);
+      container.appendChild(input);
+    });
+
+    // Init — show existing selection in preview
+    updatePreview();
+  </script>
+</body>
+</html>

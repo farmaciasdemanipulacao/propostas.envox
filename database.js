@@ -214,6 +214,33 @@ function initDatabase() {
     )
   `);
 
+  // ── TABELA: proposal_shared_leads ─────────────────────────────────
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS proposal_shared_leads (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      lead_id INTEGER NOT NULL,
+      shared_name TEXT NOT NULL,
+      shared_whatsapp TEXT NOT NULL,
+      shared_email TEXT NOT NULL,
+      shared_token TEXT UNIQUE NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (lead_id) REFERENCES leads(id)
+    )
+  `);
+
+  // ── TABELA: proposal_actions (Accept/Counter/Reject) ───────────────
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS proposal_actions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      lead_id INTEGER NOT NULL,
+      action_type TEXT NOT NULL,
+      comment TEXT,
+      counter_value REAL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (lead_id) REFERENCES leads(id)
+    )
+  `);
+
   // ── TABELA: proposal_items ─────────────────────────────────────────
   database.exec(`
     CREATE TABLE IF NOT EXISTS proposal_items (
@@ -240,6 +267,9 @@ function initDatabase() {
   try { database.exec(`ALTER TABLE leads ADD COLUMN proposal_description TEXT`); } catch(e) {}
   try { database.exec(`ALTER TABLE leads ADD COLUMN proposal_scope TEXT`); } catch(e) {}
   try { database.exec(`ALTER TABLE leads ADD COLUMN proposal_timeline TEXT`); } catch(e) {}
+  try { database.exec(`ALTER TABLE leads ADD COLUMN proposal_mode TEXT DEFAULT 'both'`); } catch(e) {}
+  try { database.exec(`ALTER TABLE leads ADD COLUMN archived INTEGER DEFAULT 0`); } catch(e) {}
+  try { database.exec(`ALTER TABLE leads ADD COLUMN proposal_sent_at DATETIME`); } catch(e) {}
 
   console.log('✅ Banco de dados inicializado com sucesso');
 }
@@ -564,12 +594,85 @@ function updateLeadProposalContent(leadId, description, scope, timeline) {
   `).run(description||null, scope||null, timeline||null, leadId);
 }
 
+function updateLeadProposalMode(leadId, mode) {
+  getDb().prepare(`UPDATE leads SET proposal_mode=? WHERE id=?`).run(mode||'both', leadId);
+}
+
+function updateLead(id, name, whatsapp, email) {
+  getDb().prepare(`UPDATE leads SET name=?, whatsapp=?, email=? WHERE id=?`).run(name, whatsapp, email, id);
+}
+
+function deleteLead(id) {
+  const database = getDb();
+  // Cascade delete related data
+  const sessions = database.prepare(`SELECT id FROM access_sessions WHERE lead_id=?`).all(id);
+  sessions.forEach(s => {
+    database.prepare(`DELETE FROM slide_events WHERE session_id=?`).run(s.id);
+  });
+  database.prepare(`DELETE FROM access_sessions WHERE lead_id=?`).run(id);
+  database.prepare(`DELETE FROM slide_events WHERE lead_id=?`).run(id);
+  database.prepare(`DELETE FROM event_log WHERE lead_id=?`).run(id);
+  database.prepare(`DELETE FROM custom_plans WHERE lead_id=?`).run(id);
+  database.prepare(`DELETE FROM lead_invites WHERE lead_id=?`).run(id);
+  database.prepare(`DELETE FROM proposal_items WHERE lead_id=?`).run(id);
+  database.prepare(`DELETE FROM proposal_shared_leads WHERE lead_id=?`).run(id);
+  database.prepare(`DELETE FROM proposal_actions WHERE lead_id=?`).run(id);
+  database.prepare(`DELETE FROM leads WHERE id=?`).run(id);
+}
+
+function archiveLead(id, archived) {
+  getDb().prepare(`UPDATE leads SET archived=? WHERE id=?`).run(archived ? 1 : 0, id);
+}
+
+function markProposalSent(leadId) {
+  getDb().prepare(`UPDATE leads SET proposal_sent_at=CURRENT_TIMESTAMP WHERE id=?`).run(leadId);
+}
+
+// ── PROPOSAL SHARED LEADS ──────────────────────────────────────────
+function addSharedLead(leadId, name, whatsapp, email, token) {
+  const r = getDb().prepare(`
+    INSERT INTO proposal_shared_leads (lead_id, shared_name, shared_whatsapp, shared_email, shared_token)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(leadId, name, whatsapp, email, token);
+  return r.lastInsertRowid;
+}
+
+function getSharedLeadsByLead(leadId) {
+  return getDb().prepare(`SELECT * FROM proposal_shared_leads WHERE lead_id=? ORDER BY created_at DESC`).all(leadId);
+}
+
+function getSharedLeadByToken(token) {
+  return getDb().prepare(`SELECT * FROM proposal_shared_leads WHERE shared_token=?`).get(token);
+}
+
+// ── PROPOSAL ACTIONS ───────────────────────────────────────────────
+function saveProposalAction(leadId, actionType, comment, counterValue) {
+  const r = getDb().prepare(`
+    INSERT INTO proposal_actions (lead_id, action_type, comment, counter_value)
+    VALUES (?, ?, ?, ?)
+  `).run(leadId, actionType, comment||null, counterValue||null);
+  return r.lastInsertRowid;
+}
+
+function getProposalActionsByLead(leadId) {
+  return getDb().prepare(`SELECT * FROM proposal_actions WHERE lead_id=? ORDER BY created_at DESC`).all(leadId);
+}
+
+function getLatestProposalAction(leadId) {
+  return getDb().prepare(`SELECT * FROM proposal_actions WHERE lead_id=? ORDER BY created_at DESC LIMIT 1`).get(leadId);
+}
+
 module.exports = {
   getDb,
   // Leads
   createLead, getLeadById, getLeadByToken, getAllLeads, getLeadStats, updateLeadDiscount,
   // Proposal Items & Content
   saveProposalItems, getProposalItemsByLead, deleteProposalItems, updateLeadProposalContent,
+  updateLeadProposalMode, updateLead, deleteLead, archiveLead, markProposalSent,
+  // Shared Leads
+  addSharedLead, getSharedLeadsByLead, getSharedLeadByToken,
+  // Proposal Actions
+  saveProposalAction, getProposalActionsByLead, getLatestProposalAction,
   // Sessions
   createSession, closeSession, getSessionById, markSessionAlertSent,
   // Slide Events

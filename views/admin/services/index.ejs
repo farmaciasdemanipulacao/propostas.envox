@@ -54,22 +54,7 @@
 <body>
   <div class="top-bar"></div>
   <div class="admin-layout">
-    <aside class="sidebar">
-      <div class="sidebar-logo">
-        <span class="brand-env">env</span><span class="brand-ox">ox</span>
-        <div class="brand-tagline">ADMIN</div>
-      </div>
-      <nav class="sidebar-nav">
-        <a href="/admin" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
-        <a href="/admin/leads/new" class="nav-item"><span class="nav-icon">➕</span> Novo Lead</a>
-        <a href="/admin/proposals/new" class="nav-item"><span class="nav-icon">📝</span> Criar Proposta</a>
-        <a href="/admin/planejamentos" class="nav-item"><span class="nav-icon">📋</span> Planejamentos</a>
-        <a href="/admin/services" class="nav-item active"><span class="nav-icon">💰</span> Serviços & Preços</a>
-      </nav>
-      <div class="sidebar-footer">
-        <a href="/admin/logout" class="nav-item logout"><span class="nav-icon">🚪</span> Sair</a>
-      </div>
-    </aside>
+    <%- include('../_sidebar', { active: 'services' }) %>
 
     <main class="main-content">
       <div class="page-header">

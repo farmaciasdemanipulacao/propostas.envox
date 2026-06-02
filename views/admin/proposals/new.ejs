@@ -321,22 +321,7 @@
   <div class="top-bar"></div>
 
   <div class="admin-layout">
-    <aside class="sidebar">
-      <div class="sidebar-logo">
-        <span class="brand-env">env</span><span class="brand-ox">ox</span>
-        <div class="brand-tagline">ADMIN</div>
-      </div>
-      <nav class="sidebar-nav">
-        <a href="/admin" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
-        <a href="/admin/leads/new" class="nav-item"><span class="nav-icon">➕</span> Novo Lead</a>
-        <a href="/admin/proposals/new" class="nav-item active"><span class="nav-icon">📝</span> Criar Proposta</a>
-        <a href="/admin/planejamentos" class="nav-item"><span class="nav-icon">📋</span> Planejamentos</a>
-        <a href="/admin/services" class="nav-item"><span class="nav-icon">💰</span> Serviços & Preços</a>
-      </nav>
-      <div class="sidebar-footer">
-        <a href="/admin/logout" class="nav-item logout"><span class="nav-icon">🚪</span> Sair</a>
-      </div>
-    </aside>
+    <%- include('../_sidebar', { active: 'new-proposal' }) %>
 
     <main class="main-content">
       <div class="page-header">
@@ -381,6 +366,35 @@
               <strong id="leadInfoName"></strong><br>
               <span id="leadInfoDisc"></span>
             </div>
+          </div>
+        </div>
+
+        <!-- ── Proposal Mode Selector ── -->
+        <div class="lead-select-card" style="margin-bottom:1.25rem">
+          <h3>🎛️ Tipo de Proposta</h3>
+          <p style="font-size:0.78rem;color:#888;margin:0 0 1rem">Define quais abas o cliente verá na página de orçamento.</p>
+          <div style="display:flex;gap:1rem;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;padding:0.75rem 1rem;border:2px solid #eee;border-radius:10px;flex:1;min-width:140px;transition:border-color 0.15s" id="mode-label-ready">
+              <input type="radio" name="proposal_mode" value="ready" onchange="updateModeLabel()" style="accent-color:#E91E63">
+              <div>
+                <div style="font-size:0.83rem;font-weight:700;color:#1a1a2e">📋 Proposta Pronta</div>
+                <div style="font-size:0.7rem;color:#888">Mostra somente a proposta que você montou aqui</div>
+              </div>
+            </label>
+            <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;padding:0.75rem 1rem;border:2px solid #eee;border-radius:10px;flex:1;min-width:140px;transition:border-color 0.15s" id="mode-label-build">
+              <input type="radio" name="proposal_mode" value="build" onchange="updateModeLabel()">
+              <div>
+                <div style="font-size:0.83rem;font-weight:700;color:#1a1a2e">🔧 Montar Proposta</div>
+                <div style="font-size:0.7rem;color:#888">Cliente monta a própria proposta (interativo)</div>
+              </div>
+            </label>
+            <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;padding:0.75rem 1rem;border:2px solid #E91E63;border-radius:10px;flex:1;min-width:140px;background:rgba(233,30,99,0.04);transition:border-color 0.15s" id="mode-label-both">
+              <input type="radio" name="proposal_mode" value="both" checked onchange="updateModeLabel()">
+              <div>
+                <div style="font-size:0.83rem;font-weight:700;color:#1a1a2e">✨ As 2 Opções</div>
+                <div style="font-size:0.7rem;color:#888">Exibe proposta pronta + opção de montar (recomendado)</div>
+              </div>
+            </label>
           </div>
         </div>
 
@@ -794,6 +808,18 @@
       }
       // Open admin direct preview with a flash message
       window.open('/admin/proposals/preview?lead_id=' + leadId, '_blank');
+    }
+
+    // ── Mode label highlight ──────────────────────────────────────────
+    function updateModeLabel() {
+      const radios = document.querySelectorAll('input[name="proposal_mode"]');
+      radios.forEach(r => {
+        const lbl = document.getElementById('mode-label-' + r.value);
+        if (lbl) {
+          lbl.style.borderColor = r.checked ? '#E91E63' : '#eee';
+          lbl.style.background  = r.checked ? 'rgba(233,30,99,0.04)' : '';
+        }
+      });
     }
 
     // Init: trigger lead change if pre-selected

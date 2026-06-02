@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { v4: uuidv4 } = require('uuid');
 const db = require('../database');
 const slides = require('../slides/content');
 
@@ -98,6 +99,79 @@ router.get('/:token/view', (req, res) => {
     slides,
     token
   });
+});
+
+// ── API: Save Proposal Action (Accept / Counter / Reject) ────────────────────
+router.post('/action', (req, res) => {
+  const { token, lead_id, action_type, comment, counter_value, current_page } = req.body;
+
+  if (!token || !action_type) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  // Verify token belongs to a real lead
+  const lead = db.getLeadByToken(token);
+  let resolvedLeadId = lead ? lead.id : parseInt(lead_id);
+
+  if (!resolvedLeadId) {
+    return res.status(404).json({ error: 'Lead not found' });
+  }
+
+  if (!['accept','counter','reject'].includes(action_type)) {
+    return res.status(400).json({ error: 'Invalid action_type' });
+  }
+
+  try {
+    const actionId = db.saveProposalAction(
+      resolvedLeadId,
+      action_type,
+      comment || null,
+      counter_value ? parseFloat(counter_value) : null
+    );
+    db.logEvent(resolvedLeadId, null, 'proposal_action', {
+      action_type,
+      comment: comment ? comment.substring(0, 200) : null,
+      counter_value: counter_value || null,
+      current_page: current_page || null
+    });
+    return res.json({ success: true, actionId });
+  } catch (err) {
+    console.error('[ProposalAction] Error:', err);
+    return res.status(500).json({ error: 'Failed to save action' });
+  }
+});
+
+// ── API: Share Proposal (add secondary viewer) ───────────────────────────────
+router.post('/share', (req, res) => {
+  const { token, lead_id, name, whatsapp, email } = req.body;
+
+  if (!token || !name || !whatsapp || !email) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  const lead = db.getLeadByToken(token);
+  const resolvedLeadId = lead ? lead.id : parseInt(lead_id);
+
+  if (!resolvedLeadId) {
+    return res.status(404).json({ error: 'Lead not found' });
+  }
+
+  try {
+    const sharedToken = uuidv4().replace(/-/g, '').substring(0, 16);
+    const sharedId = db.addSharedLead(
+      resolvedLeadId,
+      name,
+      whatsapp.replace(/\D/g, ''),
+      email.trim().toLowerCase(),
+      sharedToken
+    );
+    db.logEvent(resolvedLeadId, null, 'proposal_shared', { shared_with: email, name });
+
+    return res.json({ success: true, sharedId, sharedToken });
+  } catch (err) {
+    console.error('[ProposalShare] Error:', err);
+    return res.status(500).json({ error: 'Failed to share proposal' });
+  }
 });
 
 module.exports = router;

@@ -224,6 +224,8 @@ body {
 .nav-item.active { background: var(--pink); color: var(--white); }
 .nav-item.logout { color: var(--gray-500); }
 .nav-item.logout:hover { color: #ff6b6b; background: rgba(255,107,107,0.1); }
+.nav-item.nav-item-sub { padding-left: 1.75rem; font-size: 0.82rem; }
+.nav-group-label { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.08em; color: rgba(255,255,255,0.25); text-transform: uppercase; padding: 0.85rem 1rem 0.3rem; }
 .sidebar-footer { padding: 1rem 0.75rem; border-top: 1px solid rgba(255,255,255,0.08); }
 
 .main-content {

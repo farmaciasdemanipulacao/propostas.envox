@@ -40,16 +40,16 @@
     const tabCustom = document.getElementById('tab-custom');
     const viewAdmin = document.getElementById('view-admin-proposal');
     const viewCust  = document.getElementById('view-custom-builder');
-    if (!tabAdmin || !tabCustom || !viewAdmin || !viewCust) return;
+    if (!viewAdmin || !viewCust) return;
 
     if (tab === 'admin') {
-      tabAdmin.classList.add('active');
-      tabCustom.classList.remove('active');
+      if (tabAdmin) tabAdmin.classList.add('active');
+      if (tabCustom) tabCustom.classList.remove('active');
       viewAdmin.style.display = '';
       viewCust.style.display  = 'none';
     } else {
-      tabCustom.classList.add('active');
-      tabAdmin.classList.remove('active');
+      if (tabCustom) tabCustom.classList.add('active');
+      if (tabAdmin) tabAdmin.classList.remove('active');
       viewAdmin.style.display = 'none';
       viewCust.style.display  = '';
       if (!builderLoaded) loadBuilder();
@@ -622,14 +622,35 @@
     const adminContainer = document.getElementById('admin-proposal-container');
     if (!adminContainer) return;
 
-    // Render admin proposal first (Mode A)
-    renderAdminProposal();
+    const mode = (window.PROPOSAL_MODE || 'both').trim();
+    const tabsWrapper = document.getElementById('builderModeTabs');
+    const tabAdmin  = document.getElementById('tab-admin');
+    const tabCustom = document.getElementById('tab-custom');
 
-    // If admin has set items, default to admin tab; else default to builder
-    const hasItems = window.PROPOSAL_ITEMS && window.PROPOSAL_ITEMS.length > 0;
-    if (!hasItems) {
-      // Switch to custom builder tab by default
+    // Apply mode visibility
+    if (mode === 'ready') {
+      // Only show admin proposal; hide custom tab
+      if (tabCustom) tabCustom.style.display = 'none';
+      if (tabsWrapper && tabAdmin) {
+        // If only one tab remains, hide the tabs bar altogether
+        tabsWrapper.style.display = 'none';
+      }
+      renderAdminProposal();
+      switchBuilderTab('admin');
+    } else if (mode === 'build') {
+      // Only show custom builder; hide admin tab
+      if (tabAdmin) tabAdmin.style.display = 'none';
+      if (tabsWrapper) tabsWrapper.style.display = 'none';
+      renderAdminProposal(); // still render (hidden) so container exists
       switchBuilderTab('custom');
+    } else {
+      // 'both' — show both tabs
+      // Render admin proposal first (Mode A)
+      renderAdminProposal();
+      const hasItems = window.PROPOSAL_ITEMS && window.PROPOSAL_ITEMS.length > 0;
+      if (!hasItems) {
+        switchBuilderTab('custom');
+      }
     }
   }
 

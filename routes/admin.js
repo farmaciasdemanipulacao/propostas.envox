@@ -138,6 +138,8 @@ router.get('/leads/:id', requireAdmin, (req, res) => {
   const nextInviteIdx = inviteHistory.length;
   const nextInviteMsg = getInviteMessage(stats.lead, baseUrl, nextInviteIdx);
 
+  const proposalActions = db.getProposalActionsByLead(req.params.id);
+
   res.render('admin/lead-detail', {
     stats,
     interestLevel,
@@ -150,6 +152,7 @@ router.get('/leads/:id', requireAdmin, (req, res) => {
     inviteHistory,
     followupHistory,
     nextInviteMsg,
+    proposalActions,
     success: req.query.success,
     error: req.query.error
   });
@@ -228,9 +231,9 @@ router.get('/proposals/new', requireAdmin, (req, res) => {
   });
 });
 
-// POST /admin/proposals — save proposal items + content
-router.post('/proposals', requireAdmin, (req, res) => {
-  const { lead_id, proposal_items, proposal_description, proposal_scope, proposal_timeline } = req.body;
+// POST /admin/proposals — save proposal items + content + mode
+router.post('/proposals', requireAdmin, async (req, res) => {
+  const { lead_id, proposal_items, proposal_description, proposal_scope, proposal_timeline, proposal_mode } = req.body;
 
   if (!lead_id) {
     const leads    = db.getAllLeads();
@@ -269,7 +272,22 @@ router.post('/proposals', requireAdmin, (req, res) => {
       proposal_timeline    || ''
     );
 
-    return res.redirect(`/admin/proposals/new?lead_id=${leadId}&success=Proposta+salva+com+sucesso!`);
+    // Save proposal mode
+    const mode = ['ready','build','both'].includes(proposal_mode) ? proposal_mode : 'both';
+    db.updateLeadProposalMode(leadId, mode);
+
+    // Mark proposal as sent and notify via email
+    db.markProposalSent(leadId);
+    try {
+      const emailService = require('../services/email');
+      await emailService.sendProposalNotification(lead);
+    } catch(emailErr) {
+      console.warn('[Proposals] Email notification failed (non-fatal):', emailErr.message);
+    }
+
+    db.logEvent(leadId, null, 'proposal_created', { mode, items_count: items.length });
+
+    return res.redirect(`/admin/proposals/${leadId}/edit?success=Proposta+salva+com+sucesso!`);
   } catch (err) {
     console.error('[Proposals] Error saving proposal:', err);
     const leads    = db.getAllLeads();
@@ -295,6 +313,116 @@ router.get('/proposals/preview', requireAdmin, (req, res) => {
     req.session.authenticatedTokens.push(lead.token);
   }
   res.redirect(`/proposta/${lead.token}/view`);
+});
+
+// ══ LEADS LIST ═══════════════════════════════════════════════════════
+router.get('/leads', requireAdmin, (req, res) => {
+  const leads = db.getAllLeads();
+  res.render('admin/leads/index', {
+    leads,
+    success: req.query.success || null,
+    error:   req.query.error   || null
+  });
+});
+
+// ══ EDIT LEAD ═════════════════════════════════════════════════════════
+router.get('/leads/:id/edit', requireAdmin, (req, res) => {
+  const lead = db.getLeadById(req.params.id);
+  if (!lead) return res.redirect('/admin/leads?error=Lead+não+encontrado');
+  const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+  res.render('admin/leads/edit', { lead, baseUrl, error: null, success: null });
+});
+
+router.post('/leads/:id/edit', requireAdmin, (req, res) => {
+  const { name, whatsapp, email } = req.body;
+  if (!name || !whatsapp || !email) {
+    const lead = db.getLeadById(req.params.id);
+    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+    return res.render('admin/leads/edit', { lead, baseUrl, error: 'Todos os campos são obrigatórios.', success: null });
+  }
+  try {
+    db.updateLead(parseInt(req.params.id), name, whatsapp.replace(/\D/g,''), email.trim().toLowerCase());
+    return res.redirect(`/admin/leads/${req.params.id}/edit?success=Lead+atualizado+com+sucesso!`);
+  } catch (err) {
+    const lead = db.getLeadById(req.params.id);
+    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+    return res.render('admin/leads/edit', { lead, baseUrl, error: 'Erro ao atualizar: ' + err.message, success: null });
+  }
+});
+
+// ══ DELETE LEAD ═══════════════════════════════════════════════════════
+router.post('/leads/:id/delete', requireAdmin, (req, res) => {
+  try {
+    db.deleteLead(parseInt(req.params.id));
+    return res.redirect('/admin/leads?success=Lead+excluído+com+sucesso.');
+  } catch (err) {
+    return res.redirect(`/admin/leads?error=Erro+ao+excluir:+${encodeURIComponent(err.message)}`);
+  }
+});
+
+// ══ PROPOSALS LIST ════════════════════════════════════════════════════
+router.get('/proposals', requireAdmin, (req, res) => {
+  const leads = db.getAllLeads();
+  // Only show leads that have proposals (proposal_sent_at is set)
+  const proposalLeads = leads.map(lead => {
+    const items = db.getProposalItemsByLead(lead.id);
+    const latestAction = db.getLatestProposalAction(lead.id);
+    return {
+      ...lead,
+      items_count: items.length,
+      latest_action: latestAction ? latestAction.action_type : null
+    };
+  }).filter(l => l.proposal_sent_at || l.items_count > 0);
+
+  res.render('admin/proposals/index', {
+    leads: proposalLeads,
+    success: req.query.success || null,
+    error:   req.query.error   || null
+  });
+});
+
+// ══ EDIT PROPOSAL ═════════════════════════════════════════════════════
+router.get('/proposals/:leadId/edit', requireAdmin, (req, res) => {
+  const lead = db.getLeadById(req.params.leadId);
+  if (!lead) return res.redirect('/admin/proposals?error=Lead+não+encontrado');
+  const services      = db.getAllServices(false);
+  const proposalItems = db.getProposalItemsByLead(lead.id);
+  res.render('admin/proposals/edit', {
+    lead, services, proposalItems,
+    success: req.query.success || null,
+    error:   req.query.error   || null
+  });
+});
+
+router.post('/proposals/:leadId/edit', requireAdmin, (req, res) => {
+  const { proposal_items, proposal_description, proposal_scope, proposal_timeline, proposal_mode } = req.body;
+  const leadId = parseInt(req.params.leadId);
+  let items = [];
+  try { items = proposal_items ? JSON.parse(proposal_items) : []; } catch(e) {}
+  try {
+    db.saveProposalItems(leadId, items);
+    db.updateLeadProposalContent(leadId, proposal_description||'', proposal_scope||'', proposal_timeline||'');
+    const mode = ['ready','build','both'].includes(proposal_mode) ? proposal_mode : 'both';
+    db.updateLeadProposalMode(leadId, mode);
+    return res.redirect(`/admin/proposals/${leadId}/edit?success=Proposta+atualizada!`);
+  } catch (err) {
+    const lead = db.getLeadById(leadId);
+    const services = db.getAllServices(false);
+    const proposalItems = db.getProposalItemsByLead(leadId);
+    return res.render('admin/proposals/edit', { lead, services, proposalItems, error: 'Erro: ' + err.message, success: null });
+  }
+});
+
+// ══ ARCHIVE PROPOSAL ══════════════════════════════════════════════════
+router.post('/proposals/:leadId/archive', requireAdmin, (req, res) => {
+  const archived = parseInt(req.body.archived) || 0;
+  try {
+    db.archiveLead(parseInt(req.params.leadId), archived === 1);
+    const msg = archived ? 'Proposta+arquivada.' : 'Proposta+reativada.';
+    return res.redirect(`/admin/proposals?success=${msg}`);
+  } catch (err) {
+    return res.redirect(`/admin/proposals?error=Erro+ao+arquivar`);
+  }
 });
 
 // ══ FOLLOW-UP VIA WHATSAPP ════════════════════════════════

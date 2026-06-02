@@ -13,22 +13,7 @@
   <div class="top-bar"></div>
   
   <div class="admin-layout">
-    <aside class="sidebar">
-      <div class="sidebar-logo">
-        <span class="brand-env">env</span><span class="brand-ox">ox</span>
-        <div class="brand-tagline">ADMIN</div>
-      </div>
-      <nav class="sidebar-nav">
-        <a href="/admin" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
-        <a href="/admin/leads/new" class="nav-item"><span class="nav-icon">➕</span> Novo Lead</a>
-        <a href="/admin/proposals/new" class="nav-item"><span class="nav-icon">📝</span> Criar Proposta</a>
-        <a href="/admin/planejamentos" class="nav-item"><span class="nav-icon">📋</span> Planejamentos</a>
-        <a href="/admin/services" class="nav-item"><span class="nav-icon">💰</span> Serviços & Preços</a>
-      </nav>
-      <div class="sidebar-footer">
-        <a href="/admin/logout" class="nav-item logout"><span class="nav-icon">🚪</span> Sair</a>
-      </div>
-    </aside>
+    <%- include('./_sidebar', { active: 'leads' }) %>
     
     <main class="main-content">
       <div class="page-header">
@@ -43,7 +28,9 @@
           <form action="/admin/leads/<%= stats.lead.id %>/resend-alert" method="POST" style="display:inline">
             <button type="submit" class="btn-whatsapp">📲 Reenviar Alerta</button>
           </form>
-          <a href="/admin" class="btn-outline">← Voltar</a>
+          <a href="/admin/leads/<%= stats.lead.id %>/edit" class="btn-outline">✏️ Editar Lead</a>
+          <a href="/admin/proposals/<%= stats.lead.id %>/edit" class="btn-outline">📝 Editar Proposta</a>
+          <a href="/admin/leads" class="btn-outline">← Leads</a>
         </div>
       </div>
       
@@ -259,6 +246,42 @@
           <span class="legend-item heat-high">🟥 Alto (&gt;60s)</span>
         </div>
       </div>
+
+      <!-- Decisões da Proposta -->
+      <% if (typeof proposalActions !== 'undefined' && proposalActions && proposalActions.length > 0) { %>
+      <div class="detail-card full-width-card">
+        <h3 class="card-title">⚖️ Decisões do Lead sobre a Proposta</h3>
+        <table class="data-table">
+          <thead>
+            <tr><th>Data</th><th>Decisão</th><th>Valor (Contra-proposta)</th><th>Comentário</th></tr>
+          </thead>
+          <tbody>
+            <% proposalActions.forEach(action => { %>
+            <% const actionColors = { accept: '#16a34a', counter: '#1565c0', reject: '#dc2626' }; %>
+            <% const actionLabels = { accept: '✅ Aceita', counter: '🔄 Contra-proposta', reject: '❌ Rejeitada' }; %>
+            <tr>
+              <td><small><%= new Date(action.created_at).toLocaleString('pt-BR') %></small></td>
+              <td>
+                <span style="font-weight:700;color:<%= actionColors[action.action_type] || '#666' %>">
+                  <%= actionLabels[action.action_type] || action.action_type %>
+                </span>
+              </td>
+              <td>
+                <% if (action.counter_value) { %>
+                  <strong style="color:#1565c0">R$ <%= Number(action.counter_value).toLocaleString('pt-BR') %></strong>
+                <% } else { %>
+                  <span style="color:#bbb">—</span>
+                <% } %>
+              </td>
+              <td style="font-size:0.82rem;color:#555;max-width:300px">
+                <%= action.comment || '—' %>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% } %>
 
       <!-- Planos customizados -->
       <% if (stats.customPlans && stats.customPlans.length > 0) { %>

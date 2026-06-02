@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editar Lead — <%= lead.name %> — Envox Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <div class="top-bar"></div>
+  <div class="admin-layout">
+    <%- include('../_sidebar', { active: 'leads' }) %>
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Editar Lead</h1>
+          <p class="page-subtitle"><%= lead.name %></p>
+        </div>
+        <a href="/admin/leads" class="btn-outline">← Leads</a>
+      </div>
+
+      <% if (error) { %><div class="alert alert-error"><span>⚠️</span> <%= error %></div><% } %>
+      <% if (success) { %><div class="alert alert-success"><span>✅</span> <%= success %></div><% } %>
+
+      <div class="form-card" style="max-width:600px">
+        <form action="/admin/leads/<%= lead.id %>/edit" method="POST" class="lead-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="name">Nome Completo *</label>
+              <input type="text" id="name" name="name" value="<%= lead.name %>" required placeholder="Ex: João da Silva">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="whatsapp">WhatsApp *</label>
+              <input type="text" id="whatsapp" name="whatsapp" value="<%= lead.whatsapp %>" required placeholder="(41) 99999-9999">
+            </div>
+            <div class="form-group">
+              <label for="email">E-mail *</label>
+              <input type="email" id="email" name="email" value="<%= lead.email %>" required placeholder="email@empresa.com">
+            </div>
+          </div>
+
+          <div style="margin-top:0.5rem;padding:0.85rem 1rem;background:#f8f9fa;border-radius:10px;font-size:0.78rem;color:#888">
+            🔗 Link da proposta: <code style="background:#e8e8e8;padding:2px 6px;border-radius:4px;font-size:0.75rem"><%= baseUrl %>/proposta/<%= lead.token %></code>
+            <button type="button" onclick="navigator.clipboard.writeText('<%= baseUrl %>/proposta/<%= lead.token %>')" style="margin-left:0.5rem;padding:2px 8px;border:1px solid #ddd;border-radius:5px;background:#fff;font-size:0.72rem;cursor:pointer;font-family:Poppins,sans-serif">📋 Copiar</button>
+          </div>
+
+          <div class="form-actions" style="margin-top:1.5rem;display:flex;gap:0.75rem;justify-content:flex-end">
+            <a href="/admin/leads/<%= lead.id %>" class="btn-outline">Cancelar</a>
+            <button type="submit" class="btn-primary">💾 Salvar Alterações</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Danger Zone -->
+      <div style="max-width:600px;margin-top:2rem;padding:1.25rem;border:2px solid rgba(220,38,38,0.2);border-radius:12px;background:rgba(220,38,38,0.04)">
+        <h3 style="font-size:0.9rem;font-weight:700;color:#dc2626;margin:0 0 0.75rem">⚠️ Zona de Perigo</h3>
+        <p style="font-size:0.78rem;color:#666;margin:0 0 1rem">Excluir um lead remove permanentemente todos os dados relacionados: sessões, eventos, proposta, convites. <strong>Essa ação não pode ser desfeita.</strong></p>
+        <form action="/admin/leads/<%= lead.id %>/delete" method="POST" onsubmit="return confirm('Confirma exclusão permanente de <%= lead.name %>? Todos os dados serão perdidos.')">
+          <button type="submit" style="background:#dc2626;color:#fff;border:none;padding:0.6rem 1.25rem;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:Poppins,sans-serif">
+            🗑️ Excluir Lead Permanentemente
+          </button>
+        </form>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leads — Envox Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <div class="top-bar"></div>
+  <div class="admin-layout">
+    <%- include('../_sidebar', { active: 'leads' }) %>
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Leads</h1>
+          <p class="page-subtitle">Gerencie todos os leads cadastrados</p>
+        </div>
+        <div class="header-actions">
+          <a href="/admin/leads/new" class="btn-primary">➕ Novo Lead</a>
+        </div>
+      </div>
+
+      <% if (success) { %><div class="alert alert-success"><span>✅</span> <%= success %></div><% } %>
+      <% if (error) { %><div class="alert alert-error"><span>⚠️</span> <%= error %></div><% } %>
+
+      <!-- Search -->
+      <div style="margin-bottom:1rem">
+        <input type="text" id="leadSearch" placeholder="🔍 Buscar por nome, WhatsApp ou email..."
+          style="width:100%;max-width:400px;padding:0.6rem 1rem;border:1.5px solid #e0e0e0;border-radius:10px;font-size:0.83rem;font-family:Poppins,sans-serif;outline:none;"
+          oninput="filterLeads(this.value)">
+      </div>
+
+      <div class="table-card">
+        <div class="table-header">
+          <h2>Todos os Leads</h2>
+          <span class="table-count" id="leadCount"><%= leads.length %> lead(s)</span>
+        </div>
+        <% if (leads.length === 0) { %>
+          <div style="text-align:center;padding:3rem;color:#bbb">
+            <div style="font-size:2.5rem;margin-bottom:0.75rem">👥</div>
+            <p>Nenhum lead cadastrado ainda.</p>
+            <a href="/admin/leads/new" class="btn-primary" style="margin-top:1rem;display:inline-block">Cadastrar Primeiro Lead</a>
+          </div>
+        <% } else { %>
+        <table class="data-table" id="leadsTable">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>WhatsApp</th>
+              <th>Email</th>
+              <th>Cadastrado em</th>
+              <th>Proposta</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% leads.forEach(lead => { %>
+            <tr class="lead-row" data-search="<%= (lead.name + lead.whatsapp + lead.email).toLowerCase() %>">
+              <td>
+                <div style="font-weight:700;color:#1a1a2e"><%= lead.name %></div>
+              </td>
+              <td>
+                <a href="https://wa.me/55<%= lead.whatsapp.replace(/\D/g,'') %>" target="_blank" class="wa-link">
+                  📱 <%= lead.whatsapp %>
+                </a>
+              </td>
+              <td style="font-size:0.82rem;color:#555"><%= lead.email %></td>
+              <td style="font-size:0.78rem;color:#888"><%= new Date(lead.created_at).toLocaleDateString('pt-BR') %></td>
+              <td>
+                <% if (lead.proposal_sent_at) { %>
+                  <span style="font-size:0.75rem;color:#2e7d32;font-weight:600">✅ Enviada</span>
+                <% } else { %>
+                  <a href="/admin/proposals/new?lead_id=<%= lead.id %>" style="font-size:0.75rem;color:#E91E63;font-weight:600">+ Criar proposta</a>
+                <% } %>
+              </td>
+              <td>
+                <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+                  <a href="/admin/leads/<%= lead.id %>" class="btn-sm btn-outline" title="Ver detalhe">👁️</a>
+                  <a href="/admin/leads/<%= lead.id %>/edit" class="btn-sm btn-outline" title="Editar">✏️</a>
+                  <% if (lead.proposal_sent_at) { %>
+                  <a href="/admin/proposals/<%= lead.id %>/edit" class="btn-sm btn-outline" title="Editar proposta">📝</a>
+                  <% } %>
+                  <form action="/admin/leads/<%= lead.id %>/delete" method="POST" style="display:inline" onsubmit="return confirm('Tem certeza? Isso apagará o lead e todos os dados relacionados.')">
+                    <button type="submit" class="btn-sm btn-danger-outline" title="Excluir lead">🗑️</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+        <% } %>
+      </div>
+    </main>
+  </div>
+  <style>
+    .btn-danger-outline{border:1px solid #dc2626;color:#dc2626;background:rgba(220,38,38,0.07);border-radius:6px;padding:4px 8px;font-size:0.75rem;cursor:pointer;font-family:Poppins,sans-serif;transition:all 0.15s;}
+    .btn-danger-outline:hover{background:rgba(220,38,38,0.15);}
+  </style>
+  <script>
+    function filterLeads(val) {
+      const q = val.toLowerCase().trim();
+      const rows = document.querySelectorAll('.lead-row');
+      let visible = 0;
+      rows.forEach(r => {
+        const match = !q || r.dataset.search.includes(q);
+        r.style.display = match ? '' : 'none';
+        if (match) visible++;
+      });
+      const cnt = document.getElementById('leadCount');
+      if (cnt) cnt.textContent = visible + ' lead(s)';
+    }
+  </script>
+</body>
+</html>
