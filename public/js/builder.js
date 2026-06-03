@@ -1,6 +1,6 @@
 /**
  * builder.js — Orçamento Vertical (estilo Word/PDF) + Montador Interativo
- * 
+ *
  * Modo A (admin-proposal): Exibe itens pré-configurados pelo admin em tabela vertical
  * Modo B (custom builder): Carrega serviços do DB e deixa cliente montar o plano
  */
@@ -13,6 +13,11 @@
   }
   function fmtPct(val) { return val + '%'; }
   function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  // WhatsApp base URL
+  function waUrl(msg) {
+    return 'https://wa.me/554133000404?text=' + encodeURIComponent(msg);
+  }
 
   // ── Estado do builder interativo ───────────────────────────────────
   let allServices   = [];
@@ -32,6 +37,27 @@
     const n = name.toLowerCase();
     for (const [kw, ico] of Object.entries(ICONS)) { if (n.includes(kw)) return ico; }
     return '⚙️';
+  }
+
+  // ── Categorias dos serviços ────────────────────────────────────────
+  const CATEGORY_MAP = {
+    'social':      { label: '📱 Social Media & Conteúdo', order: 1 },
+    'tráfego':     { label: '🎯 Tráfego Pago & Performance', order: 2 },
+    'captação':    { label: '🎬 Captação de Conteúdo', order: 3 },
+    'captacao':    { label: '🎬 Captação de Conteúdo', order: 3 },
+    'atendimento': { label: '💬 Atendimento de Leads (SDR)', order: 4 },
+    'sdr':         { label: '💬 Atendimento de Leads (SDR)', order: 4 },
+    'website':     { label: '🌐 Web & Digital', order: 5 },
+    'identidade':  { label: '🎨 Identidade & Branding', order: 6 },
+    'blog':        { label: '✍️ Conteúdo & Blog', order: 7 },
+  };
+
+  function getCategory(name) {
+    const n = name.toLowerCase();
+    for (const [kw, cat] of Object.entries(CATEGORY_MAP)) {
+      if (n.includes(kw)) return cat;
+    }
+    return { label: '⚙️ Outros Serviços', order: 99 };
   }
 
   // ── Tab switch ─────────────────────────────────────────────────────
@@ -56,6 +82,27 @@
     }
   };
 
+  // ── Inline action buttons HTML ─────────────────────────────────────
+  function buildInlineActionButtons(context) {
+    var company = window.COMPANY_NAME || '';
+    var person  = window.LEAD_NAME    || '';
+    var label   = company || person || '';
+    var waBase  = 'Olá! Estou analisando a proposta da Envox' + (label ? ' para ' + label : '');
+
+    return `
+      <div class="budget-inline-actions" id="budget-inline-actions-${context}">
+        <div class="bia-title">Qual é a sua decisão?</div>
+        <div class="bia-btns">
+          <button class="bia-btn bia-accept" onclick="dwQuickAction && dwQuickAction('accept')">✅ Aceitar Proposta</button>
+          <button class="bia-btn bia-counter" onclick="dwQuickAction && dwQuickAction('counter')">🔄 Contraproposta</button>
+          <button class="bia-btn bia-reject" onclick="dwQuickAction && dwQuickAction('reject')">❌ Rejeitar</button>
+          <a class="bia-btn bia-whatsapp"
+             href="${waUrl(waBase + ' e gostaria de conversar sobre ela.')}"
+             target="_blank">💬 Falar sobre esta Proposta</a>
+        </div>
+      </div>`;
+  }
+
   // ──────────────────────────────────────────────────────────────────
   // ─── MODE A: Admin Proposal — Vertical PDF/Word Style ────────────
   // ──────────────────────────────────────────────────────────────────
@@ -67,6 +114,7 @@
     const desc    = window.PROPOSAL_DESC  || '';
     const scope   = window.PROPOSAL_SCOPE || '';
     const timeline= window.PROPOSAL_TIMELINE || '';
+    const company = window.COMPANY_NAME   || '';
 
     // Check discounts
     const discM = window.LEAD_DISCOUNT_MONTHLY || 0;
@@ -86,6 +134,27 @@
           <span style="font-size:0.75rem">Use a aba "Montar Plano" para personalizar seu orçamento.</span>
         </div>`;
       return;
+    }
+
+    // ── Context sections: Entendimento + Cronograma BEFORE table ──
+    let contextHTML = '';
+    if (desc) {
+      const label = company ? `Entendimento do Cenário da ${company}` : 'Entendimento do Cenário';
+      contextHTML += `
+        <div class="budget-context-block">
+          <div class="budget-context-title">📋 ${esc(label)}</div>
+          <div class="budget-context-text">${esc(desc)}</div>
+        </div>`;
+    }
+    if (timeline) {
+      contextHTML += `
+        <div class="budget-context-block">
+          <div class="budget-context-title">📅 Cronograma</div>
+          <div class="budget-context-text">${esc(timeline)}</div>
+        </div>`;
+    }
+    if (contextHTML) {
+      contextHTML = `<div class="budget-context-section">${contextHTML}</div>`;
     }
 
     // Separate monthly vs onetime items
@@ -186,11 +255,10 @@
 
     tableHTML += `</tbody></table></div>`;
 
-    // Summary cards — Investimento à direita, opções de pagamento abaixo
+    // Summary cards — Investimento
     let summaryCards = '<div class="budget-summary-cards">';
     if (monthlyItems.length > 0) {
       const discNote = discActive && discM > 0 ? ` · Desconto de ${discM}% aplicado` : '';
-      // Calcular valor à vista com 10% de desconto (se não houver desconto especial)
       const avistaPct = (discActive && discM > 0) ? 0 : 10;
       const avistaBRL = grandMonthly * (1 - avistaPct / 100);
       summaryCards += `
@@ -218,7 +286,7 @@
     // Opções de pagamento (à vista vs mensal) — somente para serviços mensais
     let paymentOptions = '';
     if (monthlyItems.length > 0 && !(discActive && discM > 0)) {
-      const avista3 = grandMonthly * 3 * 0.90; // 3 meses à vista com 10% off
+      const avista3 = grandMonthly * 3 * 0.90;
       paymentOptions = `
         <div class="budget-payment-options">
           <div class="budget-payment-card payment-mensal" style="flex:1">
@@ -231,60 +299,62 @@
             <div class="budget-payment-value">${fmtBRL(avista3)}</div>
             <div class="budget-payment-note">10% de desconto · <strong>${fmtBRL(grandMonthly * 3 - avista3)}</strong> de economia</div>
           </div>
-        </div>`; 
-    }
-
-    // Sections: desc, scope, timeline
-    let sectionsHTML = '';
-
-    if (desc) {
-      sectionsHTML += `
-        <div class="admin-proposal-view" style="margin-top:1.25rem">
-          <div class="admin-proposal-section">
-            <div class="admin-section-title">📄 Descrição da Proposta</div>
-            <div class="admin-section-text">${esc(desc)}</div>
-          </div>
         </div>`;
     }
 
-    if (scope || timeline) {
-      sectionsHTML += `<div class="admin-proposal-view" style="margin-top:1.25rem">`;
-      if (scope) {
-        sectionsHTML += `
-          <div class="admin-proposal-section">
-            <div class="admin-section-title">🎯 Escopo do Projeto</div>
-            <div class="admin-section-text">${esc(scope)}</div>
-          </div>`;
-      }
-      if (timeline) {
-        sectionsHTML += `
-          <div class="admin-proposal-section">
-            <div class="admin-section-title">📅 Cronograma</div>
-            <div class="admin-section-text">${esc(timeline)}</div>
-          </div>`;
-      }
-      sectionsHTML += `</div>`;
-    }
-
-    // CTA button
-    const ctaHTML = `
-      <div style="text-align:center;margin-top:1.5rem;padding-bottom:1rem">
-        <a href="https://wa.me/554133000404?text=${encodeURIComponent('Olá! Vi a proposta da Envox e gostaria de fechar negócio. Podemos conversar?')}"
-           target="_blank"
-           style="display:inline-flex;align-items:center;gap:0.6rem;background:#25D366;color:#fff;border-radius:50px;padding:0.85rem 2rem;font-family:Poppins,sans-serif;font-size:0.9rem;font-weight:700;text-decoration:none;box-shadow:0 4px 20px rgba(37,211,102,0.3)">
-          💬 Aceitar e Falar com a Envox
-        </a>
+    // Email send button for client
+    const emailBtnHTML = `
+      <div class="budget-email-btn-wrapper">
+        <button class="budget-email-btn" onclick="sendPlanEmailToClient()">
+          📧 Enviar para meu e-mail
+        </button>
+        <div class="budget-email-sent" id="budgetEmailSent" style="display:none">
+          ✅ E-mail enviado! Verifique sua caixa de entrada.
+        </div>
       </div>`;
+
+    // Inline decision buttons below total
+    const inlineActionsHTML = buildInlineActionButtons('admin');
 
     container.innerHTML = `
       <div class="admin-proposal-view">
+        ${contextHTML}
         ${tableHTML}
         ${summaryCards}
         ${paymentOptions}
-      </div>
-      ${sectionsHTML}
-      ${ctaHTML}`;
+        ${emailBtnHTML}
+        ${inlineActionsHTML}
+      </div>`;
   }
+
+  // Send plan email to client
+  window.sendPlanEmailToClient = function() {
+    const token  = window.PROPOSAL_TOKEN;
+    const btn    = document.querySelector('.budget-email-btn');
+    const sentEl = document.getElementById('budgetEmailSent');
+    if (!token) { alert('Token não encontrado.'); return; }
+    if (btn) { btn.disabled = true; btn.textContent = '📨 Enviando...'; }
+
+    fetch('/proposta/send-plan-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        if (sentEl) sentEl.style.display = 'block';
+        if (btn) btn.style.display = 'none';
+      } else {
+        alert('Erro ao enviar: ' + (data.error || 'tente novamente.'));
+        if (btn) { btn.disabled = false; btn.textContent = '📧 Enviar para meu e-mail'; }
+      }
+    })
+    .catch(() => {
+      alert('Erro de conexão. Tente novamente.');
+      if (btn) { btn.disabled = false; btn.textContent = '📧 Enviar para meu e-mail'; }
+    });
+  };
 
   // ──────────────────────────────────────────────────────────────────
   // ─── MODE B: Interactive Builder ──────────────────────────────────
@@ -304,6 +374,7 @@
       groups.push({
         baseName: base,
         icon: getIcon(base),
+        category: getCategory(base),
         variants,
         isCaptacao: base.toLowerCase().includes('captação') || base.toLowerCase().includes('captacao'),
       });
@@ -311,74 +382,117 @@
     return groups;
   }
 
+  // Group services by category for accordion
+  function groupByCategory(groups) {
+    const catMap = new Map();
+    groups.forEach((group, gi) => {
+      const catLabel = group.category.label;
+      if (!catMap.has(catLabel)) {
+        catMap.set(catLabel, { label: catLabel, order: group.category.order, groups: [] });
+      }
+      catMap.get(catLabel).groups.push({ group, gi });
+    });
+    // Sort categories by order
+    return Array.from(catMap.values()).sort((a, b) => a.order - b.order);
+  }
+
   function renderBuilder() {
     const container = document.getElementById('plan-builder-container');
     if (!container) return;
 
-    let groupsHTML = '';
-    serviceGroups.forEach((group, gi) => {
-      const hasVariants = group.variants.length > 1;
-      const isCaptacao  = group.isCaptacao;
-      const price0      = group.variants[0].price;
+    const categories = groupByCategory(serviceGroups);
 
-      let optionsHTML = '';
-      if (hasVariants && !isCaptacao) {
-        selectedKeys[gi] = selectedKeys[gi] || { active: false, selectedVariantKey: group.variants[0].key };
-        optionsHTML = `
-          <div class="bs-options bs-options-select" id="opts-group-${gi}" style="display:none">
-            <select class="builder-select" id="sel-group-${gi}" onchange="builderGroupChange(${gi})">
-              ${group.variants.map(v => `<option value="${v.key}" data-price="${v.price}">${v.name.includes(' - ') ? v.name.split(' - ').slice(1).join(' - ') : v.name} — ${fmtBRL(v.price)}${v.unit ? '/' + v.unit.replace('/', '') : '/mês'}</option>`).join('')}
-            </select>
-          </div>`;
-      } else if (isCaptacao) {
-        selectedKeys[gi] = selectedKeys[gi] || { active: false, selectedVariantKey: group.variants[0].key };
-        optionsHTML = `
-          <div class="bs-options bs-options-row" id="opts-group-${gi}" style="display:none">
-            <span class="bs-qty-label">Sessões/mês:</span>
-            <div class="bs-qty-btns">
-              <button type="button" class="qty-btn" onclick="captacaoChange(-1)">−</button>
-              <span id="captacao-qty-val" class="qty-val">1</span>
-              <button type="button" class="qty-btn" onclick="captacaoChange(1)">+</button>
+    let accordionHTML = '';
+    categories.forEach((cat, catIdx) => {
+      let groupsHTML = '';
+      cat.groups.forEach(({ group, gi }) => {
+        const hasVariants = group.variants.length > 1;
+        const isCaptacao  = group.isCaptacao;
+        const price0      = group.variants[0].price;
+
+        let optionsHTML = '';
+        if (hasVariants && !isCaptacao) {
+          selectedKeys[gi] = selectedKeys[gi] || { active: false, selectedVariantKey: group.variants[0].key };
+          optionsHTML = `
+            <div class="bs-options bs-options-select" id="opts-group-${gi}" style="display:none">
+              <select class="builder-select" id="sel-group-${gi}" onchange="builderGroupChange(${gi})">
+                ${group.variants.map(v => `<option value="${v.key}" data-price="${v.price}">${v.name.includes(' - ') ? v.name.split(' - ').slice(1).join(' - ') : v.name} — ${fmtBRL(v.price)}${v.unit ? '/' + v.unit.replace('/', '') : '/mês'}</option>`).join('')}
+              </select>
+            </div>`;
+        } else if (isCaptacao) {
+          selectedKeys[gi] = selectedKeys[gi] || { active: false, selectedVariantKey: group.variants[0].key };
+          optionsHTML = `
+            <div class="bs-options bs-options-row" id="opts-group-${gi}" style="display:none">
+              <span class="bs-qty-label">Sessões/mês:</span>
+              <div class="bs-qty-btns">
+                <button type="button" class="qty-btn" onclick="captacaoChange(-1)">−</button>
+                <span id="captacao-qty-val" class="qty-val">1</span>
+                <button type="button" class="qty-btn" onclick="captacaoChange(1)">+</button>
+              </div>
+              <span class="bs-qty-note">${fmtBRL(price0)} × <span id="captacao-qty-x">1</span> = <strong id="captacao-qty-total">${fmtBRL(price0)}</strong></span>
+            </div>`;
+        } else {
+          selectedKeys[gi] = selectedKeys[gi] || { active: false, selectedVariantKey: group.variants[0].key };
+        }
+
+        const isOnetime  = group.variants[0].category === 'onetime';
+        const priceLabel = isOnetime ? `${fmtBRL(price0)} (único)` : `a partir de ${fmtBRL(price0)}/mês`;
+
+        groupsHTML += `
+          <div class="builder-section" id="bs-group-${gi}">
+            <div class="bs-title-row">
+              <div class="bs-icon">${group.icon}</div>
+              <div class="bs-info">
+                <div class="bs-label">${esc(group.baseName)}</div>
+                <div class="bs-price-hint">${priceLabel}</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="tog-group-${gi}" onchange="builderGroupToggle(${gi})">
+                <span class="toggle-slider"></span>
+              </label>
             </div>
-            <span class="bs-qty-note">${fmtBRL(price0)} × <span id="captacao-qty-x">1</span> = <strong id="captacao-qty-total">${fmtBRL(price0)}</strong></span>
+            ${optionsHTML}
           </div>`;
-      } else {
-        selectedKeys[gi] = selectedKeys[gi] || { active: false, selectedVariantKey: group.variants[0].key };
-      }
+      });
 
-      const isOnetime  = group.variants[0].category === 'onetime';
-      const priceLabel = isOnetime ? `${fmtBRL(price0)} (único)` : `a partir de ${fmtBRL(price0)}/mês`;
-
-      groupsHTML += `
-        <div class="builder-section" id="bs-group-${gi}">
-          <div class="bs-title-row">
-            <div class="bs-icon">${group.icon}</div>
-            <div class="bs-info">
-              <div class="bs-label">${esc(group.baseName)}</div>
-              <div class="bs-price-hint">${priceLabel}</div>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="tog-group-${gi}" onchange="builderGroupToggle(${gi})">
-              <span class="toggle-slider"></span>
-            </label>
+      accordionHTML += `
+        <div class="builder-accordion" id="acc-cat-${catIdx}">
+          <button class="builder-accordion-header" onclick="toggleAccordion(${catIdx})" type="button">
+            <span class="bah-label">${cat.label}</span>
+            <span class="bah-count" id="acc-count-${catIdx}">0 selecionado(s)</span>
+            <span class="bah-arrow" id="acc-arrow-${catIdx}">▾</span>
+          </button>
+          <div class="builder-accordion-body" id="acc-body-${catIdx}">
+            ${groupsHTML}
           </div>
-          ${optionsHTML}
         </div>`;
     });
+
+    const company = window.COMPANY_NAME || '';
+    const emailBtn = `
+      <button id="btn-send-plan" class="btn-whatsapp-builder" style="display:none" onclick="sendPlanWhatsApp()">
+        💬 Enviar pelo WhatsApp
+      </button>
+      <button id="btn-send-plan-email" class="btn-email-builder" style="display:none" onclick="sendBuilderPlanEmail()">
+        📧 Enviar para meu e-mail
+      </button>
+      <div id="builder-email-sent" class="builder-email-sent" style="display:none">
+        ✅ E-mail enviado com sucesso!
+      </div>`;
 
     container.innerHTML = `
       <div class="builder-layout">
         <div class="builder-main">
           <div class="builder-header">
             <h2>Monte seu <span class="text-pink">plano ideal</span></h2>
-            <p class="slide-desc">Selecione os serviços que fazem sentido para o seu negócio</p>
+            <p class="slide-desc">Selecione os serviços que fazem sentido para o seu negócio${company ? ' — <strong>' + company + '</strong>' : ''}</p>
           </div>
-          ${groupsHTML}
+          ${accordionHTML}
           <div id="discount-combo-alert" class="discount-combo-alert" style="display:none"></div>
         </div>
 
         <div class="builder-summary" id="builder-summary">
-          <div class="summary-title">✦ Seu Plano</div>
+          <div class="summary-title">✦ Seu Plano${company ? '<br><small style="font-size:0.7rem;font-weight:400;color:#E91E63">' + company + '</small>' : ''}</div>
           <div id="summary-items" class="summary-items">
             <p class="summary-empty">Selecione pelo menos um serviço</p>
           </div>
@@ -398,17 +512,51 @@
             <span>Com desconto</span>
             <div class="summary-price-small summary-price-disc" id="summary-onetime-disc-val">${fmtBRL(0)}</div>
           </div>
-          <button id="btn-send-plan" class="btn-whatsapp-builder" style="display:none" onclick="sendPlanWhatsApp()">
-            💬 Enviar pelo WhatsApp
-          </button>
+          ${emailBtn}
           <div class="builder-cta-doubt">
             Ficou com dúvida?<br>
-            <a href="https://wa.me/554133000404?text=${encodeURIComponent('Olá! Tenho dúvida sobre os valores da proposta.')}" target="_blank" class="btn-doubt-wa">
+            <a href="${waUrl('Olá! Tenho dúvida sobre os valores da proposta' + (company ? ' para ' + company : '') + '.')}" target="_blank" class="btn-doubt-wa">
               💬 Fale com a gente
             </a>
           </div>
         </div>
+      </div>
+
+      <!-- Inline actions for custom builder -->
+      <div class="builder-inline-actions" id="builder-inline-actions" style="display:none">
+        ${buildInlineActionButtons('builder')}
       </div>`;
+
+    // Auto-open first accordion
+    if (categories.length > 0) {
+      const firstBody = document.getElementById('acc-body-0');
+      if (firstBody) firstBody.classList.add('open');
+      const firstArrow = document.getElementById('acc-arrow-0');
+      if (firstArrow) firstArrow.textContent = '▴';
+    }
+  }
+
+  // Accordion toggle
+  window.toggleAccordion = function(catIdx) {
+    const body  = document.getElementById(`acc-body-${catIdx}`);
+    const arrow = document.getElementById(`acc-arrow-${catIdx}`);
+    if (!body) return;
+    const isOpen = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    if (arrow) arrow.textContent = isOpen ? '▾' : '▴';
+  };
+
+  // Update accordion counters
+  function updateAccordionCounts() {
+    const categories = groupByCategory(serviceGroups);
+    categories.forEach((cat, catIdx) => {
+      const selected = cat.groups.filter(({ gi }) => selectedKeys[gi] && selectedKeys[gi].active).length;
+      const countEl = document.getElementById(`acc-count-${catIdx}`);
+      if (countEl) {
+        countEl.textContent = selected > 0 ? `${selected} selecionado${selected !== 1 ? 's' : ''}` : '';
+        countEl.style.display = selected > 0 ? 'inline-block' : 'none';
+      }
+    });
   }
 
   // ── Toggle de grupo ────────────────────────────────────────────────
@@ -421,6 +569,7 @@
     if (opts) opts.style.display = selectedKeys[gi].active ? 'flex' : 'none';
     if (sec)  sec.classList.toggle('active', selectedKeys[gi].active);
     builderCalc();
+    updateAccordionCounts();
   };
 
   window.builderGroupChange = function (gi) {
@@ -512,14 +661,17 @@
     const summaryOneDisc  = document.getElementById('summary-onetime-disc');
     const summaryOneDV    = document.getElementById('summary-onetime-disc-val');
     const btnSend         = document.getElementById('btn-send-plan');
+    const btnSendEmail    = document.getElementById('btn-send-plan-email');
     const comboAlert      = document.getElementById('discount-combo-alert');
+    const inlineActions   = document.getElementById('builder-inline-actions');
 
     if (!summaryItems) return;
 
     if (items.length === 0) {
       summaryItems.innerHTML = '<p class="summary-empty">Selecione pelo menos um serviço</p>';
-      [summaryMon, summaryMonDisc, summaryOne, summaryOneDisc, btnSend].forEach(el => { if (el) el.style.display = 'none'; });
+      [summaryMon, summaryMonDisc, summaryOne, summaryOneDisc, btnSend, btnSendEmail].forEach(el => { if (el) el.style.display = 'none'; });
       if (comboAlert) comboAlert.style.display = 'none';
+      if (inlineActions) inlineActions.style.display = 'none';
       return;
     }
 
@@ -547,6 +699,8 @@
     } else if (summaryOne) { summaryOne.style.display = 'none'; if (summaryOneDisc) summaryOneDisc.style.display = 'none'; }
 
     if (btnSend) btnSend.style.display = 'flex';
+    if (btnSendEmail) btnSendEmail.style.display = 'flex';
+    if (inlineActions) inlineActions.style.display = 'block';
 
     if (comboAlert) {
       if (comboDiscPct > 0) {
@@ -575,10 +729,12 @@
     const onetimeDisc = window._builderOnetimeDisc || onetime;
     const discPctM    = window._builderDiscPctM || 0;
     const discPctO    = window._builderDiscPctO || 0;
+    const company     = window.COMPANY_NAME || '';
+    const person      = window.LEAD_NAME    || '';
     if (items.length === 0) return;
 
     const listLines = items.map(i => `• ${i.name}: ${fmtBRL(i.price)}`).join('\n');
-    let msg = `Olá! 👋\n\nMontei meu plano personalizado na proposta da Envox:\n\n📋 *MEU PLANO:*\n\n${listLines}\n\n`;
+    let msg = `Olá! 👋\n\nMontei meu plano personalizado na proposta da Envox${company ? ' para ' + company : ''}:\n\n📋 *MEU PLANO:*\n\n${listLines}\n\n`;
 
     if (discPctM > 0 && monthlyDisc < monthly) {
       msg += `💰 *Mensal:* ${fmtBRL(monthly)}\n✅ *Com desconto (${discPctM}%): ${fmtBRL(monthlyDisc)}/mês*\n`;
@@ -615,7 +771,46 @@
       }).catch(() => {});
     }
 
-    window.open('https://wa.me/554133000404?text=' + encodeURIComponent(msg), '_blank');
+    window.open(waUrl(msg), '_blank');
+  };
+
+  // ── Enviar plano por email (builder) ───────────────────────────────
+  window.sendBuilderPlanEmail = function() {
+    const token   = window.PROPOSAL_TOKEN;
+    const items   = window._builderItems || [];
+    const monthly = window._builderMonthlyDisc || window._builderMonthly || 0;
+    const onetime = window._builderOnetimeDisc || window._builderOnetime || 0;
+    if (!token || items.length === 0) return;
+
+    const btn    = document.getElementById('btn-send-plan-email');
+    const sentEl = document.getElementById('builder-email-sent');
+    if (btn) { btn.disabled = true; btn.textContent = '📨 Enviando...'; }
+
+    // Build simple plan HTML
+    const listHTML = items.map(i => `<li>${i.name} — ${fmtBRL(i.price)}</li>`).join('');
+    let planHtml = `<ul style="padding-left:1.5rem;line-height:1.8">${listHTML}</ul>`;
+    if (monthly > 0) planHtml += `<p style="margin-top:1rem"><strong>Total mensal: ${fmtBRL(monthly)}/mês</strong></p>`;
+    if (onetime > 0) planHtml += `<p><strong>Total único: ${fmtBRL(onetime)}</strong></p>`;
+
+    fetch('/proposta/send-plan-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, planHtml, source: 'builder' })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        if (sentEl) { sentEl.style.display = 'block'; }
+        if (btn) btn.style.display = 'none';
+      } else {
+        alert('Erro ao enviar: ' + (data.error || 'tente novamente.'));
+        if (btn) { btn.disabled = false; btn.textContent = '📧 Enviar para meu e-mail'; }
+      }
+    })
+    .catch(() => {
+      alert('Erro de conexão.');
+      if (btn) { btn.disabled = false; btn.textContent = '📧 Enviar para meu e-mail'; }
+    });
   };
 
   // ── Load builder data from API ─────────────────────────────────────
@@ -647,7 +842,6 @@
 
   // ── Init ───────────────────────────────────────────────────────────
   function init() {
-    // Check if we're on the slide 8 page
     const adminContainer = document.getElementById('admin-proposal-container');
     if (!adminContainer) return;
 
@@ -656,25 +850,17 @@
     const tabAdmin  = document.getElementById('tab-admin');
     const tabCustom = document.getElementById('tab-custom');
 
-    // Apply mode visibility
     if (mode === 'ready') {
-      // Only show admin proposal; hide custom tab
       if (tabCustom) tabCustom.style.display = 'none';
-      if (tabsWrapper && tabAdmin) {
-        // If only one tab remains, hide the tabs bar altogether
-        tabsWrapper.style.display = 'none';
-      }
+      if (tabsWrapper) tabsWrapper.style.display = 'none';
       renderAdminProposal();
       switchBuilderTab('admin');
     } else if (mode === 'build') {
-      // Only show custom builder; hide admin tab
       if (tabAdmin) tabAdmin.style.display = 'none';
       if (tabsWrapper) tabsWrapper.style.display = 'none';
-      renderAdminProposal(); // still render (hidden) so container exists
+      renderAdminProposal();
       switchBuilderTab('custom');
     } else {
-      // 'both' — show both tabs
-      // Render admin proposal first (Mode A)
       renderAdminProposal();
       const hasItems = window.PROPOSAL_ITEMS && window.PROPOSAL_ITEMS.length > 0;
       if (!hasItems) {

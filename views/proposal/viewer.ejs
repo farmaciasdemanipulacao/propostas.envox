@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Proposta Envox — <%= lead.name %></title>
+  <title>Proposta Envox<% if (lead.company_name) { %> — <%= lead.company_name %><% } else { %> — <%= lead.name %><% } %></title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/proposal.css">
 </head>
@@ -16,7 +16,11 @@
       <span class="brand-env">env</span><span class="brand-ox">ox</span>
     </div>
     <div class="header-info">
-      <span class="header-lead">Proposta para: <strong><%= lead.name %></strong></span>
+      <% if (lead.company_name) { %>
+        <span class="header-lead">Proposta para: <strong><%= lead.company_name %></strong><% if (lead.name) { %> · <span style="font-weight:400;opacity:0.75"><%= lead.name %></span><% } %></span>
+      <% } else { %>
+        <span class="header-lead">Proposta para: <strong><%= lead.name %></strong></span>
+      <% } %>
     </div>
     <div class="header-right">
       <div class="header-slide-counter">
@@ -79,6 +83,10 @@
     window.LEAD_DISCOUNT_ONETIME  = <%= lead.discount_onetime || 0 %>;
     window.LEAD_DISCOUNT_EXPIRES  = '<%= lead.discount_expires || "" %>';
     window.PROPOSAL_MODE = '<%= lead.proposal_mode || "both" %>';
+    window.COMPANY_NAME  = <%- JSON.stringify(lead.company_name || '') %>;
+    window.LEAD_NAME     = <%- JSON.stringify(lead.name || '') %>;
+    window.LEAD_CARGO    = <%- JSON.stringify(lead.cargo || '') %>;
+    window.WHATSAPP_URL  = 'https://wa.me/554133000404';
     <% if (lead.proposal_items) { %>
     window.PROPOSAL_ITEMS = <%- JSON.stringify(lead.proposal_items || []) %>;
     window.PROPOSAL_DESC  = <%- JSON.stringify(lead.proposal_description || '') %>;
@@ -103,6 +111,9 @@
       <button class="dw-btn dw-btn-accept" onclick="dwSelectAction('accept')">✅ Aceitar Proposta</button>
       <button class="dw-btn dw-btn-counter" onclick="dwSelectAction('counter')">🔄 Fazer Contra Proposta</button>
       <button class="dw-btn dw-btn-reject" onclick="dwSelectAction('reject')">❌ Rejeitar Proposta</button>
+      <a class="dw-btn dw-btn-whatsapp" id="dwWaBtn"
+         href="https://wa.me/554133000404?text=Ol%C3%A1!%20Estou%20analisando%20a%20proposta%20da%20Envox%20e%20gostaria%20de%20conversar."
+         target="_blank">💬 Falar sobre esta Proposta</a>
     </div>
     <div class="dw-form" id="dwForm">
       <div id="dwFormCounter" style="display:none">
@@ -136,33 +147,40 @@
       <button class="dw-quick-btn dw-quick-accept" onclick="dwQuickAction('accept')" title="Aceitar Proposta">✅ Aceitar</button>
       <button class="dw-quick-btn dw-quick-counter" onclick="dwQuickAction('counter')" title="Fazer Contra Proposta">🔄 Contraproposta</button>
       <button class="dw-quick-btn dw-quick-reject" onclick="dwQuickAction('reject')" title="Rejeitar Proposta">❌ Rejeitar</button>
+      <a class="dw-quick-btn dw-quick-whatsapp" id="dwQuickWa"
+         href="https://wa.me/554133000404?text=Ol%C3%A1!%20Estou%20analisando%20a%20proposta%20da%20Envox%20e%20gostaria%20de%20conversar."
+         target="_blank" title="Falar sobre esta Proposta">💬 Falar</a>
     </div>
   </div>
 
   <!-- ── SHARE WIDGET (floating left) ── -->
   <div class="share-widget hidden" id="shareWidget">
     <div class="share-widget-header">
-      <span class="share-widget-title">📤 Enviar para Outra Pessoa</span>
+      <span class="share-widget-title">📤 Compartilhar Proposta</span>
       <button class="share-widget-close" onclick="toggleShareWidget()" title="Fechar">✕</button>
     </div>
     <div class="share-widget-body">
-      <p class="sw-hint">Quer que um sócio, diretor ou responsável também analise esta proposta? Envie um link exclusivo de acesso — a pessoa receberá por e-mail.</p>
+      <p class="sw-hint">Quer que um sócio, diretor ou responsável também analise esta proposta? Envie um link exclusivo — a pessoa receberá por e-mail e ficará registrada no sistema.</p>
       <div class="sw-form-row">
-        <label>Nome</label>
+        <label>Nome *</label>
         <input type="text" id="swName" placeholder="Nome da pessoa">
       </div>
       <div class="sw-form-row">
-        <label>WhatsApp</label>
+        <label>Cargo / Função</label>
+        <input type="text" id="swCargo" placeholder="Ex: Sócio, Diretor, Gerente...">
+      </div>
+      <div class="sw-form-row">
+        <label>WhatsApp *</label>
         <input type="text" id="swWhatsapp" placeholder="(41) 99999-9999">
       </div>
       <div class="sw-form-row">
-        <label>E-mail (receberá o link)</label>
+        <label>E-mail * (receberá o link)</label>
         <input type="email" id="swEmail" placeholder="email@empresa.com">
       </div>
       <button class="sw-submit" id="swSubmitBtn" onclick="swSubmit()">📤 Enviar Link de Acesso</button>
       <div class="sw-success" id="swSuccess">
         ✅ Link enviado com sucesso!<br>
-        <small style="color:#555;font-size:0.72rem">A pessoa receberá o e-mail com o link de acesso exclusivo em instantes.</small>
+        <small style="color:#555;font-size:0.72rem">A pessoa receberá o e-mail com o link exclusivo em instantes e será cadastrada automaticamente.</small>
       </div>
     </div>
   </div>

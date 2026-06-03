@@ -12,7 +12,7 @@ const slides = [
             <span class="brand-sub">MARKETING DIGITAL</span>
           </div>
           <h1 class="slide1-title">Proposta<br><span class="text-pink">Comercial</span></h1>
-          <p class="slide1-subtitle">Mais clientes, mais vendas, mais resultado.<br>Essa é a razão pela qual existimos.</p>
+          <p class="slide1-subtitle" id="slide1-company-sub">Feita com carinho e estratégia para o seu negócio.<br>Mais clientes, mais vendas, mais resultado.</p>
           <div class="slide1-badges">
             <span class="badge-item">🏆 Agência Premiada</span>
             <span class="badge-item">📅 Desde 2014</span>
@@ -38,7 +38,21 @@ const slides = [
           </div>
         </div>
       </div>
-    </div>`
+    </div>
+    <script>
+    (function initSlide1() {
+      var sub = document.getElementById('slide1-company-sub');
+      var company = window.COMPANY_NAME || '';
+      var person  = window.LEAD_NAME    || '';
+      if (sub) {
+        if (company) {
+          sub.innerHTML = 'Feita com carinho e estratégia para <strong class="text-pink">' + company + '</strong>.<br>Mais clientes, mais vendas, mais resultado.';
+        } else if (person) {
+          sub.innerHTML = 'Feita com carinho e estratégia para <strong class="text-pink">' + person + '</strong>.<br>Mais clientes, mais vendas, mais resultado.';
+        }
+      }
+    })();
+    </script>`
   },
 
   // SLIDE 2 — O PROBLEMA
@@ -132,12 +146,12 @@ const slides = [
         <div class="solution-card card-green">
           <div class="solution-number">04</div>
           <div class="solution-icon">💬</div>
-          <h3>Atendimento de Leads</h3>
-          <p>Nossa equipe atende os leads das suas campanhas em tempo real — como se fosse o seu time comercial.</p>
+          <h3>Atendimento de Leads <span style="font-size:0.75em;opacity:0.8">(SDR)</span></h3>
+          <p>Nossa equipe de Atendimento — também chamado SDR — responde os leads das suas campanhas em tempo real, em par com o Analista de Tráfego que informa resultados e ajustes na ponta, sem esperar.</p>
           <ul class="solution-list">
             <li>Resposta em minutos</li>
-            <li>Qualificação de leads</li>
-            <li>Script personalizado</li>
+            <li>SDR + Analista em sincronia</li>
+            <li>Feedbacks em tempo real</li>
           </ul>
           <div class="solution-resolve-badge">✓ Resolve: leads sem atendimento</div>
         </div>
@@ -154,8 +168,19 @@ const slides = [
       <div class="slide-header-light">
         <span class="slide-tag">DIFERENCIAL EXCLUSIVO</span>
         <h2>O serviço que transforma<br><span class="text-pink">campanha em cliente</span></h2>
-        <p class="slide-desc">Gerar lead é só metade do caminho. A outra metade é atender rápido e com técnica.</p>
+        <p class="slide-desc">Gerar lead é só metade do caminho. A outra metade é atender rápido e com técnica — e é aqui que a maioria das agências deixa você na mão.</p>
       </div>
+
+      <!-- Pairing highlight: Analista + SDR (Atendimento) -->
+      <div class="sdr-pairing-banner">
+        <div class="sdr-pairing-icon">🤝</div>
+        <div class="sdr-pairing-text">
+          <strong>Analista de Tráfego Pago + SDR (Atendimento)</strong> trabalhando em par —
+          o Analista otimiza campanhas e repassa resultados em tempo real direto para o time de Atendimento,
+          que converte o lead <em>sem esperar relatório mensal</em>.
+        </div>
+      </div>
+
       <div class="sdr-compare">
         <div class="sdr-side sdr-bad">
           <div class="sdr-side-header">
@@ -191,17 +216,17 @@ const slides = [
         <div class="sdr-vs-divider"><span>VS</span></div>
         <div class="sdr-side sdr-good">
           <div class="sdr-side-header">
-            <span>✅</span> Com Atendimento Envox
+            <span>✅</span> Com Atendimento Envox (SDR)
           </div>
           <div class="sdr-flow">
             <div class="sdr-step">
               <span class="sdr-step-icon">📢</span>
-              <span class="sdr-step-text">Você investe em anúncio</span>
+              <span class="sdr-step-text">Analista otimiza anúncio em tempo real</span>
             </div>
             <div class="sdr-connector sdr-connector-good">↓</div>
             <div class="sdr-step">
-              <span class="sdr-step-icon">👀</span>
-              <span class="sdr-step-text">Pessoa vê e manda mensagem</span>
+              <span class="sdr-step-icon">🔔</span>
+              <span class="sdr-step-text">Lead chega — SDR (Atendimento) é notificado na hora</span>
             </div>
             <div class="sdr-connector sdr-connector-good">↓</div>
             <div class="sdr-step sdr-step-good">
@@ -211,7 +236,7 @@ const slides = [
             <div class="sdr-connector sdr-connector-good">↓</div>
             <div class="sdr-step sdr-step-good">
               <span class="sdr-step-icon">🎯</span>
-              <span class="sdr-step-text">Qualifica, tira dúvidas, gera interesse</span>
+              <span class="sdr-step-text">Qualifica, tira dúvidas, gera interesse com script personalizado</span>
             </div>
             <div class="sdr-connector sdr-connector-good">↓</div>
             <div class="sdr-step sdr-step-win">
@@ -222,7 +247,7 @@ const slides = [
         </div>
       </div>
       <div class="sdr-insight">
-        💡 Pesquisas mostram que leads respondidos em menos de 5 minutos têm até <strong>21x mais chance de conversão</strong> do que os respondidos após 30 minutos. Nossa equipe opera com essa velocidade — todo dia, em nome do seu negócio.
+        💡 Pesquisas mostram que leads respondidos em menos de 5 minutos têm até <strong>21x mais chance de conversão</strong> do que os respondidos após 30 minutos. Nosso SDR (Atendimento) opera com essa velocidade — e o Analista de Tráfego alimenta informações em tempo real para que cada resposta seja precisa.
       </div>
     </div>`
   },
@@ -316,57 +341,9 @@ const slides = [
     </div>`
   },
 
-  // SLIDE 6 — CREDIBILIDADE
+  // SLIDE 6 (era 7) — COMO TRABALHAMOS
   {
     number: 6,
-    title: 'Credibilidade',
-    html: `
-    <div class="slide-content slide-6">
-      <div class="slide-header-light">
-        <span class="slide-tag">CREDIBILIDADE</span>
-        <h2>Não é promessa.<br>É histórico <span class="text-pink">comprovado.</span></h2>
-        <p class="slide-desc">Qualquer agência diz que gera resultado. Veja o que nos diferencia de verdade.</p>
-      </div>
-      <div class="slide-content-wrapper">
-        <div class="cred-grid">
-          <div class="cred-card cred-featured">
-            <div class="cred-icon">🥇</div>
-            <h3 class="cred-title">1º lugar em Vendas — Nacional</h3>
-            <p class="cred-desc">Prêmio Agências de Resultados RD Station 2020, 2022 e 2023 entre mais de 500 agências do Brasil.</p>
-          </div>
-          <div class="cred-card">
-            <div class="cred-icon">🏅</div>
-            <h3 class="cred-title">1º lugar em Gestão de Agência</h3>
-            <p class="cred-desc">Melhor Case de Gestão 2021 pela Operand, entre mais de 140 empresas.</p>
-          </div>
-          <div class="cred-card">
-            <div class="cred-icon">🤝</div>
-            <h3 class="cred-title">Parceira Oficial RD Station</h3>
-            <p class="cred-desc">Certificação que exige volume de contratos ativos e qualidade comprovada de entrega.</p>
-          </div>
-          <div class="cred-card">
-            <div class="cred-icon">📅</div>
-            <h3 class="cred-title">Desde 2014 no mercado</h3>
-            <p class="cred-desc">Sobrevivemos à virada do inbound, à pandemia, às mudanças de algoritmo. Só permanece quem entrega resultado.</p>
-          </div>
-          <div class="cred-card">
-            <div class="cred-icon">🔄</div>
-            <h3 class="cred-title">Alta retenção de clientes</h3>
-            <p class="cred-desc">A maioria dos nossos clientes permanece por anos. Consequência natural de resultado consistente.</p>
-          </div>
-          <div class="cred-card">
-            <div class="cred-icon">📍</div>
-            <h3 class="cred-title">Raízes em Curitiba</h3>
-            <p class="cred-desc">Atendemos empresas de todo o Brasil, mas conhecemos a dinâmica do mercado local como ninguém.</p>
-          </div>
-        </div>
-      </div>
-    </div>`
-  },
-
-  // SLIDE 7 — COMO TRABALHAMOS
-  {
-    number: 7,
     title: 'Como Trabalhamos',
     html: `
     <div class="slide-content slide-7">
@@ -429,17 +406,17 @@ const slides = [
     </div>`
   },
 
-  // SLIDE 8 — ORÇAMENTO
+  // SLIDE 7 (era 8) — ORÇAMENTO
   {
-    number: 8,
+    number: 7,
     title: 'Orçamento',
     html: `
     <div class="slide-content slide-builder">
       <div class="builder-page-wrapper">
         <div class="builder-page-header">
           <span class="slide-tag">SEU INVESTIMENTO</span>
-          <h2>Proposta <span class="text-pink">Personalizada</span></h2>
-          <p class="slide-desc">Montamos a solução certa para o seu momento e objetivo.</p>
+          <h2 id="budget-slide-title">Proposta <span class="text-pink">Personalizada</span></h2>
+          <p class="slide-desc" id="budget-slide-sub">Montamos a solução certa para o seu momento e objetivo.</p>
         </div>
 
         <!-- Tabs: Proposta Admin vs. Montador -->
@@ -470,12 +447,28 @@ const slides = [
           </div>
         </div>
       </div>
-    </div>`
+    </div>
+    <script>
+    (function initBudgetSlide() {
+      var company = window.COMPANY_NAME || '';
+      var person  = window.LEAD_NAME    || '';
+      var titleEl = document.getElementById('budget-slide-title');
+      var subEl   = document.getElementById('budget-slide-sub');
+      if (company && titleEl) {
+        titleEl.innerHTML = 'Proposta <span class="text-pink">para ' + company + '</span>';
+      } else if (person && titleEl) {
+        titleEl.innerHTML = 'Proposta <span class="text-pink">Personalizada</span> para ' + person;
+      }
+      if (company && subEl) {
+        subEl.textContent = 'Montamos a solução certa para ' + company + ' — no seu momento e objetivo.';
+      }
+    })();
+    </script>`
   },
 
-  // SLIDE 9 — MONTE SUA PROPOSTA (unlock request)
+  // SLIDE 8 (era 9) — MONTE SUA PROPOSTA (unlock request)
   {
-    number: 9,
+    number: 8,
     title: 'Minha Própria Proposta',
     html: `
     <div class="slide-content slide-9">
@@ -527,7 +520,8 @@ const slides = [
     })();
 
     function requestBuilderUnlock() {
-      const msg = encodeURIComponent('Olá! Estou vendo a proposta da Envox e gostaria de montar meu próprio plano personalizado. Podem liberar o montador para mim? 🛠️');
+      const company = window.COMPANY_NAME || '';
+      const msg = encodeURIComponent('Olá! Estou vendo a proposta da Envox' + (company ? ' para ' + company : '') + ' e gostaria de montar meu próprio plano personalizado. Podem liberar o montador para mim? 🛠️');
       window.open('https://wa.me/554133000404?text=' + msg, '_blank');
       const sentMsg = document.getElementById('unlockSentMsg');
       if (sentMsg) sentMsg.classList.add('show');
@@ -555,9 +549,9 @@ const slides = [
     </script>`
   },
 
-  // SLIDE 10 — QUEBRANDO OBJEÇÕES
+  // SLIDE 9 (era 10) — QUEBRANDO OBJEÇÕES
   {
-    number: 10,
+    number: 9,
     title: 'Perguntas Frequentes',
     html: `
     <div class="slide-content slide-10">
@@ -573,7 +567,7 @@ const slides = [
               <span class="objection-q-icon">💬</span>
               <span>"Já contratei agência antes e não funcionou."</span>
             </div>
-            <div class="objection-a">A maioria das experiências ruins tem a mesma causa: geraram leads mas ninguém atendeu rápido o suficiente — ou era só inbound genérico sem resultado prático. Nossa estrutura é diferente: atendimento de leads integrado, cases ativos em Curitiba e transparência total com relatórios mensais.</div>
+            <div class="objection-a">A maioria das experiências ruins tem a mesma causa: geraram leads mas ninguém atendeu rápido o suficiente — ou era só inbound genérico sem resultado prático. Nossa estrutura é diferente: SDR (Atendimento) integrado com Analista de Tráfego em tempo real, cases ativos em Curitiba e transparência total com relatórios mensais.</div>
           </div>
           <div class="objection-item">
             <div class="objection-q">
@@ -601,9 +595,9 @@ const slides = [
     </div>`
   },
 
-  // SLIDE 11 — ENCERRAMENTO / CTA
+  // SLIDE 10 (era 11) — ENCERRAMENTO / CTA
   {
-    number: 11,
+    number: 10,
     title: 'Vamos Conversar?',
     html: `
     <div class="slide-content slide-11">
@@ -623,7 +617,7 @@ const slides = [
           <div class="slide11-brand">
             <span class="brand-env">env</span><span class="brand-ox">ox</span>
           </div>
-          <h2 class="slide11-title">Chega de deixar<br><span class="text-pink">dinheiro na mesa.</span></h2>
+          <h2 class="slide11-title" id="slide11-title">Chega de deixar<br><span class="text-pink">dinheiro na mesa.</span></h2>
           <p class="slide11-subtitle">O próximo passo é simples: uma conversa de 15 minutos. Sem compromisso, sem enrolação.</p>
 
           <div class="slide11-steps">
@@ -666,7 +660,8 @@ const slides = [
             <span id="validity-text">⏳ PROPOSTA VÁLIDA POR 7 DIAS</span>
           </div>
 
-          <a href="https://wa.me/554133000404?text=Olá!%20Acabei%20de%20visualizar%20a%20proposta%20da%20Envox%20e%20quero%20conversar!"
+          <a id="slide11-wa-btn"
+             href="https://wa.me/554133000404?text=Ol%C3%A1!%20Acabei%20de%20visualizar%20a%20proposta%20da%20Envox%20e%20quero%20conversar!"
              target="_blank"
              class="btn-whatsapp-final">
             <span>💬</span> Quero conversar no WhatsApp
@@ -675,6 +670,23 @@ const slides = [
       </div>
       <script>
         (function initSlide11() {
+          var company = window.COMPANY_NAME || '';
+          var person  = window.LEAD_NAME    || '';
+
+          // Personalize title
+          var titleEl = document.getElementById('slide11-title');
+          if (titleEl && company) {
+            titleEl.innerHTML = 'Chega de deixar dinheiro na mesa,<br><span class="text-pink">' + company + '.</span>';
+          }
+
+          // Personalize WhatsApp link
+          var waBtn = document.getElementById('slide11-wa-btn');
+          if (waBtn) {
+            var label = company || person || '';
+            var msg = 'Olá! Acabei de visualizar a proposta da Envox' + (label ? ' para ' + label : '') + ' e quero conversar!';
+            waBtn.href = 'https://wa.me/554133000404?text=' + encodeURIComponent(msg);
+          }
+
           const monthly = window.LEAD_DISCOUNT_MONTHLY || 0;
           const onetime = window.LEAD_DISCOUNT_ONETIME || 0;
           const expires = window.LEAD_DISCOUNT_EXPIRES || '';

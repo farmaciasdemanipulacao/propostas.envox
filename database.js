@@ -259,6 +259,29 @@ function initDatabase() {
     )
   `);
 
+  // ── TABELA: companies ──────────────────────────────────────────────
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS companies (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      segment TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // ── TABELA: proposal_new_requests ─────────────────────────────────
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS proposal_new_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      lead_id INTEGER,
+      company_name TEXT NOT NULL,
+      cargo TEXT,
+      briefing TEXT NOT NULL,
+      status TEXT DEFAULT 'pending',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   // ── MIGRAÇÕES ─────────────────────────────────────────────────────
   try { database.exec(`ALTER TABLE access_sessions ADD COLUMN alert_sent INTEGER DEFAULT 0`); } catch(e) {}
   try { database.exec(`ALTER TABLE leads ADD COLUMN discount_monthly REAL DEFAULT 0`); } catch(e) {}
@@ -270,6 +293,11 @@ function initDatabase() {
   try { database.exec(`ALTER TABLE leads ADD COLUMN proposal_mode TEXT DEFAULT 'both'`); } catch(e) {}
   try { database.exec(`ALTER TABLE leads ADD COLUMN archived INTEGER DEFAULT 0`); } catch(e) {}
   try { database.exec(`ALTER TABLE leads ADD COLUMN proposal_sent_at DATETIME`); } catch(e) {}
+  // Session 5 migrations
+  try { database.exec(`ALTER TABLE leads ADD COLUMN company_name TEXT DEFAULT ''`); } catch(e) {}
+  try { database.exec(`ALTER TABLE leads ADD COLUMN cargo TEXT DEFAULT ''`); } catch(e) {}
+  try { database.exec(`ALTER TABLE leads ADD COLUMN proposal_status TEXT DEFAULT 'active'`); } catch(e) {}
+  try { database.exec(`ALTER TABLE proposal_shared_leads ADD COLUMN shared_cargo TEXT DEFAULT ''`); } catch(e) {}
 
   console.log('✅ Banco de dados inicializado com sucesso');
 }
@@ -629,12 +657,35 @@ function markProposalSent(leadId) {
   getDb().prepare(`UPDATE leads SET proposal_sent_at=CURRENT_TIMESTAMP WHERE id=?`).run(leadId);
 }
 
-// ── PROPOSAL SHARED LEADS ──────────────────────────────────────────
-function addSharedLead(leadId, name, whatsapp, email, token) {
+// ── PROPOSAL STATUS ────────────────────────────────────────────────
+function setProposalStatus(leadId, status) {
+  getDb().prepare(`UPDATE leads SET proposal_status=? WHERE id=?`).run(status, leadId);
+}
+function updateLeadCompany(leadId, companyName, cargo) {
+  getDb().prepare(`UPDATE leads SET company_name=?, cargo=? WHERE id=?`).run(companyName||'', cargo||'', leadId);
+}
+
+// ── PROPOSAL NEW REQUESTS ──────────────────────────────────────────
+function createProposalRequest(leadId, companyName, cargo, briefing) {
   const r = getDb().prepare(`
-    INSERT INTO proposal_shared_leads (lead_id, shared_name, shared_whatsapp, shared_email, shared_token)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(leadId, name, whatsapp, email, token);
+    INSERT INTO proposal_new_requests (lead_id, company_name, cargo, briefing)
+    VALUES (?, ?, ?, ?)
+  `).run(leadId||null, companyName, cargo||'', briefing);
+  return r.lastInsertRowid;
+}
+function getAllProposalRequests() {
+  return getDb().prepare(`SELECT * FROM proposal_new_requests ORDER BY created_at DESC`).all();
+}
+function updateProposalRequestStatus(id, status) {
+  getDb().prepare(`UPDATE proposal_new_requests SET status=? WHERE id=?`).run(status, id);
+}
+
+// ── PROPOSAL SHARED LEADS ──────────────────────────────────────────
+function addSharedLead(leadId, name, whatsapp, email, token, cargo) {
+  const r = getDb().prepare(`
+    INSERT INTO proposal_shared_leads (lead_id, shared_name, shared_whatsapp, shared_email, shared_token, shared_cargo)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(leadId, name, whatsapp, email, token, cargo||'');
   return r.lastInsertRowid;
 }
 
@@ -667,6 +718,7 @@ module.exports = {
   getDb,
   // Leads
   createLead, getLeadById, getLeadByToken, getLeadByEmail, getAllLeads, getLeadStats, updateLeadDiscount,
+  updateLeadCompany, setProposalStatus,
   // Proposal Items & Content
   saveProposalItems, getProposalItemsByLead, deleteProposalItems, updateLeadProposalContent,
   updateLeadProposalMode, updateLead, deleteLead, archiveLead, markProposalSent,
@@ -674,6 +726,8 @@ module.exports = {
   addSharedLead, getSharedLeadsByLead, getSharedLeadByToken,
   // Proposal Actions
   saveProposalAction, getProposalActionsByLead, getLatestProposalAction,
+  // Proposal Requests
+  createProposalRequest, getAllProposalRequests, updateProposalRequestStatus,
   // Sessions
   createSession, closeSession, getSessionById, markSessionAlertSent,
   // Slide Events

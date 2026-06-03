@@ -218,11 +218,44 @@ async function sendTestEmail(toEmail) {
   });
 }
 
+// ── Notificação para o administrador ──────────────────────────────
+async function sendAdminNotification({ subject, body }) {
+  const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+  if (!adminEmail) return { skipped: true };
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px">
+      <h2 style="color:#1a1a2e;margin-bottom:16px">${subject}</h2>
+      <div style="color:#444;line-height:1.7;white-space:pre-line">${body}</div>
+      <hr style="border:none;border-top:1px solid #eee;margin:20px 0">
+      <p style="font-size:0.75rem;color:#aaa">Enviado automaticamente pelo sistema Envox Proposta · ${new Date().toLocaleString('pt-BR')}</p>
+    </div>`;
+  return sendMail({ to: adminEmail, subject, html, text: body });
+}
+
+// ── Envio do plano personalizado por email ─────────────────────────
+async function sendPlanEmail({ to, leadName, companyName, planHtml }) {
+  const subj = `📋 Seu Plano Personalizado Envox${companyName ? ' — ' + companyName : ''}`;
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;padding:24px">
+      <h2 style="color:#E91E63">Seu Plano Personalizado</h2>
+      <p style="color:#555">Olá${leadName ? ' '+leadName : ''}! Segue abaixo o plano que você montou:</p>
+      <div style="margin:24px 0;padding:16px;background:#f9f9f9;border-radius:8px">
+        ${planHtml || '<p>Plano enviado via Envox Proposta.</p>'}
+      </div>
+      <p style="color:#555">Entre em contato pelo WhatsApp para finalizar: <strong>(41) 3300-0404</strong></p>
+      <hr style="border:none;border-top:1px solid #eee;margin:20px 0">
+      <p style="font-size:0.75rem;color:#aaa">Envox Marketing Digital · envox.com.br</p>
+    </div>`;
+  return sendMail({ to, subject: subj, html, text: `Seu plano personalizado Envox — Entre em contato: (41) 3300-0404` });
+}
+
 module.exports = {
   isConfigured,
   verifyConnection,
   sendMail,
   sendProposalNotification,
   sendSharedProposalEmail,
+  sendAdminNotification,
+  sendPlanEmail,
   sendTestEmail,
 };

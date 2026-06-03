@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solicitações de Nova Proposta — Envox Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <div class="top-bar"></div>
+
+  <div class="admin-layout">
+    <%- include('./_sidebar', { active: 'leads' }) %>
+
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>📝 Solicitações de Nova Proposta</h1>
+          <p class="page-subtitle">Leads que rejeitaram e solicitaram uma nova proposta</p>
+        </div>
+        <div class="header-actions">
+          <a href="/admin/leads" class="btn-outline">← Leads</a>
+        </div>
+      </div>
+
+      <% if (success) { %><div class="alert alert-success"><span>✅</span> <%= success %></div><% } %>
+      <% if (error) { %><div class="alert alert-error"><span>⚠️</span> <%= error %></div><% } %>
+
+      <% if (!requests || requests.length === 0) { %>
+        <div style="background:var(--white);border-radius:14px;padding:3rem;text-align:center;color:var(--gray-400)">
+          <div style="font-size:2.5rem;margin-bottom:1rem">📭</div>
+          <p style="font-size:0.9rem">Nenhuma solicitação de nova proposta recebida ainda.</p>
+          <p style="font-size:0.78rem;margin-top:0.5rem;color:var(--gray-300)">Quando um lead rejeitar e solicitar nova proposta, aparecerá aqui.</p>
+        </div>
+      <% } else { %>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Lead</th>
+                <th>Empresa</th>
+                <th>Cargo</th>
+                <th>Briefing</th>
+                <th>Data</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% requests.forEach(req => { %>
+                <tr>
+                  <td><span style="font-size:0.75rem;color:var(--gray-400)">#<%= req.id %></span></td>
+                  <td>
+                    <% if (req.lead_id) { %>
+                      <a href="/admin/leads/<%= req.lead_id %>" style="color:var(--primary);text-decoration:none;font-weight:600">
+                        Ver Lead #<%= req.lead_id %>
+                      </a>
+                    <% } else { %>
+                      <span style="color:var(--gray-400);font-size:0.8rem">Sem lead vinculado</span>
+                    <% } %>
+                  </td>
+                  <td><strong><%= req.company_name || '—' %></strong></td>
+                  <td style="font-size:0.82rem;color:var(--gray-600)"><%= req.cargo || '—' %></td>
+                  <td>
+                    <div style="max-width:260px;font-size:0.8rem;color:var(--gray-700);line-height:1.5">
+                      <% const briefText = req.briefing || ''; %>
+                      <%= briefText.length > 120 ? briefText.substring(0, 120) + '...' : briefText %>
+                      <% if (briefText.length > 120) { %>
+                        <button onclick="showBriefing(this)" data-full="<%= briefText.replace(/\"/g,'&quot;') %>"
+                                style="background:none;border:none;color:var(--primary);font-size:0.75rem;cursor:pointer;padding:0;margin-left:4px">
+                          ver mais
+                        </button>
+                      <% } %>
+                    </div>
+                  </td>
+                  <td style="font-size:0.78rem;color:var(--gray-500);white-space:nowrap">
+                    <%= new Date(req.created_at).toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'}) %>
+                    <br><small><%= new Date(req.created_at).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) %></small>
+                  </td>
+                  <td>
+                    <span class="status-badge status-<%= req.status || 'pending' %>">
+                      <% if (req.status === 'in_progress') { %>🔄 Em andamento
+                      <% } else if (req.status === 'done') { %>✅ Concluído
+                      <% } else { %>⏳ Pendente<% } %>
+                    </span>
+                  </td>
+                  <td>
+                    <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+                      <% if (req.lead_id) { %>
+                        <a href="/admin/leads/<%= req.lead_id %>/proposals/new"
+                           style="font-size:0.75rem;padding:0.3rem 0.7rem;background:var(--primary);color:#fff;border-radius:6px;text-decoration:none;font-weight:600">
+                          📋 Criar Proposta
+                        </a>
+                      <% } %>
+                      <% if (req.status !== 'in_progress') { %>
+                        <form action="/admin/proposal-requests/<%= req.id %>/status" method="POST" style="display:inline">
+                          <input type="hidden" name="status" value="in_progress">
+                          <button type="submit" style="font-size:0.72rem;padding:0.3rem 0.6rem;background:#1565c0;color:#fff;border:none;border-radius:6px;cursor:pointer">
+                            🔄 Iniciar
+                          </button>
+                        </form>
+                      <% } %>
+                      <% if (req.status !== 'done') { %>
+                        <form action="/admin/proposal-requests/<%= req.id %>/status" method="POST" style="display:inline">
+                          <input type="hidden" name="status" value="done">
+                          <button type="submit" style="font-size:0.72rem;padding:0.3rem 0.6rem;background:#2e7d32;color:#fff;border:none;border-radius:6px;cursor:pointer">
+                            ✅ Concluir
+                          </button>
+                        </form>
+                      <% } %>
+                    </div>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </main>
+  </div>
+
+  <!-- Briefing modal -->
+  <div id="briefingModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;padding:1rem">
+    <div style="background:#fff;border-radius:16px;padding:2rem;max-width:560px;width:100%;max-height:80vh;overflow-y:auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">
+        <strong style="font-size:1rem">📄 Briefing Completo</strong>
+        <button onclick="closeBriefing()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#666">✕</button>
+      </div>
+      <p id="briefingText" style="font-size:0.88rem;color:#444;line-height:1.7;white-space:pre-wrap"></p>
+    </div>
+  </div>
+
+  <style>
+    .status-badge { padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; display: inline-block; }
+    .status-pending { background: rgba(251,191,36,0.15); color: #b45309; }
+    .status-in_progress { background: rgba(59,130,246,0.12); color: #1565c0; }
+    .status-done { background: rgba(34,197,94,0.12); color: #2e7d32; }
+  </style>
+
+  <script>
+    function showBriefing(btn) {
+      document.getElementById('briefingText').textContent = btn.dataset.full;
+      const modal = document.getElementById('briefingModal');
+      modal.style.display = 'flex';
+    }
+    function closeBriefing() {
+      document.getElementById('briefingModal').style.display = 'none';
+    }
+    document.getElementById('briefingModal').addEventListener('click', function(e) {
+      if (e.target === this) closeBriefing();
+    });
+  </script>
+</body>
+</html>

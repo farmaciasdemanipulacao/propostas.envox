@@ -32,6 +32,25 @@
       
       <div class="form-card">
         <form action="/admin/leads" method="POST" class="lead-form">
+          <div class="form-section-title" style="margin-bottom:0.75rem;font-size:0.8rem;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:0.5px;padding-bottom:0.5rem;border-bottom:1px solid #eee">
+            Empresa
+          </div>
+          <div class="form-row form-row-2">
+            <div class="form-group">
+              <label for="company_name">Nome da Empresa *</label>
+              <input type="text" id="company_name" name="company_name" 
+                placeholder="Ex: Mazu Restaurante" required>
+            </div>
+            <div class="form-group">
+              <label for="cargo">Cargo do Contato</label>
+              <input type="text" id="cargo" name="cargo" 
+                placeholder="Ex: Diretor, Sócio, Gerente...">
+            </div>
+          </div>
+
+          <div class="form-section-title" style="margin-top:1rem;margin-bottom:0.75rem;font-size:0.8rem;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:0.5px;padding-top:1rem;border-top:1px solid #eee">
+            Contato / Lead
+          </div>
           <div class="form-row">
             <div class="form-group">
               <label for="name">Nome Completo *</label>

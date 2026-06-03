@@ -97,26 +97,23 @@ router.get('/leads/new', requireAdmin, (req, res) => {
 });
 
 router.post('/leads', requireAdmin, (req, res) => {
-  const { name, whatsapp, email, discount_monthly, discount_onetime, discount_expires } = req.body;
-  if (!name || !whatsapp || !email) {
-    return res.render('admin/new-lead', { error: 'Todos os campos são obrigatórios.', success: null });
+  const { name, whatsapp, email, company_name, cargo, discount_monthly, discount_onetime, discount_expires } = req.body;
+  if (!name || !whatsapp || !email || !company_name) {
+    return res.render('admin/new-lead', { error: 'Nome, empresa, WhatsApp e email são obrigatórios.', success: null });
   }
   const token = uuidv4().replace(/-/g, '').substring(0, 12);
   try {
     const leadId = db.createLead(name, whatsapp.replace(/\D/g, ''), email, token);
-    // Aplicar desconto e prazo se informados
-    if ((discount_monthly || discount_onetime || discount_expires) && leadId) {
-      db.updateLeadDiscount(
-        leadId,
-        parseFloat(discount_monthly) || 0,
-        parseFloat(discount_onetime) || 0,
-        discount_expires || null
-      );
+    if (leadId) {
+      db.updateLeadCompany(leadId, company_name.trim(), (cargo||'').trim());
     }
-    return res.redirect(`/admin?success=Lead+${encodeURIComponent(name)}+cadastrado+com+sucesso!`);
+    if ((discount_monthly || discount_onetime || discount_expires) && leadId) {
+      db.updateLeadDiscount(leadId, parseFloat(discount_monthly)||0, parseFloat(discount_onetime)||0, discount_expires||null);
+    }
+    return res.redirect(`/admin/leads/${leadId}/proposals/new?success=Lead+${encodeURIComponent(name)}+cadastrado!`);
   } catch (err) {
     console.error('Error creating lead:', err);
-    return res.render('admin/new-lead', { error: 'Erro ao cadastrar lead. Tente novamente.', success: null });
+    return res.render('admin/new-lead', { error: 'Erro ao cadastrar lead. Email já existe?', success: null });
   }
 });
 
@@ -452,6 +449,24 @@ router.post('/proposals/:leadId/archive', requireAdmin, (req, res) => {
   } catch (err) {
     return res.redirect(`/admin/proposals?error=Erro+ao+arquivar`);
   }
+});
+
+// ══ PROPOSAL REQUESTS ═════════════════════════════════════
+router.get('/proposal-requests', requireAdmin, (req, res) => {
+  const requests = db.getAllProposalRequests ? db.getAllProposalRequests() : [];
+  res.render('admin/proposal-requests', { requests, success: req.query.success, error: req.query.error });
+});
+router.post('/proposal-requests/:id/status', requireAdmin, (req, res) => {
+  const { status } = req.body;
+  db.updateProposalRequestStatus(req.params.id, status);
+  return res.redirect('/admin/proposal-requests?success=Status+atualizado');
+});
+
+// ══ LEAD: SET COMPANY ════════════════════════════════════
+router.post('/leads/:id/company', requireAdmin, (req, res) => {
+  const { company_name, cargo } = req.body;
+  db.updateLeadCompany(req.params.id, company_name||'', cargo||'');
+  return res.redirect(`/admin/leads/${req.params.id}?success=Empresa+atualizada`);
 });
 
 // ══ FOLLOW-UP VIA WHATSAPP ════════════════════════════════

@@ -124,6 +124,11 @@ router.get('/:token/view', (req, res) => {
     return res.redirect(`/proposta/${token}`);
   }
 
+  // Se proposta foi rejeitada, mostrar tela de rejeição
+  if (lead.proposal_status === 'rejected') {
+    return res.render('proposal/rejected', { lead, token });
+  }
+
   // Attach proposal items and content fields to the lead object
   const proposalItems = db.getProposalItemsByLead(lead.id);
   const enrichedLead  = {
@@ -142,14 +147,13 @@ router.get('/:token/view', (req, res) => {
 });
 
 // ── API: Save Proposal Action (Accept / Counter / Reject) ────────────────────
-router.post('/action', (req, res) => {
+router.post('/action', async (req, res) => {
   const { token, lead_id, action_type, comment, counter_value, current_page } = req.body;
 
   if (!token || !action_type) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  // Verify token belongs to a real lead
   const lead = db.getLeadByToken(token);
   let resolvedLeadId = lead ? lead.id : parseInt(lead_id);
 
@@ -174,6 +178,28 @@ router.post('/action', (req, res) => {
       counter_value: counter_value || null,
       current_page: current_page || null
     });
+
+    // Se REJEITAR: inativar proposta e notificar admin
+    if (action_type === 'reject') {
+      db.setProposalStatus(resolvedLeadId, 'rejected');
+      const leadData = lead || db.getLeadById(resolvedLeadId);
+      const motivo = comment ? comment.substring(0, 300) : '(sem motivo informado)';
+      // Notificar admin via email (não bloqueante)
+      emailService.sendAdminNotification({
+        subject: `❌ Proposta REJEITADA — ${leadData ? leadData.name : 'Lead #'+resolvedLeadId}`,
+        body: `O lead ${leadData ? leadData.name : '#'+resolvedLeadId} (${leadData ? leadData.company_name || '' : ''}) rejeitou a proposta.\n\nMotivo: ${motivo}\n\nAcesse o painel para ver detalhes.`
+      }).catch(e => console.error('[Action] Notif email err:', e));
+    }
+
+    // Se ACEITAR: notificar admin
+    if (action_type === 'accept') {
+      const leadData = lead || db.getLeadById(resolvedLeadId);
+      emailService.sendAdminNotification({
+        subject: `✅ Proposta ACEITA — ${leadData ? leadData.name : 'Lead #'+resolvedLeadId}`,
+        body: `O lead ${leadData ? leadData.name : '#'+resolvedLeadId} (${leadData ? leadData.company_name || '' : ''}) ACEITOU a proposta!\n\nAcesse o painel para dar andamento.`
+      }).catch(e => console.error('[Action] Notif email err:', e));
+    }
+
     return res.json({ success: true, actionId });
   } catch (err) {
     console.error('[ProposalAction] Error:', err);
@@ -181,9 +207,53 @@ router.post('/action', (req, res) => {
   }
 });
 
+// ── API: Solicitar nova proposta (após rejeição) ──────────────────────────────
+router.post('/request-new', async (req, res) => {
+  const { token, lead_id, company_name, cargo, briefing } = req.body;
+  if (!company_name || !briefing) {
+    return res.status(400).json({ error: 'Preencha empresa e briefing' });
+  }
+  const lead = token ? db.getLeadByToken(token) : null;
+  const resolvedLeadId = lead ? lead.id : (parseInt(lead_id) || null);
+  try {
+    const reqId = db.createProposalRequest(resolvedLeadId, company_name, cargo||'', briefing);
+    db.logEvent(resolvedLeadId || 0, null, 'new_proposal_request', { company_name, cargo, briefing: briefing.substring(0,200) });
+    const leadData = lead || (resolvedLeadId ? db.getLeadById(resolvedLeadId) : null);
+    emailService.sendAdminNotification({
+      subject: `🆕 Solicitação de Nova Proposta — ${company_name}`,
+      body: `${leadData ? leadData.name : 'Lead'} solicitou uma nova proposta.\n\nEmpresa: ${company_name}\nCargo: ${cargo||''}\n\nBriefing:\n${briefing}\n\nAcesse o painel para criar a proposta.`
+    }).catch(e => console.error('[RequestNew] Email err:', e));
+    return res.json({ success: true, requestId: reqId });
+  } catch(err) {
+    console.error('[RequestNew] Error:', err);
+    return res.status(500).json({ error: 'Erro ao registrar solicitação' });
+  }
+});
+
+// ── API: Enviar plano por email ───────────────────────────────────────────────
+router.post('/send-plan-email', async (req, res) => {
+  const { token, lead_id, email, plan_html } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email obrigatório' });
+  const lead = token ? db.getLeadByToken(token) : null;
+  const resolvedLeadId = lead ? lead.id : (parseInt(lead_id)||null);
+  try {
+    await emailService.sendPlanEmail({ to: email, leadName: lead ? lead.name : '', companyName: lead ? lead.company_name||'' : '', planHtml: plan_html||'' });
+    if (resolvedLeadId) db.logEvent(resolvedLeadId, null, 'plan_email_sent', { to: email });
+    // Notify admin
+    emailService.sendAdminNotification({
+      subject: `📧 Cliente enviou plano por email — ${lead ? lead.name : email}`,
+      body: `O lead ${lead ? lead.name : email} enviou seu plano personalizado para ${email}. Acesse o painel para acompanhar.`
+    }).catch(()=>{});
+    return res.json({ success: true });
+  } catch(err) {
+    console.error('[SendPlanEmail] Error:', err);
+    return res.status(500).json({ error: 'Erro ao enviar email' });
+  }
+});
+
 // ── API: Share Proposal (add secondary viewer + email + auto-lead) ──────────
 router.post('/share', async (req, res) => {
-  const { token, lead_id, name, whatsapp, email } = req.body;
+  const { token, lead_id, name, whatsapp, email, cargo } = req.body;
 
   if (!token || !name || !whatsapp || !email) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -199,6 +269,7 @@ router.post('/share', async (req, res) => {
   const cleanEmail    = email.trim().toLowerCase();
   const cleanWhatsapp = whatsapp.replace(/\D/g, '');
   const cleanName     = name.trim();
+  const cleanCargo    = (cargo||'').trim();
 
   try {
     // 1. Gerar token compartilhado
@@ -208,20 +279,25 @@ router.post('/share', async (req, res) => {
       cleanName,
       cleanWhatsapp,
       cleanEmail,
-      sharedToken
+      sharedToken,
+      cleanCargo
     );
 
-    // 2. Auto-cadastrar como lead no painel (se ainda não existe)
+    // 2. Auto-cadastrar como lead no painel com cargo e empresa
     let sharedLeadRecord = db.getLeadByEmail ? db.getLeadByEmail(cleanEmail) : null;
     if (!sharedLeadRecord) {
       try {
         const newLeadToken = uuidv4().replace(/-/g, '').substring(0, 16);
         db.createLead(cleanName, cleanWhatsapp, cleanEmail, newLeadToken);
         sharedLeadRecord = db.getLeadByToken(newLeadToken);
-        console.log(`[ProposalShare] Auto-cadastrou lead: ${cleanName} <${cleanEmail}>`);
+        // Set company_name and cargo from the original lead
+        if (sharedLeadRecord) {
+          const origCompany = lead ? lead.company_name || '' : '';
+          db.updateLeadCompany(sharedLeadRecord.id, origCompany, cleanCargo);
+        }
+        console.log(`[ProposalShare] Auto-cadastrou lead: ${cleanName} <${cleanEmail}> (${cleanCargo})`);
       } catch (leadErr) {
-        // Se já existe (unique constraint), ignora
-        console.log(`[ProposalShare] Lead já existe para ${cleanEmail}, ignorando criação.`);
+        console.log(`[ProposalShare] Lead já existe para ${cleanEmail}.`);
       }
     }
 
@@ -244,7 +320,14 @@ router.post('/share', async (req, res) => {
       }
     }).catch(err => console.error('[ProposalShare] Email error:', err));
 
-    db.logEvent(resolvedLeadId, null, 'proposal_shared', { shared_with: cleanEmail, name: cleanName });
+    // 5. Notificar admin sobre compartilhamento
+    const companyName = lead ? (lead.company_name || '') : '';
+    emailService.sendAdminNotification({
+      subject: `📤 Proposta compartilhada — ${lead ? lead.name : 'Lead'} → ${cleanName}`,
+      body: `${lead ? lead.name : 'Um lead'} compartilhou a proposta${companyName ? ' de '+companyName : ''} com:\n\nNome: ${cleanName}\nCargo: ${cleanCargo||'não informado'}\nWhatsApp: ${cleanWhatsapp}\nEmail: ${cleanEmail}\n\nLink de acesso gerado: ${shareLink}\nAcesse o painel para ver o histórico completo.`
+    }).catch(e => console.error('[ProposalShare] Admin notif err:', e));
+
+    db.logEvent(resolvedLeadId, null, 'proposal_shared', { shared_with: cleanEmail, name: cleanName, cargo: cleanCargo });
 
     return res.json({ success: true, sharedId, sharedToken });
   } catch (err) {

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proposta Rejeitada — Envox</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #0f0f1a;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .brand {
+      font-size: 1.6rem;
+      font-weight: 900;
+      letter-spacing: -1px;
+      margin-bottom: 2.5rem;
+    }
+    .brand-env { color: #fff; }
+    .brand-ox  { color: #E91E63; }
+
+    .rejected-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 3rem 2.5rem;
+      max-width: 560px;
+      width: 100%;
+      text-align: center;
+    }
+    .rejected-icon {
+      font-size: 4rem;
+      margin-bottom: 1.25rem;
+    }
+    .rejected-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      line-height: 1.25;
+    }
+    .rejected-sub {
+      font-size: 0.92rem;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.65;
+      margin-bottom: 2rem;
+    }
+    .rejected-sub strong { color: rgba(255,255,255,0.85); }
+
+    .divider {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      margin: 2rem 0;
+    }
+
+    .new-request-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+    .new-request-sub {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+      text-align: left;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.65);
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.07);
+      border: 1.5px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s;
+      resize: vertical;
+    }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: rgba(255,255,255,0.3);
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: rgba(233,30,99,0.6);
+    }
+    .form-group select option { background: #1a1a2e; color: #fff; }
+    .form-group textarea { min-height: 110px; }
+
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(135deg, #E91E63 0%, #c2185b 100%);
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      padding: 0.95rem 2rem;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-whatsapp-alt {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      background: #25D366;
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      padding: 0.85rem 2rem;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 0.75rem;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .btn-whatsapp-alt:hover { opacity: 0.88; }
+
+    .success-msg {
+      display: none;
+      background: rgba(34,197,94,0.12);
+      border: 1px solid rgba(34,197,94,0.3);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-top: 1rem;
+      color: #4ade80;
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+    .success-msg.show { display: block; }
+    .error-msg {
+      display: none;
+      background: rgba(239,68,68,0.12);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 10px;
+      padding: 0.85rem;
+      margin-bottom: 1rem;
+      color: #f87171;
+      font-size: 0.82rem;
+    }
+    .error-msg.show { display: block; }
+
+    @media (max-width: 600px) {
+      .rejected-card { padding: 2rem 1.25rem; }
+      .rejected-title { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="brand"><span class="brand-env">env</span><span class="brand-ox">ox</span></div>
+
+  <div class="rejected-card">
+    <div class="rejected-icon">🚫</div>
+    <h1 class="rejected-title">Proposta Rejeitada</h1>
+    <p class="rejected-sub">
+      Olá, <strong><%= lead.name %></strong>!<br><br>
+      Você rejeitou a proposta comercial da Envox. O acesso a esta proposta foi encerrado.<br>
+      Se mudou de ideia ou gostaria de uma nova proposta personalizada, preencha o formulário abaixo.
+    </p>
+
+    <a href="https://wa.me/554133000404?text=<%= encodeURIComponent('Olá! Sou ' + lead.name + ' e gostaria de conversar sobre uma nova proposta da Envox.') %>"
+       target="_blank"
+       class="btn-whatsapp-alt">
+      💬 Falar com a Envox no WhatsApp
+    </a>
+
+    <hr class="divider">
+
+    <div class="new-request-title">📝 Solicitar Nova Proposta</div>
+    <p class="new-request-sub">Preencha as informações abaixo e nosso time criará uma proposta personalizada para você.</p>
+
+    <div class="error-msg" id="formError"></div>
+
+    <form id="newRequestForm">
+      <input type="hidden" name="token" value="<%= token %>">
+      <input type="hidden" name="lead_id" value="<%= lead.id %>">
+
+      <div class="form-group">
+        <label>Nome da Empresa *</label>
+        <input type="text" name="company_name" id="rCompany"
+               placeholder="Ex: Minha Empresa Ltda"
+               value="<%= lead.company_name || '' %>">
+      </div>
+      <div class="form-group">
+        <label>Seu Cargo / Função *</label>
+        <input type="text" name="cargo" id="rCargo"
+               placeholder="Ex: CEO, Diretor de Marketing, Gerente..."
+               value="<%= lead.cargo || '' %>">
+      </div>
+      <div class="form-group">
+        <label>Briefing do Projeto *</label>
+        <textarea name="briefing" id="rBriefing"
+                  placeholder="Descreva o que você precisa: objetivos, segmento, público-alvo, canais desejados, orçamento estimado, prazo..."></textarea>
+      </div>
+
+      <button type="button" class="btn-submit" id="submitBtn" onclick="submitRequest()">
+        🚀 Solicitar Nova Proposta
+      </button>
+    </form>
+
+    <div class="success-msg" id="successMsg">
+      ✅ <strong>Solicitação enviada com sucesso!</strong><br><br>
+      Nossa equipe recebeu seu briefing e entrará em contato em breve para construir uma proposta personalizada para você.<br><br>
+      <a href="https://wa.me/554133000404?text=<%= encodeURIComponent('Olá! Acabei de solicitar uma nova proposta pela plataforma Envox. Me chamo ' + lead.name + '.') %>"
+         target="_blank"
+         class="btn-whatsapp-alt" style="margin-top:0.5rem">
+        💬 Confirmar pelo WhatsApp também
+      </a>
+    </div>
+  </div>
+
+  <script>
+    function submitRequest() {
+      const company  = document.getElementById('rCompany').value.trim();
+      const cargo    = document.getElementById('rCargo').value.trim();
+      const briefing = document.getElementById('rBriefing').value.trim();
+      const errEl    = document.getElementById('formError');
+
+      errEl.classList.remove('show');
+      if (!company || !cargo || !briefing) {
+        errEl.textContent = '⚠️ Preencha todos os campos obrigatórios.';
+        errEl.classList.add('show');
+        return;
+      }
+      if (briefing.length < 20) {
+        errEl.textContent = '⚠️ Briefing muito curto. Descreva melhor o que você precisa (mínimo 20 caracteres).';
+        errEl.classList.add('show');
+        return;
+      }
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Enviando...';
+
+      const form   = document.getElementById('newRequestForm');
+      const token  = form.querySelector('[name="token"]').value;
+      const leadId = form.querySelector('[name="lead_id"]').value;
+
+      fetch('/proposta/request-new', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, lead_id: leadId, company_name: company, cargo, briefing })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          form.style.display = 'none';
+          document.getElementById('successMsg').classList.add('show');
+        } else {
+          errEl.textContent = '⚠️ Erro ao enviar: ' + (data.error || 'tente novamente.');
+          errEl.classList.add('show');
+          btn.disabled = false;
+          btn.textContent = '🚀 Solicitar Nova Proposta';
+        }
+      })
+      .catch(() => {
+        errEl.textContent = '⚠️ Erro de conexão. Tente novamente.';
+        errEl.classList.add('show');
+        btn.disabled = false;
+        btn.textContent = '🚀 Solicitar Nova Proposta';
+      });
+    }
+  </script>
+</body>
+</html>

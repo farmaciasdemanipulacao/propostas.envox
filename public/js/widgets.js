@@ -1,5 +1,5 @@
 /**
- * widgets.js — Decision Widget (Accept/Counter/Reject) + Share Widget
+ * widgets.js — Decision Widget (Accept/Counter/Reject/Falar) + Share Widget
  * Loaded on proposal viewer pages.
  */
 (function () {
@@ -9,6 +9,21 @@
 
   let dwCurrentAction = null;
   let dwSubmitted = false;
+
+  // Update WhatsApp button in decision widget with personalized message
+  function updateDwWaLink() {
+    var company = window.COMPANY_NAME || '';
+    var person  = window.LEAD_NAME    || '';
+    var label   = company || person || '';
+    var msg     = 'Olá! Estou analisando a proposta da Envox' + (label ? ' para ' + label : '') + ' e gostaria de conversar.';
+    var encoded = encodeURIComponent(msg);
+    var url     = 'https://wa.me/554133000404?text=' + encoded;
+
+    var dwWaBtn    = document.getElementById('dwWaBtn');
+    var dwQuickWa  = document.getElementById('dwQuickWa');
+    if (dwWaBtn)   dwWaBtn.href   = url;
+    if (dwQuickWa) dwQuickWa.href = url;
+  }
 
   // Open widget and optionally pre-select an action
   window.toggleDecisionWidget = function (preAction) {
@@ -29,7 +44,6 @@
   // Quick-action from the persistent pill buttons — open widget + pre-select
   window.dwQuickAction = function (action) {
     window.toggleDecisionWidget(action);
-    // Smooth scroll so widget is visible
     const widget = document.getElementById('decisionWidget');
     if (widget) {
       setTimeout(() => widget.scrollIntoView({ behavior: 'smooth', block: 'end' }), 150);
@@ -59,6 +73,9 @@
       activeBtn.style.opacity = '1';
       activeBtn.style.transform = 'scale(1.02)';
     }
+    // Always keep WhatsApp button full opacity
+    const waBtn = document.querySelector('.dw-btn-whatsapp');
+    if (waBtn) { waBtn.style.opacity = '1'; waBtn.style.transform = 'none'; }
   };
 
   window.dwSubmit = function () {
@@ -105,10 +122,20 @@
       if (dwSuccessMsg) dwSuccessMsg.textContent = msgs[dwCurrentAction] || '✅ Decisão registrada!';
       if (dwSuccess) dwSuccess.classList.add('show');
 
+      // If rejected, redirect to rejected page after delay
+      if (dwCurrentAction === 'reject') {
+        setTimeout(() => {
+          const token = window.PROPOSAL_TOKEN;
+          if (token) window.location.href = '/proposta/' + token + '/view';
+        }, 2500);
+      }
+
       // Disable quick buttons too
       document.querySelectorAll('.dw-quick-btn').forEach(b => {
-        b.disabled = true;
-        b.style.opacity = '0.4';
+        if (!b.classList.contains('dw-quick-whatsapp')) {
+          b.disabled = true;
+          b.style.opacity = '0.4';
+        }
       });
     })
     .catch(err => {
@@ -133,11 +160,12 @@
 
   window.swSubmit = function () {
     const name     = (document.getElementById('swName')?.value || '').trim();
+    const cargo    = (document.getElementById('swCargo')?.value || '').trim();
     const whatsapp = (document.getElementById('swWhatsapp')?.value || '').replace(/\D/g, '');
     const email    = (document.getElementById('swEmail')?.value || '').trim();
 
     if (!name || !whatsapp || !email) {
-      alert('Preencha todos os campos para enviar o acesso.');
+      alert('Preencha Nome, WhatsApp e E-mail para enviar o acesso.');
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -154,7 +182,7 @@
     fetch('/proposta/share', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, lead_id: leadId, name, whatsapp, email })
+      body: JSON.stringify({ token, lead_id: leadId, name, cargo, whatsapp, email })
     })
     .then(r => r.json())
     .then(data => {
@@ -163,7 +191,7 @@
         if (sw) sw.classList.add('show');
         if (submitBtn) submitBtn.style.display = 'none';
         // Clear fields
-        ['swName', 'swWhatsapp', 'swEmail'].forEach(id => {
+        ['swName', 'swCargo', 'swWhatsapp', 'swEmail'].forEach(id => {
           const el = document.getElementById(id);
           if (el) el.value = '';
         });
@@ -188,6 +216,9 @@
   };
 
   document.addEventListener('DOMContentLoaded', function () {
+    // Personalize WhatsApp links
+    updateDwWaLink();
+
     // Track slide number via IntersectionObserver
     const sections = document.querySelectorAll('.page-section');
     if (!sections.length) return;
