@@ -692,15 +692,15 @@ function getProposalStats(proposalId) {
 
   const placeholders = leadIds.map(() => '?').join(',');
 
-  // Sessões de todos os leads
+  // Sessões de todos os leads — filtra por proposal_id se existir, senão fallback por lead_id
   const sessions = database.prepare(`
     SELECT s.*, l.name as lead_name FROM access_sessions s
     JOIN leads l ON l.id = s.lead_id
-    WHERE s.lead_id IN (${placeholders})
+    WHERE (s.proposal_id = ? OR (s.proposal_id IS NULL AND s.lead_id IN (${placeholders})))
     ORDER BY s.started_at DESC
-  `).all(...leadIds);
+  `).all(proposalId, ...leadIds);
 
-  // Slide stats AGREGADO (SUM) por slide_number
+  // Slide stats AGREGADO (SUM) por slide_number — filtra por proposal_id se existir
   const slideStats = database.prepare(`
     SELECT slide_number,
       COUNT(*) as view_count,
@@ -708,21 +708,21 @@ function getProposalStats(proposalId) {
       COALESCE(MAX(duration_seconds), 0) as max_duration,
       SUM(CASE WHEN event_type = 'revisited' THEN 1 ELSE 0 END) as revisit_count
     FROM slide_events
-    WHERE lead_id IN (${placeholders})
+    WHERE (proposal_id = ? OR (proposal_id IS NULL AND lead_id IN (${placeholders})))
     GROUP BY slide_number ORDER BY slide_number
-  `).all(...leadIds);
+  `).all(proposalId, ...leadIds);
 
   const totalSlidesSeen = database.prepare(`
     SELECT COUNT(DISTINCT slide_number) as count FROM slide_events
-    WHERE lead_id IN (${placeholders})
-  `).get(...leadIds);
+    WHERE (proposal_id = ? OR (proposal_id IS NULL AND lead_id IN (${placeholders})))
+  `).get(proposalId, ...leadIds);
 
   const eventLog = database.prepare(`
     SELECT e.*, l.name as lead_name FROM event_log e
     JOIN leads l ON l.id = e.lead_id
-    WHERE e.lead_id IN (${placeholders})
+    WHERE (e.proposal_id = ? OR (e.proposal_id IS NULL AND e.lead_id IN (${placeholders})))
     ORDER BY e.timestamp DESC LIMIT 200
-  `).all(...leadIds);
+  `).all(proposalId, ...leadIds);
 
   const customPlans = database.prepare(`
     SELECT cp.*, l.name as lead_name FROM custom_plans cp
@@ -755,7 +755,19 @@ function getProposalStats(proposalId) {
 }
 
 // Slide stats de UM lead específico (para filtro individual no relatório)
-function getLeadSlideStatsForProposal(leadId) {
+function getLeadSlideStatsForProposal(leadId, proposalId) {
+  if (proposalId) {
+    return getDb().prepare(`
+      SELECT slide_number,
+        COUNT(*) as view_count,
+        COALESCE(SUM(duration_seconds), 0) as total_duration,
+        COALESCE(MAX(duration_seconds), 0) as max_duration,
+        SUM(CASE WHEN event_type = 'revisited' THEN 1 ELSE 0 END) as revisit_count
+      FROM slide_events
+      WHERE lead_id = ? AND (proposal_id = ? OR proposal_id IS NULL)
+      GROUP BY slide_number ORDER BY slide_number
+    `).all(leadId, proposalId);
+  }
   return getDb().prepare(`
     SELECT slide_number,
       COUNT(*) as view_count,

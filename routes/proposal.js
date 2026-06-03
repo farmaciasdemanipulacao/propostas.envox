@@ -32,6 +32,7 @@ function getViewerLead(req, proposal) {
 
 // ── Shared token viewer — DEVE VIR ANTES de /:token ─────
 // GET /proposta/s/:sharedToken — acesso via link compartilhado
+// NÃO autentica automaticamente: guarda sharedToken pendente e redireciona para tela de auth
 router.get('/s/:sharedToken', (req, res) => {
   const { sharedToken } = req.params;
   const sharedRecord = db.getSharedLeadByToken(sharedToken);
@@ -46,7 +47,7 @@ router.get('/s/:sharedToken', (req, res) => {
 
   // sharedRecord tem proposal_token e new_lead_id
   const proposalToken = sharedRecord.proposal_token;
-  const proposal = db.getProposalByTokenWithLeads(proposalToken);
+  const proposal = db.getProposalByToken(proposalToken);
 
   if (!proposal) {
     return res.render('proposal/auth', {
@@ -56,28 +57,18 @@ router.get('/s/:sharedToken', (req, res) => {
     });
   }
 
-  // Autenticar proposta na sessão
-  if (!req.session.authenticatedTokens) req.session.authenticatedTokens = [];
-  if (!req.session.authenticatedTokens.includes(proposalToken)) {
-    req.session.authenticatedTokens.push(proposalToken);
+  // Se já está autenticado (ex: recarregou a aba), redirecionar direto
+  if (req.session && req.session.authenticatedTokens &&
+      req.session.authenticatedTokens.includes(proposalToken) &&
+      req.session.sharedAccess && req.session.sharedAccess[proposalToken]) {
+    return res.redirect(`/proposta/${proposalToken}/view`);
   }
 
-  // Gravar contexto do lead compartilhado
-  req.session.sharedAccess = req.session.sharedAccess || {};
-  req.session.sharedAccess[proposalToken] = {
-    sharedToken,
-    lead_id: sharedRecord.new_lead_id,
-    name: sharedRecord.lead_name
-  };
+  // Guardar sharedToken pendente para ser resolvido após login bem-sucedido
+  req.session.pendingSharedToken = sharedToken;
 
-  if (sharedRecord.new_lead_id) {
-    db.logEvent(sharedRecord.new_lead_id, null, 'shared_view', {
-      shared_token: sharedToken,
-      viewer_name: sharedRecord.lead_name,
-    }, proposal.id);
-  }
-
-  return res.redirect(`/proposta/${proposalToken}/view`);
+  // Redirecionar para tela de autenticação — lead DEVE inserir email + WhatsApp
+  return res.redirect(`/proposta/${proposalToken}`);
 });
 
 // GET /proposta/:token — tela de autenticação
@@ -138,6 +129,26 @@ router.post('/:token/auth', (req, res) => {
   // Guardar qual lead fez login
   req.session.sharedAccess = req.session.sharedAccess || {};
   req.session.sharedAccess[token] = { lead_id: matchedLead.id, name: matchedLead.name };
+
+  // Se havia um sharedToken pendente, resolver contexto de compartilhamento
+  if (req.session.pendingSharedToken) {
+    const pendingToken = req.session.pendingSharedToken;
+    delete req.session.pendingSharedToken;
+    const sharedRecord = db.getSharedLeadByToken(pendingToken);
+    if (sharedRecord && sharedRecord.proposal_token === token && sharedRecord.new_lead_id === matchedLead.id) {
+      // Sobrescrever com contexto do link compartilhado (já está correto em sharedAccess)
+      req.session.sharedAccess[token] = {
+        sharedToken: pendingToken,
+        lead_id: sharedRecord.new_lead_id,
+        name: sharedRecord.lead_name
+      };
+      // Registrar evento de acesso compartilhado
+      db.logEvent(sharedRecord.new_lead_id, null, 'shared_view', {
+        shared_token: pendingToken,
+        viewer_name: sharedRecord.lead_name,
+      }, sharedRecord.proposal_id || null);
+    }
+  }
 
   return res.redirect(`/proposta/${token}/view`);
 });

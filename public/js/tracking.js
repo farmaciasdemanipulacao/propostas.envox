@@ -7,6 +7,7 @@
   
   // Variáveis de rastreamento (injetadas pelo servidor via viewer.ejs)
   const TOKEN   = window.PROPOSAL_TOKEN;
+  const LEAD_ID = window.PROPOSAL_LEAD_ID;
   const API_BASE = '/api/track';
 
   let sessionId     = null;
@@ -18,13 +19,16 @@
 
   // ====== INICIALIZAÇÃO ======
   async function init() {
-    if (!TOKEN) return;
+    if (!TOKEN || !LEAD_ID) {
+      console.warn('[Tracking] TOKEN ou LEAD_ID não definidos. Tracking desabilitado.');
+      return;
+    }
     
     try {
       const resp = await fetch(`${API_BASE}/open`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: TOKEN })
+        body: JSON.stringify({ token: TOKEN, lead_id: LEAD_ID })
       });
       const data = await resp.json();
       if (data.sessionId) {
@@ -34,6 +38,8 @@
         
         // Registrar slide 1 como visualizado ao abrir
         trackCurrentSlide(1);
+      } else {
+        console.warn('[Tracking] Session not created:', data);
       }
     } catch (err) {
       console.error('[Tracking] Error opening proposal:', err);
@@ -42,7 +48,7 @@
 
   // ====== REGISTRAR SLIDE ======
   function trackCurrentSlide(slideNumber) {
-    if (!sessionId || !TOKEN) return;
+    if (!sessionId || !TOKEN || !LEAD_ID) return;
     
     const now      = Date.now();
     const duration = (now - slideStartTime) / 1000;
@@ -69,13 +75,14 @@
   }
 
   function sendSlideEvent(slideNumber, duration, isRevisit) {
-    if (!sessionId || !TOKEN) return;
+    if (!sessionId || !TOKEN || !LEAD_ID) return;
     
     fetch(`${API_BASE}/slide`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         token: TOKEN,
+        lead_id: LEAD_ID,
         sessionId: sessionId,
         slideNumber: slideNumber,
         duration: Math.max(0, duration),
@@ -86,7 +93,7 @@
 
   // ====== FECHAR PROPOSTA ======
   function closeProposal() {
-    if (!sessionId || !TOKEN || proposalClosed) return;
+    if (!sessionId || !TOKEN || !LEAD_ID || proposalClosed) return;
     proposalClosed = true;
     
     // Registrar último slide com duração final
@@ -95,6 +102,7 @@
     
     const payload = JSON.stringify({
       token: TOKEN,
+      lead_id: LEAD_ID,
       sessionId: sessionId,
       slideNumber: currentSlide,
       duration: duration,
@@ -103,6 +111,7 @@
     
     const closePayload = JSON.stringify({
       token: TOKEN,
+      lead_id: LEAD_ID,
       sessionId: sessionId,
       totalDuration: totalDuration
     });

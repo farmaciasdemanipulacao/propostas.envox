@@ -391,7 +391,7 @@ router.get('/proposals/:proposalId/edit', requireAdmin, (req, res) => {
 
   // Stats individuais por lead (para o seletor — inclui viewCounts e métricas)
   const perLeadStats = proposal.leads.map(lead => {
-    const individualSlideStats = db.getLeadSlideStatsForProposal(lead.id);
+    const individualSlideStats = db.getLeadSlideStatsForProposal(lead.id, proposalId);
     const durations = [], colors = [], viewCounts = [];
     let totalDur = 0, slidesSeen = 0, revisits = 0;
     for (let i = 1; i <= 12; i++) {
@@ -432,6 +432,70 @@ router.get('/proposals/:proposalId/edit', requireAdmin, (req, res) => {
     eventLog,
     success: req.query.success || null,
     error: req.query.error || null
+  });
+});
+
+// GET /admin/proposals/:proposalId/heat — página de relatório de calor/engajamento
+router.get('/proposals/:proposalId/heat', requireAdmin, (req, res) => {
+  const proposalId = parseInt(req.params.proposalId);
+  const proposal = db.getProposalWithLeads(proposalId);
+  if (!proposal) return res.redirect('/admin/proposals?error=Proposta+não+encontrada');
+
+  // Stats agregados (todos os leads vinculados)
+  const stats = db.getProposalStats(proposalId);
+
+  // Preparar dados de chart para o "Todos" (agregado)
+  const slideLabels = [];
+  const slideDurationsAll = [];
+  const slideColorsAll = [];
+  for (let i = 1; i <= 12; i++) {
+    const slideStat = stats.slideStats.find(s => s.slide_number === i);
+    const dur = slideStat ? Math.round(slideStat.total_duration || 0) : 0;
+    slideLabels.push(`Slide ${i}`);
+    slideDurationsAll.push(dur);
+    if (dur === 0) slideColorsAll.push('#e0e0e0');
+    else if (dur < 20) slideColorsAll.push('#66bb6a');
+    else if (dur < 60) slideColorsAll.push('#ffa726');
+    else slideColorsAll.push('#e91e63');
+  }
+
+  // Stats individuais por lead
+  const perLeadStats = proposal.leads.map(lead => {
+    const individualSlideStats = db.getLeadSlideStatsForProposal(lead.id, proposalId);
+    const durations = [], colors = [], viewCounts = [];
+    let totalDur = 0, slidesSeen = 0, revisits = 0;
+    for (let i = 1; i <= 12; i++) {
+      const ss = individualSlideStats.find(s => s.slide_number === i);
+      const dur = ss ? Math.round(ss.total_duration || 0) : 0;
+      durations.push(dur);
+      viewCounts.push(ss ? (ss.view_count || 0) : 0);
+      if (dur === 0) colors.push('#e0e0e0');
+      else if (dur < 20) colors.push('#66bb6a');
+      else if (dur < 60) colors.push('#ffa726');
+      else colors.push('#e91e63');
+      if (dur > 0) slidesSeen++;
+      totalDur += dur;
+      if (ss && ss.revisit_count > 0) revisits++;
+    }
+    const leadSessions = (stats.sessions || []).filter(s => s.lead_id === lead.id);
+    const accesses = leadSessions.length;
+    return { lead_id: lead.id, lead_name: lead.name, durations, colors, viewCounts, accesses, totalDur, slidesSeen, revisits };
+  });
+
+  const eventLog = (stats.eventLog || []).map(ev => {
+    let details = {};
+    try { details = ev.details ? JSON.parse(ev.details) : {}; } catch(e) {}
+    return { ...ev, parsedDetails: details };
+  });
+
+  res.render('admin/proposals/heat', {
+    proposal,
+    stats,
+    slideLabels: JSON.stringify(slideLabels),
+    slideDurationsAll: JSON.stringify(slideDurationsAll),
+    slideColorsAll: JSON.stringify(slideColorsAll),
+    perLeadStats: JSON.stringify(perLeadStats),
+    eventLog
   });
 });
 

@@ -6,24 +6,33 @@ const { calculateInterestLevel, getInterestLabel } = require('../services/intere
 const { getInviteMessage, getFollowupMessage, buildWhatsAppLink, countInvitesByType } = require('../services/invites');
 const { sendCustomPlanAlert } = require('../services/whatsapp');
 
-// Middleware para validar lead e sessão
-function validateLead(req, res, next) {
-  const token = req.body.token || req.query.token;
-  if (!token) return res.status(400).json({ error: 'Token obrigatório' });
-  const lead = db.getLeadByToken(token);
-  if (!lead) return res.status(404).json({ error: 'Lead não encontrado' });
-  req.lead = lead;
-  next();
-}
-
 // ══════════════════════════════════════════════════════════
 // TRACKING
 // ══════════════════════════════════════════════════════════
 
 // POST /api/track/open
-router.post('/open', validateLead, (req, res) => {
+// Aceita { token, lead_id } — token é da proposta, lead_id é o lead que está acessando
+router.post('/open', (req, res) => {
+  const { token, lead_id } = req.body;
+  if (!token) return res.status(400).json({ error: 'Token obrigatório' });
+
+  // Resolver lead: por lead_id (novo padrão) ou fallback getLeadByToken (legado)
+  let lead = null;
+  if (lead_id) {
+    lead = db.getLeadById(parseInt(lead_id));
+  }
+  if (!lead) {
+    // Fallback legado: token era do lead em versões antigas
+    lead = db.getLeadByToken(token);
+  }
+  if (!lead) return res.status(404).json({ error: 'Lead não encontrado' });
+
+  // Resolver proposta pelo token
+  const proposal = db.getProposalByToken(token);
+
   try {
-    const sessionId = openProposal(req.lead.id);
+    const sessionId = db.createSession(lead.id, proposal ? proposal.id : null);
+    db.logEvent(lead.id, sessionId, 'proposal_opened', { message: 'Abriu a proposta' }, proposal ? proposal.id : null);
     res.json({ success: true, sessionId });
   } catch (err) {
     console.error('Track open error:', err);
@@ -32,13 +41,23 @@ router.post('/open', validateLead, (req, res) => {
 });
 
 // POST /api/track/slide
+// Aceita { token, lead_id, sessionId, slideNumber, duration, isRevisit }
 router.post('/slide', (req, res) => {
-  const { token, sessionId, slideNumber, duration, isRevisit } = req.body;
+  const { token, lead_id, sessionId, slideNumber, duration, isRevisit } = req.body;
   if (!token || !sessionId || !slideNumber) {
     return res.status(400).json({ error: 'Dados incompletos' });
   }
-  const lead = db.getLeadByToken(token);
+
+  // Resolver lead
+  let lead = null;
+  if (lead_id) {
+    lead = db.getLeadById(parseInt(lead_id));
+  }
+  if (!lead) {
+    lead = db.getLeadByToken(token);
+  }
   if (!lead) return res.status(404).json({ error: 'Lead não encontrado' });
+
   try {
     trackSlide(parseInt(sessionId), lead.id, parseInt(slideNumber), parseFloat(duration) || 0, !!isRevisit);
     res.json({ success: true });
@@ -49,11 +68,21 @@ router.post('/slide', (req, res) => {
 });
 
 // POST /api/track/close
+// Aceita { token, lead_id, sessionId, totalDuration }
 router.post('/close', async (req, res) => {
-  const { token, sessionId, totalDuration } = req.body;
+  const { token, lead_id, sessionId, totalDuration } = req.body;
   if (!token || !sessionId) return res.status(400).json({ error: 'Dados incompletos' });
-  const lead = db.getLeadByToken(token);
+
+  // Resolver lead
+  let lead = null;
+  if (lead_id) {
+    lead = db.getLeadById(parseInt(lead_id));
+  }
+  if (!lead) {
+    lead = db.getLeadByToken(token);
+  }
   if (!lead) return res.status(404).json({ error: 'Lead não encontrado' });
+
   try {
     await closeProposal(parseInt(sessionId), lead.id, parseInt(totalDuration) || 0);
     res.json({ success: true });

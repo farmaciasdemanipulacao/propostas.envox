@@ -105,6 +105,7 @@
                 <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
                   <a href="/admin/proposals/<%= proposal.id %>/edit" class="btn-sm btn-outline" title="Editar proposta">✏️ Editar</a>
                   <a href="/admin/proposals/<%= proposal.id %>/view" class="btn-sm btn-outline" title="Ver proposta no painel">👁️ Ver</a>
+                  <a href="/admin/proposals/<%= proposal.id %>/heat" class="btn-sm btn-heat" title="Relatório de engajamento">🌡️ Calor</a>
                   <form action="/admin/proposals/<%= proposal.id %>/archive" method="POST" style="display:inline" onsubmit="return confirm('<%= proposal.proposal_status === 'archived' ? 'Reativar' : 'Arquivar' %> esta proposta?')">
                     <input type="hidden" name="archived" value="<%= proposal.proposal_status === 'archived' ? 0 : 1 %>">
                     <button type="submit" class="btn-sm <%= proposal.proposal_status === 'archived' ? 'btn-outline' : 'btn-danger-outline' %>" title="<%= proposal.proposal_status === 'archived' ? 'Reativar' : 'Arquivar' %>">
@@ -127,6 +128,8 @@
     .badge-success { background:rgba(46,125,50,0.1);color:#2e7d32; }
     .btn-danger-outline { border-color:#dc2626;color:#dc2626;background:rgba(220,38,38,0.07); }
     .btn-danger-outline:hover { background:rgba(220,38,38,0.14); }
+    .btn-heat { border-color:#f97316;color:#ea580c;background:rgba(249,115,22,0.07);border:1px solid #f97316;border-radius:6px;padding:4px 10px;font-size:0.75rem;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:3px;cursor:pointer; }
+    .btn-heat:hover { background:rgba(249,115,22,0.16); }
   </style>
 </body>
 </html>
