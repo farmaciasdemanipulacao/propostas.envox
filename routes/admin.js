@@ -389,21 +389,28 @@ router.get('/proposals/:proposalId/edit', requireAdmin, (req, res) => {
     else slideColorsAll.push('#e91e63');
   }
 
-  // Stats individuais por lead (para o seletor)
+  // Stats individuais por lead (para o seletor — inclui viewCounts e métricas)
   const perLeadStats = proposal.leads.map(lead => {
     const individualSlideStats = db.getLeadSlideStatsForProposal(lead.id);
-    const durations = [];
-    const colors = [];
+    const durations = [], colors = [], viewCounts = [];
+    let totalDur = 0, slidesSeen = 0, revisits = 0;
     for (let i = 1; i <= 12; i++) {
       const ss = individualSlideStats.find(s => s.slide_number === i);
       const dur = ss ? Math.round(ss.total_duration || 0) : 0;
       durations.push(dur);
+      viewCounts.push(ss ? (ss.view_count || 0) : 0);
       if (dur === 0) colors.push('#e0e0e0');
       else if (dur < 20) colors.push('#66bb6a');
       else if (dur < 60) colors.push('#ffa726');
       else colors.push('#e91e63');
+      if (dur > 0) slidesSeen++;
+      totalDur += dur;
+      if (ss && ss.revisit_count > 0) revisits++;
     }
-    return { lead_id: lead.id, lead_name: lead.name, durations, colors };
+    // Acessos individuais: contar sessões do lead para esta proposta
+    const leadSessions = (stats.sessions || []).filter(s => s.lead_id === lead.id);
+    const accesses = leadSessions.length;
+    return { lead_id: lead.id, lead_name: lead.name, durations, colors, viewCounts, accesses, totalDur, slidesSeen, revisits };
   });
 
   const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;

@@ -363,7 +363,26 @@
       <div class="detail-card full-width-card">
         <h3 class="card-title">🔥 Mapa de Calor — Engajamento por Slide</h3>
         <div class="heatmap-grid" id="heatmapGrid">
-          <!-- preenchido por JS -->
+          <%
+          const _slideNames = ['','Capa','O Problema','Nossa Solução','Plano Crescimento',
+            'Plano Presença Forte','Plano Performance','Como Trabalhamos','Monte seu Plano',
+            'Adicionais','Separados','Por que Envox?','Encerramento'];
+          for (let _i = 1; _i <= 12; _i++) {
+            const _ss = (stats.slideStats || []).find(s => s.slide_number === _i);
+            const _dur = _ss ? Math.round(_ss.total_duration || 0) : 0;
+            const _views = _ss ? (_ss.view_count || 0) : 0;
+            let _hc = 'heat-none';
+            if (_dur > 0 && _dur < 20) _hc = 'heat-low';
+            else if (_dur >= 20 && _dur < 60) _hc = 'heat-medium';
+            else if (_dur >= 60) _hc = 'heat-high';
+          %>
+            <div class="heatmap-cell <%= _hc %>" id="hcell-<%= _i %>">
+              <div class="heat-number"><%= _i %></div>
+              <div class="heat-name"><%= _slideNames[_i] %></div>
+              <div class="heat-time"><%= _dur %>s</div>
+              <div class="heat-views"><%= _views %> viz.</div>
+            </div>
+          <% } %>
         </div>
         <div class="heatmap-legend">
           <span class="legend-item heat-none">⬜ Não visto</span>
@@ -391,6 +410,59 @@
               <td><span style="font-weight:700;color:<%= actionColors[action.action_type] || '#666' %>"><%= actionLabels[action.action_type] || action.action_type %></span></td>
               <td><% if (action.counter_value) { %><strong style="color:#1565c0">R$ <%= Number(action.counter_value).toLocaleString('pt-BR') %></strong><% } else { %><span style="color:#bbb">—</span><% } %></td>
               <td style="font-size:0.82rem;color:#555;max-width:280px"><%= action.comment || '—' %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% } %>
+
+      <!-- Histórico de Sessões -->
+      <% if (stats.sessions && stats.sessions.length > 0) { %>
+      <div class="detail-card full-width-card">
+        <h3 class="card-title">🕐 Histórico de Acessos</h3>
+        <table class="data-table">
+          <thead>
+            <tr><th>Lead</th><th>#</th><th>Início</th><th>Fim</th><th>Duração</th><th>Alerta WA</th></tr>
+          </thead>
+          <tbody>
+            <% stats.sessions.forEach((sess, idx) => { %>
+            <tr>
+              <td style="font-size:0.8rem;font-weight:600;color:#555"><%= sess.lead_name || '—' %></td>
+              <td><%= stats.sessions.length - idx %></td>
+              <td><small><%= new Date(sess.started_at).toLocaleString('pt-BR') %></small></td>
+              <td>
+                <% if (sess.ended_at) { %>
+                  <small><%= new Date(sess.ended_at).toLocaleString('pt-BR') %></small>
+                <% } else { %><span class="badge badge-warning">Em andamento</span><% } %>
+              </td>
+              <td>
+                <% const _dm = Math.floor((sess.total_duration_seconds||0)/60); %>
+                <% const _ds = (sess.total_duration_seconds||0)%60; %>
+                <%= _dm %>m<%= _ds %>s
+              </td>
+              <td><%= sess.alert_sent ? '✅' : '—' %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% } %>
+
+      <!-- Planos customizados -->
+      <% if (stats.customPlans && stats.customPlans.length > 0) { %>
+      <div class="detail-card full-width-card">
+        <h3 class="card-title">🛒 Planos Customizados pelo Cliente</h3>
+        <table class="data-table">
+          <thead><tr><th>Lead</th><th>Data</th><th>Mensal</th><th>Único</th><th>Enviou WA</th></tr></thead>
+          <tbody>
+            <% stats.customPlans.forEach(plan => { %>
+            <tr>
+              <td style="font-size:0.8rem;font-weight:600;color:#555"><%= plan.lead_name || '—' %></td>
+              <td><small><%= new Date(plan.created_at).toLocaleString('pt-BR') %></small></td>
+              <td>R$ <%= (plan.monthly_total||0).toLocaleString('pt-BR') %></td>
+              <td>R$ <%= (plan.onetime_total||0).toLocaleString('pt-BR') %></td>
+              <td><%= plan.sent_via_whatsapp ? '✅ Sim' : '❌ Não' %></td>
             </tr>
             <% }) %>
           </tbody>
@@ -472,52 +544,70 @@
       }
     });
 
-    // ── Heatmap renderer ──────────────────────────────────────────────
-    function renderHeatmap(durations) {
-      const grid = document.getElementById('heatmapGrid');
-      let html = '';
+    // ── View counts por slide (agregado) — vindos do server ──────────
+    const ALL_VIEW_COUNTS = <%- JSON.stringify(Array.from({length:12},(_,i)=>{ const s=(stats.slideStats||[]).find(x=>x.slide_number===i+1); return s ? (s.view_count||0) : 0; })) %>;
+
+    // ── Heatmap renderer (restaurado do original — com viz.) ──────────
+    function renderHeatmap(durations, viewCounts) {
+      const vc = viewCounts || new Array(12).fill(0);
       for (let i = 1; i <= 12; i++) {
+        const cell = document.getElementById('hcell-' + i);
+        if (!cell) continue;
         const dur = durations[i - 1] || 0;
         let heatClass = 'heat-none';
         if (dur > 0 && dur < 20) heatClass = 'heat-low';
         else if (dur >= 20 && dur < 60) heatClass = 'heat-medium';
         else if (dur >= 60) heatClass = 'heat-high';
-        html += `<div class="heatmap-cell ${heatClass}">
-          <div class="heat-number">${i}</div>
-          <div class="heat-name">${SLIDE_NAMES[i] || ''}</div>
-          <div class="heat-time">${Math.round(dur)}s</div>
-        </div>`;
+        cell.className = 'heatmap-cell ' + heatClass;
+        cell.querySelector('.heat-time').textContent  = Math.round(dur) + 's';
+        cell.querySelector('.heat-views').textContent = vc[i - 1] + ' viz.';
       }
-      grid.innerHTML = html;
     }
 
-    // Init heatmap with aggregated data
-    renderHeatmap(ALL_DURATIONS);
+    // Init heatmap — server já renderizou as células com dados agregados;
+    // chamada aqui apenas para garantir consistência visual inicial.
+    renderHeatmap(ALL_DURATIONS, ALL_VIEW_COUNTS);
 
     // ── Switch report lead selector ────────────────────────────────────
     function switchReport(leadId, btn) {
-      // Update button states
       document.querySelectorAll('.rls-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
 
-      let durations, colors;
+      let durations, colors, viewCounts, accesses, totalDur, slidesSeen, revisits;
 
       if (leadId === 'all') {
-        durations = ALL_DURATIONS;
-        colors    = ALL_COLORS;
+        durations  = ALL_DURATIONS;
+        colors     = ALL_COLORS;
+        viewCounts = ALL_VIEW_COUNTS;
+        accesses   = <%= stats.totalAccesses %>;
+        totalDur   = <%= stats.totalDuration %>;
+        slidesSeen = <%= stats.totalSlidesSeen %>;
+        revisits   = <%= stats.slideStats ? stats.slideStats.filter(s => s.revisit_count > 0).length : 0 %>;
       } else {
         const perLead = PER_LEAD_STATS.find(p => p.lead_id == leadId);
-        durations = perLead ? perLead.durations : new Array(12).fill(0);
-        colors    = perLead ? perLead.colors    : new Array(12).fill('#e0e0e0');
+        durations  = perLead ? perLead.durations  : new Array(12).fill(0);
+        colors     = perLead ? perLead.colors      : new Array(12).fill('#e0e0e0');
+        viewCounts = perLead ? (perLead.viewCounts || new Array(12).fill(0)) : new Array(12).fill(0);
+        accesses   = perLead ? (perLead.accesses   || 0) : 0;
+        totalDur   = perLead ? (perLead.totalDur   || 0) : 0;
+        slidesSeen = perLead ? (perLead.slidesSeen || 0) : 0;
+        revisits   = perLead ? (perLead.revisits   || 0) : 0;
       }
 
-      // Update chart
+      // Atualizar gráfico
       chart.data.datasets[0].data = durations;
       chart.data.datasets[0].backgroundColor = colors;
       chart.update();
 
-      // Update heatmap
-      renderHeatmap(durations);
+      // Atualizar heatmap
+      renderHeatmap(durations, viewCounts);
+
+      // Atualizar métricas numéricas
+      document.getElementById('metricAccesses').textContent = accesses;
+      const mm = Math.floor(totalDur / 60), ms = totalDur % 60;
+      document.getElementById('metricDuration').textContent = mm + 'm' + ms + 's';
+      document.getElementById('metricSlides').textContent   = slidesSeen + '/12';
+      document.getElementById('metricRevisits').textContent = revisits;
     }
 
     // ── Proposal editor JS ────────────────────────────────────────────
