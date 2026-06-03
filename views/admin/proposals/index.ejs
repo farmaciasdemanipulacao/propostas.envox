@@ -104,9 +104,7 @@
               <td>
                 <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
                   <a href="/admin/proposals/<%= proposal.id %>/edit" class="btn-sm btn-outline" title="Editar proposta">✏️ Editar</a>
-                  <% if (typeof baseUrl !== 'undefined') { %>
-                  <a href="<%= baseUrl %>/proposta/<%= proposal.token %>" class="btn-sm btn-outline" title="Ver proposta" target="_blank">👁️ Ver</a>
-                  <% } %>
+                  <a href="/admin/proposals/<%= proposal.id %>/view" class="btn-sm btn-outline" title="Ver proposta no painel">👁️ Ver</a>
                   <form action="/admin/proposals/<%= proposal.id %>/archive" method="POST" style="display:inline" onsubmit="return confirm('<%= proposal.proposal_status === 'archived' ? 'Reativar' : 'Arquivar' %> esta proposta?')">
                     <input type="hidden" name="archived" value="<%= proposal.proposal_status === 'archived' ? 0 : 1 %>">
                     <button type="submit" class="btn-sm <%= proposal.proposal_status === 'archived' ? 'btn-outline' : 'btn-danger-outline' %>" title="<%= proposal.proposal_status === 'archived' ? 'Reativar' : 'Arquivar' %>">

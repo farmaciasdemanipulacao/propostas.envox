@@ -118,7 +118,7 @@
           </p>
         </div>
         <div class="header-actions">
-          <a href="/admin/proposals/preview?proposal_id=<%= proposal.id %>" class="btn-outline" target="_blank">👁️ Ver Proposta</a>
+          <a href="/admin/proposals/<%= proposal.id %>/view" class="btn-outline">👁️ Ver Proposta</a>
           <form action="/admin/proposals/<%= proposal.id %>/resend-emails" method="POST" style="display:inline">
             <button type="submit" class="btn-outline">📧 Reenviar Emails</button>
           </form>

@@ -504,6 +504,47 @@ router.get('/proposals/preview', requireAdmin, (req, res) => {
   res.redirect(`/proposta/${p.token}/view`);
 });
 
+// GET /admin/proposals/:proposalId/view — visualizador embedded no painel admin
+router.get('/proposals/:proposalId/view', requireAdmin, (req, res) => {
+  const proposalId = parseInt(req.params.proposalId);
+  const proposal = db.getProposalWithLeads(proposalId);
+  if (!proposal) return res.redirect('/admin/proposals?error=Proposta+não+encontrada');
+
+  const leads = proposal.leads || [];
+  const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+
+  // Autenticar token na sessão do admin para que o iframe não peça login
+  if (!req.session.authenticatedTokens) req.session.authenticatedTokens = [];
+  if (!req.session.authenticatedTokens.includes(proposal.token)) {
+    req.session.authenticatedTokens.push(proposal.token);
+  }
+
+  // Lead selecionado para visualizar (query param ou primário)
+  const selectedLeadId = req.query.lead_id ? parseInt(req.query.lead_id) : null;
+  const viewerLead = selectedLeadId
+    ? leads.find(l => l.id === selectedLeadId)
+    : (leads.find(l => l.is_primary) || leads[0]);
+
+  if (viewerLead) {
+    req.session.proposalLeadOverride = req.session.proposalLeadOverride || {};
+    req.session.proposalLeadOverride[proposal.token] = viewerLead.id;
+  }
+
+  // Stats resumidos para o painel lateral
+  const stats = db.getProposalStats(proposalId);
+
+  res.render('admin/proposals/view', {
+    proposal,
+    leads,
+    viewerLead: viewerLead || null,
+    stats,
+    baseUrl,
+    selectedLeadId: viewerLead ? viewerLead.id : null,
+    success: req.query.success || null,
+    error: req.query.error || null
+  });
+});
+
 // POST /admin/proposals/:proposalId/archive
 router.post('/proposals/:proposalId/archive', requireAdmin, (req, res) => {
   const archived = parseInt(req.body.archived) || 0;
