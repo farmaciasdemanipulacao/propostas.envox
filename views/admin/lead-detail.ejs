@@ -7,7 +7,6 @@
   <title><%= stats.lead.name %> — Envox Admin</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/admin.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
   <div class="top-bar"></div>
@@ -19,17 +18,13 @@
       <div class="page-header">
         <div>
           <h1><%= stats.lead.name %></h1>
-          <p class="page-subtitle">Análise de engajamento com a proposta</p>
+          <p class="page-subtitle">Informações e engajamento do lead</p>
         </div>
         <div class="header-actions">
-          <button class="btn-copy-link btn-outline" data-url="<%= baseUrl %>/proposta/<%= stats.lead.token %>">
-            📋 Copiar Link
-          </button>
           <form action="/admin/leads/<%= stats.lead.id %>/resend-alert" method="POST" style="display:inline">
             <button type="submit" class="btn-whatsapp">📲 Reenviar Alerta</button>
           </form>
           <a href="/admin/leads/<%= stats.lead.id %>/edit" class="btn-outline">✏️ Editar Lead</a>
-          <a href="/admin/proposals/<%= stats.lead.id %>/edit" class="btn-outline">📝 Editar Proposta</a>
           <a href="/admin/leads" class="btn-outline">← Leads</a>
         </div>
       </div>
@@ -58,48 +53,23 @@
               <span class="info-label">Email</span>
               <span class="info-value"><%= stats.lead.email %></span>
             </div>
+            <% if (stats.lead.company_name) { %>
+            <div class="info-row">
+              <span class="info-label">Empresa</span>
+              <span class="info-value"><%= stats.lead.company_name %></span>
+            </div>
+            <% } %>
+            <% if (stats.lead.cargo) { %>
+            <div class="info-row">
+              <span class="info-label">Cargo</span>
+              <span class="info-value"><%= stats.lead.cargo %></span>
+            </div>
+            <% } %>
             <div class="info-row">
               <span class="info-label">Cadastrado em</span>
               <span class="info-value"><%= new Date(stats.lead.created_at).toLocaleDateString('pt-BR') %></span>
             </div>
-            <div class="info-row">
-              <span class="info-label">Link da Proposta</span>
-              <span class="info-value">
-                <button class="btn-copy-link btn-sm" data-url="<%= baseUrl %>/proposta/<%= stats.lead.token %>">📋 Copiar</button>
-              </span>
-            </div>
-            <% if (stats.lead.discount_monthly > 0 || stats.lead.discount_onetime > 0) { %>
-            <div class="info-row" style="background:rgba(233,30,99,0.04);border-radius:8px;padding:0.5rem 0.75rem;margin-top:0.5rem">
-              <span class="info-label">🎉 Condição Especial</span>
-              <span class="info-value" style="font-size:0.82rem">
-                <% if (stats.lead.discount_monthly > 0) { %><span style="color:#E91E63;font-weight:700"><%= stats.lead.discount_monthly %>% recorrentes</span><% } %>
-                <% if (stats.lead.discount_onetime > 0) { %><% if (stats.lead.discount_monthly > 0) { %> · <% } %><span style="color:#E91E63;font-weight:700"><%= stats.lead.discount_onetime %>% pontuais</span><% } %>
-                <% if (stats.lead.discount_expires) { %><br><small style="color:#666">Prazo: <%= new Date(stats.lead.discount_expires + 'T12:00:00').toLocaleDateString('pt-BR') %></small><% } %>
-              </span>
-            </div>
-            <% } %>
           </div>
-          <!-- Editar descontos inline -->
-          <details style="margin-top:0.75rem">
-            <summary style="font-size:0.78rem;color:#E91E63;cursor:pointer;font-weight:600">✏️ Editar condições especiais</summary>
-            <form action="/admin/leads/<%= stats.lead.id %>/discount" method="POST" style="margin-top:0.75rem;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:end">
-              <div>
-                <label style="font-size:0.72rem;font-weight:600;color:#666;display:block;margin-bottom:3px">Desc. Recorrentes (%)</label>
-                <input type="number" name="discount_monthly" value="<%= stats.lead.discount_monthly || 0 %>" min="0" max="100" style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:0.82rem">
-              </div>
-              <div>
-                <label style="font-size:0.72rem;font-weight:600;color:#666;display:block;margin-bottom:3px">Desc. Pontuais (%)</label>
-                <input type="number" name="discount_onetime" value="<%= stats.lead.discount_onetime || 0 %>" min="0" max="100" style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:0.82rem">
-              </div>
-              <div>
-                <label style="font-size:0.72rem;font-weight:600;color:#666;display:block;margin-bottom:3px">Prazo</label>
-                <input type="date" name="discount_expires" value="<%= stats.lead.discount_expires || '' %>" style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:0.82rem">
-              </div>
-              <div style="grid-column:1/-1">
-                <button type="submit" style="background:#E91E63;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:0.8rem;cursor:pointer;font-weight:600;width:100%">💾 Salvar condições</button>
-              </div>
-            </form>
-          </details>
         </div>
         
         <div class="detail-card">
@@ -205,52 +175,79 @@
         </div>
         <% } %>
       </div>
-      
-      <!-- Gráfico de Slides -->
+
+      <!-- Propostas vinculadas -->
       <div class="detail-card full-width-card">
-        <h3 class="card-title">📈 Tempo por Slide (segundos)</h3>
-        <div class="chart-wrap">
-          <canvas id="slideChart" height="100"></canvas>
-        </div>
-      </div>
-      
-      <!-- Mapa de Calor -->
-      <div class="detail-card full-width-card">
-        <h3 class="card-title">🔥 Mapa de Calor — Engajamento por Slide</h3>
-        <div class="heatmap-grid">
-          <% 
-          const slideNamesList = ['','Capa','O Problema','Nossa Solução','Plano Crescimento',
-            'Plano Presença Forte','Plano Performance','Comparativo','Monte seu Plano',
-            'Adicionais','Separados','Por que Envox?','Encerramento'];
-          for (let i = 1; i <= 12; i++) {
-            const slideStat = stats.slideStats.find(s => s.slide_number === i);
-            const dur = slideStat ? Math.round(slideStat.total_duration || 0) : 0;
-            const views = slideStat ? slideStat.view_count : 0;
-            let heatClass = 'heat-none';
-            if (dur > 0 && dur < 20) heatClass = 'heat-low';
-            else if (dur >= 20 && dur < 60) heatClass = 'heat-medium';
-            else if (dur >= 60) heatClass = 'heat-high';
-          %>
-            <div class="heatmap-cell <%= heatClass %>">
-              <div class="heat-number"><%= i %></div>
-              <div class="heat-name"><%= slideNamesList[i] %></div>
-              <div class="heat-time"><%= dur %>s</div>
-              <div class="heat-views"><%= views %> viz.</div>
-            </div>
-          <% } %>
-        </div>
-        <div class="heatmap-legend">
-          <span class="legend-item heat-none">⬜ Não visto</span>
-          <span class="legend-item heat-low">🟩 Pouco (&lt;20s)</span>
-          <span class="legend-item heat-medium">🟨 Médio (20-60s)</span>
-          <span class="legend-item heat-high">🟥 Alto (&gt;60s)</span>
-        </div>
+        <h3 class="card-title">📋 Propostas Vinculadas</h3>
+        <% if (typeof linkedProposals !== 'undefined' && linkedProposals && linkedProposals.length > 0) { %>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Token</th>
+                <th>Leads</th>
+                <th>Itens</th>
+                <th>Status</th>
+                <th>Criada em</th>
+                <th>Vínculo</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% linkedProposals.forEach(p => { %>
+              <tr>
+                <td>
+                  <span style="font-family:monospace;font-size:0.82rem;background:#f5f5f5;padding:2px 7px;border-radius:5px">
+                    <%= p.token %>
+                  </span>
+                </td>
+                <td style="font-size:0.82rem;color:#555">
+                  <%= p.leads_count || 1 %> lead(s)
+                </td>
+                <td style="font-size:0.82rem;color:#555">
+                  <%= p.items_count || 0 %> item(s)
+                </td>
+                <td>
+                  <% if (p.proposal_status === 'archived') { %>
+                    <span class="badge" style="background:#f5f5f5;color:#999">Arquivada</span>
+                  <% } else { %>
+                    <span class="badge badge-success">Ativa</span>
+                  <% } %>
+                </td>
+                <td style="font-size:0.78rem;color:#666">
+                  <%= new Date(p.created_at).toLocaleDateString('pt-BR') %>
+                </td>
+                <td style="font-size:0.78rem">
+                  <% if (p.is_primary) { %>
+                    <span style="color:#E91E63;font-weight:700">⭐ Principal</span>
+                  <% } else { %>
+                    <span style="color:#888">Secundário</span>
+                  <% } %>
+                </td>
+                <td>
+                  <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+                    <a href="/admin/proposals/<%= p.id %>/edit" class="btn-sm btn-outline">✏️ Editar</a>
+                    <% if (typeof baseUrl !== 'undefined') { %>
+                    <a href="<%= baseUrl %>/proposta/<%= p.token %>" class="btn-sm btn-outline" target="_blank">👁️ Ver</a>
+                    <% } %>
+                  </div>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } else { %>
+          <div style="text-align:center;padding:2rem;color:#bbb">
+            <div style="font-size:2rem;margin-bottom:0.5rem">📝</div>
+            <p>Este lead ainda não está vinculado a nenhuma proposta.</p>
+            <a href="/admin/proposals/new" class="btn-primary" style="margin-top:0.75rem;display:inline-block">Criar Proposta</a>
+          </div>
+        <% } %>
       </div>
 
       <!-- Decisões da Proposta -->
       <% if (typeof proposalActions !== 'undefined' && proposalActions && proposalActions.length > 0) { %>
       <div class="detail-card full-width-card">
-        <h3 class="card-title">⚖️ Decisões do Lead sobre a Proposta</h3>
+        <h3 class="card-title">⚖️ Decisões do Lead sobre Propostas</h3>
         <table class="data-table">
           <thead>
             <tr><th>Data</th><th>Decisão</th><th>Valor (Contra-proposta)</th><th>Comentário</th></tr>
@@ -422,32 +419,6 @@
   <div id="toast" class="toast hidden">Link copiado!</div>
   
   <script>
-    const ctx = document.getElementById('slideChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: <%- slideLabels %>,
-        datasets: [{
-          label: 'Tempo (segundos)',
-          data: <%- slideDurations %>,
-          backgroundColor: <%- slideColors %>,
-          borderRadius: 6,
-          borderWidth: 0
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          tooltip: { callbacks: { label: ctx => `${ctx.raw}s de visualização` } }
-        },
-        scales: {
-          y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { callback: v => v + 's' } },
-          x: { grid: { display: false } }
-        }
-      }
-    });
-    
     document.querySelectorAll('.btn-copy-link').forEach(btn => {
       btn.addEventListener('click', function() {
         navigator.clipboard.writeText(this.dataset.url).then(() => {

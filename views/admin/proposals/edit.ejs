@@ -4,9 +4,10 @@
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Editar Proposta — <%= lead.name %> — Envox Admin</title>
+  <title>Proposta #<%= proposal.id %> — Envox Admin</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/admin.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     .proposal-builder-grid { display:grid;grid-template-columns:1fr 300px;gap:1.5rem;align-items:start; }
     @media(max-width:900px){.proposal-builder-grid{grid-template-columns:1fr;}}
@@ -50,7 +51,56 @@
     .content-field textarea:focus{border-color:#E91E63;}
     .form-actions-sticky{position:sticky;bottom:0;background:rgba(255,255,255,0.95);backdrop-filter:blur(6px);border-top:1px solid #eee;padding:0.9rem 0;margin-top:1.5rem;display:flex;gap:0.75rem;align-items:center;justify-content:flex-end;z-index:10;}
     .catalog-category-label{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#999;padding:0.5rem 0.25rem 0.2rem;}
-    .lead-info-box{background:#f0fff4;border:1px solid #c8e6c9;border-radius:10px;padding:0.85rem 1rem;font-size:0.82rem;color:#2e7d32;margin-bottom:1.25rem;}
+
+    /* Leads vinculados */
+    .lead-chips-row { display:flex;flex-wrap:wrap;gap:0.4rem;margin:0.5rem 0; }
+    .lead-chip {
+      display:inline-flex;align-items:center;gap:0.35rem;
+      padding:0.3rem 0.65rem;border-radius:20px;
+      background:#fff;border:1.5px solid #ddd;font-size:0.75rem;
+      font-family:Poppins,sans-serif;
+    }
+    .lead-chip.primary { border-color:#E91E63;background:#fff0f5;color:#E91E63;font-weight:700; }
+    .lead-chip .chip-del { cursor:pointer;color:#aaa;font-size:0.8rem;margin-left:4px; }
+    .lead-chip .chip-del:hover { color:#dc2626; }
+
+    /* Relatório */
+    .report-lead-selector {
+      display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center;
+    }
+    .rls-btn {
+      padding:0.3rem 0.75rem;border:1.5px solid #ddd;border-radius:20px;
+      background:#fff;font-size:0.75rem;font-weight:600;color:#555;
+      cursor:pointer;font-family:Poppins,sans-serif;transition:all 0.15s;
+    }
+    .rls-btn:hover { border-color:#E91E63;color:#E91E63; }
+    .rls-btn.active { border-color:#E91E63;background:#fff0f5;color:#E91E63; }
+
+    /* Heatmap */
+    .heatmap-grid { display:grid;grid-template-columns:repeat(6,1fr);gap:0.5rem;margin-bottom:1rem; }
+    @media(max-width:700px){ .heatmap-grid { grid-template-columns:repeat(3,1fr); } }
+    .heatmap-cell { border-radius:8px;padding:0.6rem 0.4rem;text-align:center;border:1px solid #eee; }
+    .heat-none { background:#f5f5f5; }
+    .heat-low  { background:#e8f5e9; border-color:#c8e6c9; }
+    .heat-medium { background:#fff8e1; border-color:#ffe082; }
+    .heat-high { background:#fce4ec; border-color:#f48fb1; }
+    .heat-number { font-size:0.65rem;font-weight:700;color:#999;margin-bottom:2px; }
+    .heat-name { font-size:0.58rem;color:#555;font-weight:500;line-height:1.2; }
+    .heat-time { font-size:0.72rem;font-weight:700;color:#1a1a2e; }
+    .heat-views { font-size:0.58rem;color:#aaa; }
+    .heatmap-legend { display:flex;gap:1rem;flex-wrap:wrap;font-size:0.72rem;color:#666; }
+
+    /* Metrics grid */
+    .metrics-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:1rem; }
+    @media(max-width:700px){ .metrics-grid { grid-template-columns:repeat(2,1fr); } }
+    .metric-item { background:#f8f9fa;border-radius:10px;padding:0.75rem;text-align:center; }
+    .metric-value { font-size:1.4rem;font-weight:800;color:#1a1a2e; }
+    .metric-label { font-size:0.65rem;color:#888;font-weight:500;margin-top:2px; }
+
+    /* Vincular lead adicional */
+    .link-lead-form { display:flex;gap:0.5rem;align-items:center;margin-top:0.75rem; }
+    .link-lead-form select { flex:1;padding:0.45rem 0.7rem;border:1px solid #ddd;border-radius:8px;font-size:0.8rem;font-family:Poppins,sans-serif;outline:none; }
+    .link-lead-form select:focus { border-color:#E91E63; }
   </style>
 </head>
 <body>
@@ -60,11 +110,18 @@
     <main class="main-content">
       <div class="page-header">
         <div>
-          <h1>Editar Proposta</h1>
-          <p class="page-subtitle"><%= lead.name %> — <%= lead.email %></p>
+          <h1>Proposta #<%= proposal.id %></h1>
+          <p class="page-subtitle">
+            <% if (proposal.leads && proposal.leads.length > 0) { %>
+              <%= proposal.leads.map(l => l.company_name || l.name).filter(Boolean).join(' · ') %>
+            <% } %>
+          </p>
         </div>
         <div class="header-actions">
-          <a href="/admin/proposals/preview?lead_id=<%= lead.id %>" class="btn-outline" target="_blank">👁️ Ver Proposta</a>
+          <a href="/admin/proposals/preview?proposal_id=<%= proposal.id %>" class="btn-outline" target="_blank">👁️ Ver Proposta</a>
+          <form action="/admin/proposals/<%= proposal.id %>/resend-emails" method="POST" style="display:inline">
+            <button type="submit" class="btn-outline">📧 Reenviar Emails</button>
+          </form>
           <a href="/admin/proposals" class="btn-outline">← Propostas</a>
         </div>
       </div>
@@ -72,24 +129,45 @@
       <% if (success) { %><div class="alert alert-success"><span>✅</span> <%= success %></div><% } %>
       <% if (error) { %><div class="alert alert-error"><span>⚠️</span> <%= error %></div><% } %>
 
-      <!-- Lead Info -->
-      <div class="lead-info-box">
-        👤 <strong><%= lead.name %></strong> &nbsp;·&nbsp; 📱 <%= lead.whatsapp %>
-        &nbsp;·&nbsp; 📧 <%= lead.email %>
-        <% if (lead.discount_monthly > 0 || lead.discount_onetime > 0) { %>
-          &nbsp;·&nbsp; 🎉 Desconto:
-          <% if (lead.discount_monthly > 0) { %><%= lead.discount_monthly %>% mensais<% } %>
-          <% if (lead.discount_onetime > 0) { %> / <%= lead.discount_onetime %>% pontuais<% } %>
-        <% } %>
+      <!-- ── Leads vinculados ── -->
+      <div class="detail-card full-width-card" style="margin-bottom:1.25rem">
+        <h3 class="card-title">👥 Leads vinculados a esta proposta</h3>
+        <div class="lead-chips-row">
+          <% (proposal.leads || []).forEach(lead => { %>
+            <span class="lead-chip <%= lead.is_primary ? 'primary' : '' %>">
+              <% if (lead.is_primary) { %><span title="Lead primário">⭐</span><% } %>
+              <%= lead.name %>
+              <% if (lead.company_name) { %><span style="opacity:0.6;font-size:0.68rem">· <%= lead.company_name %></span><% } %>
+              <% if (!lead.is_primary) { %>
+                <form action="/admin/proposals/<%= proposal.id %>/unlink-lead" method="POST" style="display:inline" onsubmit="return confirm('Desvincular <%= lead.name %>?')">
+                  <input type="hidden" name="lead_id" value="<%= lead.id %>">
+                  <button type="submit" class="chip-del" title="Desvincular">✕</button>
+                </form>
+              <% } %>
+            </span>
+          <% }) %>
+        </div>
+        <!-- Vincular lead adicional -->
+        <form action="/admin/proposals/<%= proposal.id %>/link-lead" method="POST" class="link-lead-form">
+          <select name="lead_id" required>
+            <option value="">+ Vincular outro lead...</option>
+            <% const linkedIds = (proposal.leads || []).map(l => l.id); %>
+            <% allLeads.filter(l => !linkedIds.includes(l.id)).forEach(lead => { %>
+              <option value="<%= lead.id %>"><%= lead.name %><% if (lead.company_name) { %> — <%= lead.company_name %><% } %></option>
+            <% }) %>
+          </select>
+          <button type="submit" class="btn-primary" style="padding:0.45rem 1rem;font-size:0.8rem">Vincular</button>
+        </form>
       </div>
 
-      <form id="proposalForm" action="/admin/proposals/<%= lead.id %>/edit" method="POST">
+      <!-- ══ EDITOR DA PROPOSTA ══ -->
+      <form id="proposalForm" action="/admin/proposals/<%= proposal.id %>/edit" method="POST">
 
         <!-- Mode Selector -->
-        <div class="form-card" style="margin-bottom:1.25rem">
+        <div class="form-card" style="margin-bottom:1.25rem;background:#fff;border-radius:12px;border:1px solid #eee;padding:1.25rem">
           <h3 style="font-size:0.85rem;font-weight:700;color:#1a1a2e;margin:0 0 1rem">🎛️ Tipo de Proposta</h3>
           <div style="display:flex;gap:1rem;flex-wrap:wrap">
-            <% const currentMode = lead.proposal_mode || 'both'; %>
+            <% const currentMode = proposal.proposal_mode || 'both'; %>
             <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;padding:0.75rem 1rem;border:2px solid <%= currentMode === 'ready' ? '#E91E63' : '#eee' %>;border-radius:10px;flex:1;min-width:140px" id="mode-label-ready">
               <input type="radio" name="proposal_mode" value="ready" onchange="updateModeLabel()" style="accent-color:#E91E63" <%= currentMode === 'ready' ? 'checked' : '' %>>
               <div>
@@ -200,15 +278,15 @@
               <h3>📝 Conteúdo da Proposta</h3>
               <div class="content-field">
                 <label>📄 Descrição</label>
-                <textarea name="proposal_description" rows="4"><%= lead.proposal_description || '' %></textarea>
+                <textarea name="proposal_description" rows="4"><%= proposal.proposal_description || '' %></textarea>
               </div>
               <div class="content-field">
                 <label>🎯 Escopo</label>
-                <textarea name="proposal_scope" rows="4"><%= lead.proposal_scope || '' %></textarea>
+                <textarea name="proposal_scope" rows="4"><%= proposal.proposal_scope || '' %></textarea>
               </div>
               <div class="content-field">
                 <label>📅 Cronograma</label>
-                <textarea name="proposal_timeline" rows="4"><%= lead.proposal_timeline || '' %></textarea>
+                <textarea name="proposal_timeline" rows="4"><%= proposal.proposal_timeline || '' %></textarea>
               </div>
             </div>
           </div>
@@ -229,13 +307,220 @@
           <button type="submit" class="btn-primary">💾 Salvar Alterações</button>
         </div>
       </form>
+
+      <!-- ══ RELATÓRIO DE ENGAJAMENTO ══ -->
+      <div class="detail-card full-width-card" style="margin-top:2rem">
+        <h3 class="card-title">📊 Relatório de Engajamento</h3>
+
+        <!-- Seletor de lead -->
+        <div class="report-lead-selector">
+          <span style="font-size:0.75rem;color:#888;font-weight:600">Ver:</span>
+          <button class="rls-btn active" onclick="switchReport('all', this)">
+            Todos os leads (<%= stats.totalAccesses %> acessos)
+          </button>
+          <% (proposal.leads || []).forEach(lead => { %>
+            <button class="rls-btn" onclick="switchReport(<%= lead.id %>, this)">
+              <%= lead.name %><% if (lead.is_primary) { %> ⭐<% } %>
+            </button>
+          <% }) %>
+        </div>
+
+        <!-- Métricas gerais -->
+        <div class="metrics-grid" id="reportMetrics">
+          <div class="metric-item">
+            <div class="metric-value" id="metricAccesses"><%= stats.totalAccesses %></div>
+            <div class="metric-label">Acessos</div>
+          </div>
+          <div class="metric-item">
+            <%
+              const tm = Math.floor(stats.totalDuration/60);
+              const ts = stats.totalDuration % 60;
+            %>
+            <div class="metric-value" id="metricDuration"><%= tm %>m<%= ts %>s</div>
+            <div class="metric-label">Tempo Total</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-value" id="metricSlides"><%= stats.totalSlidesSeen %>/12</div>
+            <div class="metric-label">Slides Vistos</div>
+          </div>
+          <div class="metric-item">
+            <% const revisits = stats.slideStats ? stats.slideStats.filter(s => s.revisit_count > 0).length : 0; %>
+            <div class="metric-value" id="metricRevisits"><%= revisits %></div>
+            <div class="metric-label">Slides Revisitados</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráfico -->
+      <div class="detail-card full-width-card">
+        <h3 class="card-title">📈 Tempo por Slide (segundos)</h3>
+        <div class="chart-wrap">
+          <canvas id="slideChart" height="100"></canvas>
+        </div>
+      </div>
+
+      <!-- Mapa de Calor -->
+      <div class="detail-card full-width-card">
+        <h3 class="card-title">🔥 Mapa de Calor — Engajamento por Slide</h3>
+        <div class="heatmap-grid" id="heatmapGrid">
+          <!-- preenchido por JS -->
+        </div>
+        <div class="heatmap-legend">
+          <span class="legend-item heat-none">⬜ Não visto</span>
+          <span class="legend-item heat-low">🟩 Pouco (&lt;20s)</span>
+          <span class="legend-item heat-medium">🟨 Médio (20-60s)</span>
+          <span class="legend-item heat-high">🟥 Alto (&gt;60s)</span>
+        </div>
+      </div>
+
+      <!-- Decisões -->
+      <% if (proposalActions && proposalActions.length > 0) { %>
+      <div class="detail-card full-width-card">
+        <h3 class="card-title">⚖️ Decisões sobre a Proposta</h3>
+        <table class="data-table">
+          <thead>
+            <tr><th>Lead</th><th>Data</th><th>Decisão</th><th>Valor (Contraproposta)</th><th>Comentário</th></tr>
+          </thead>
+          <tbody>
+            <% proposalActions.forEach(action => { %>
+            <% const actionColors = { accept: '#16a34a', counter: '#1565c0', reject: '#dc2626' }; %>
+            <% const actionLabels = { accept: '✅ Aceita', counter: '🔄 Contra-proposta', reject: '❌ Rejeitada' }; %>
+            <tr>
+              <td><strong><%= action.lead_name || '—' %></strong></td>
+              <td><small><%= new Date(action.created_at).toLocaleString('pt-BR') %></small></td>
+              <td><span style="font-weight:700;color:<%= actionColors[action.action_type] || '#666' %>"><%= actionLabels[action.action_type] || action.action_type %></span></td>
+              <td><% if (action.counter_value) { %><strong style="color:#1565c0">R$ <%= Number(action.counter_value).toLocaleString('pt-BR') %></strong><% } else { %><span style="color:#bbb">—</span><% } %></td>
+              <td style="font-size:0.82rem;color:#555;max-width:280px"><%= action.comment || '—' %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% } %>
+
+      <!-- Log de Eventos -->
+      <div class="detail-card full-width-card">
+        <h3 class="card-title">📋 Log de Eventos</h3>
+        <% if (eventLog && eventLog.length > 0) { %>
+          <div class="event-log">
+            <% eventLog.slice(0, 50).forEach(ev => { %>
+              <div class="event-item event-<%= ev.event_type %>">
+                <div class="event-time"><%= new Date(ev.timestamp).toLocaleString('pt-BR') %></div>
+                <div class="event-dot"></div>
+                <div class="event-text">
+                  <% if (ev.lead_name) { %><span style="font-weight:600;color:#E91E63"><%= ev.lead_name %>:</span> <% } %>
+                  <% if (ev.event_type === 'proposal_opened') { %>🔓 Abriu a proposta
+                  <% } else if (ev.event_type === 'proposal_closed') { %>🔒 Fechou a proposta
+                    <% if (ev.parsedDetails && ev.parsedDetails.total_duration) { %><small>(<%= Math.round(ev.parsedDetails.total_duration) %>s)</small><% } %>
+                  <% } else if (ev.event_type === 'slide_viewed') { %>👁️ Visualizou slide
+                    <% if (ev.parsedDetails && ev.parsedDetails.duration_seconds > 0) { %><small>(<%= Math.round(ev.parsedDetails.duration_seconds) %>s)</small><% } %>
+                  <% } else if (ev.event_type === 'proposal_shared') { %>📤 Compartilhou com <%= ev.parsedDetails ? ev.parsedDetails.shared_with : '' %>
+                  <% } else if (ev.event_type === 'proposal_action') { %>⚖️ <%= ev.parsedDetails ? ev.parsedDetails.action_type : 'ação' %>
+                  <% } else { %>ℹ️ <%= ev.event_type %><% } %>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        <% } else { %>
+          <p class="text-muted">Nenhum evento registrado ainda.</p>
+        <% } %>
+      </div>
+
     </main>
   </div>
+
+  <div id="toast" class="toast hidden">Copiado!</div>
 
   <script>
     const SERVICES_DATA = <%- JSON.stringify(services) %>;
     const PROPOSAL_ITEMS_DATA = <%- JSON.stringify(proposalItems) %>;
 
+    // ── Report data from server ────────────────────────────────────────
+    const SLIDE_LABELS    = <%- slideLabels %>;
+    const ALL_DURATIONS   = <%- slideDurationsAll %>;
+    const ALL_COLORS      = <%- slideColorsAll %>;
+    const PER_LEAD_STATS  = <%- perLeadStats %>;
+
+    const SLIDE_NAMES = ['','Capa','O Problema','Nossa Solução','Plano Crescimento',
+      'Plano Presença Forte','Plano Performance','Como Trabalhamos','Monte seu Plano',
+      'Adicionais','Separados','Por que Envox?','Encerramento'];
+
+    // ── Chart.js ──────────────────────────────────────────────────────
+    const ctx = document.getElementById('slideChart').getContext('2d');
+    let chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: SLIDE_LABELS,
+        datasets: [{
+          label: 'Tempo (segundos)',
+          data: ALL_DURATIONS,
+          backgroundColor: ALL_COLORS,
+          borderRadius: 6,
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => `${ctx.raw}s de visualização` } }
+        },
+        scales: {
+          y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { callback: v => v + 's' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+
+    // ── Heatmap renderer ──────────────────────────────────────────────
+    function renderHeatmap(durations) {
+      const grid = document.getElementById('heatmapGrid');
+      let html = '';
+      for (let i = 1; i <= 12; i++) {
+        const dur = durations[i - 1] || 0;
+        let heatClass = 'heat-none';
+        if (dur > 0 && dur < 20) heatClass = 'heat-low';
+        else if (dur >= 20 && dur < 60) heatClass = 'heat-medium';
+        else if (dur >= 60) heatClass = 'heat-high';
+        html += `<div class="heatmap-cell ${heatClass}">
+          <div class="heat-number">${i}</div>
+          <div class="heat-name">${SLIDE_NAMES[i] || ''}</div>
+          <div class="heat-time">${Math.round(dur)}s</div>
+        </div>`;
+      }
+      grid.innerHTML = html;
+    }
+
+    // Init heatmap with aggregated data
+    renderHeatmap(ALL_DURATIONS);
+
+    // ── Switch report lead selector ────────────────────────────────────
+    function switchReport(leadId, btn) {
+      // Update button states
+      document.querySelectorAll('.rls-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      let durations, colors;
+
+      if (leadId === 'all') {
+        durations = ALL_DURATIONS;
+        colors    = ALL_COLORS;
+      } else {
+        const perLead = PER_LEAD_STATS.find(p => p.lead_id == leadId);
+        durations = perLead ? perLead.durations : new Array(12).fill(0);
+        colors    = perLead ? perLead.colors    : new Array(12).fill('#e0e0e0');
+      }
+
+      // Update chart
+      chart.data.datasets[0].data = durations;
+      chart.data.datasets[0].backgroundColor = colors;
+      chart.update();
+
+      // Update heatmap
+      renderHeatmap(durations);
+    }
+
+    // ── Proposal editor JS ────────────────────────────────────────────
     function updateModeLabel() {
       const radios = document.querySelectorAll('input[name="proposal_mode"]');
       radios.forEach(r => {
@@ -304,7 +589,7 @@
         items.push({
           service_id: parseInt(svcId),
           name: chk.dataset.name,
-          description: chk.dataset.desc,
+          description: chk.dataset.desc || '',
           price: parseFloat(document.getElementById('price-' + svcId)?.value) || 0,
           qty: parseInt(document.getElementById('qty-' + svcId)?.value) || 1,
           unit: chk.dataset.unit,
@@ -321,7 +606,7 @@
       container.appendChild(input);
     });
 
-    // Init — show existing selection in preview
+    // Init
     updatePreview();
   </script>
 </body>

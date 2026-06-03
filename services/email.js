@@ -96,12 +96,9 @@ async function sendMail({ to, subject, html, text }) {
   }
 }
 
-// ── Template: Proposta criada ─────────────────────────────────────────────────
+// ── Template: Proposta criada — enviada para 1 lead (N:N) ────────────────────
 
-async function sendProposalNotification(lead) {
-  const baseUrl  = (process.env.BASE_URL || 'https://envox.com.br').replace(/\/$/, '');
-  const propLink = `${baseUrl}/proposta/${lead.token}`;
-
+async function sendProposalToLead(lead, propLink) {
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #eee;border-radius:8px;overflow:hidden">
       <div style="background:#1a1a2e;padding:24px 32px;text-align:center">
@@ -112,7 +109,8 @@ async function sendProposalNotification(lead) {
           Sua proposta está pronta, ${lead.name}! 🎉
         </h1>
         <p style="color:#555;font-size:0.95rem;line-height:1.65;margin:0 0 24px">
-          Preparamos uma proposta personalizada especialmente para o seu negócio.
+          Preparamos uma proposta personalizada especialmente para
+          ${lead.company_name ? '<strong>' + lead.company_name + '</strong>' : 'o seu negócio'}.
           Acesse agora para conferir todos os detalhes.
         </p>
         <div style="text-align:center;margin:28px 0">
@@ -123,7 +121,14 @@ async function sendProposalNotification(lead) {
             📋 Acessar Proposta
           </a>
         </div>
-        <p style="margin:24px 0 0;font-size:0.82rem;color:#aaa;word-break:break-all">
+        <div style="background:#f8f9fa;border-radius:8px;padding:16px 20px;margin-top:16px">
+          <p style="margin:0;font-size:0.82rem;color:#666;font-family:Arial,sans-serif">
+            <strong>Seus dados de acesso:</strong><br>
+            • WhatsApp: <strong>${lead.whatsapp}</strong><br>
+            • E-mail: <strong>${lead.email}</strong>
+          </p>
+        </div>
+        <p style="margin:20px 0 0;font-size:0.82rem;color:#aaa;word-break:break-all">
           Link direto: <a href="${propLink}" style="color:#E91E63">${propLink}</a>
         </p>
       </div>
@@ -138,8 +143,15 @@ async function sendProposalNotification(lead) {
     to:      lead.email,
     subject: `📋 Sua proposta Envox está pronta, ${lead.name}`,
     html,
-    text: `Olá ${lead.name},\n\nSua proposta está pronta!\n\nAcesse: ${propLink}\n\n— Envox Agência Digital`,
+    text: `Olá ${lead.name},\n\nSua proposta está pronta!\n\nAcesse: ${propLink}\n\nSeus dados de acesso:\n- WhatsApp: ${lead.whatsapp}\n- E-mail: ${lead.email}\n\n— Envox Agência Digital`,
   });
+}
+
+// Manter compatibilidade com código legado que chame sendProposalNotification
+async function sendProposalNotification(lead) {
+  const baseUrl  = (process.env.BASE_URL || 'https://envox.com.br').replace(/\/$/, '');
+  const propLink = `${baseUrl}/proposta/${lead.token || ''}`;
+  return sendProposalToLead(lead, propLink);
 }
 
 // ── Template: Proposta compartilhada ─────────────────────────────────────
@@ -253,6 +265,7 @@ module.exports = {
   isConfigured,
   verifyConnection,
   sendMail,
+  sendProposalToLead,
   sendProposalNotification,
   sendSharedProposalEmail,
   sendAdminNotification,

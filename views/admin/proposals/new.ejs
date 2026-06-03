@@ -236,7 +236,7 @@
     .content-field textarea:focus { border-color: #E91E63; }
     .content-field small { font-size: 0.7rem; color: #999; }
 
-    /* Lead selector */
+    /* Lead selector multi-chip */
     .lead-select-card {
       background: #fff;
       border-radius: 12px;
@@ -248,10 +248,27 @@
       font-size: 0.85rem;
       font-weight: 700;
       color: #1a1a2e;
-      margin: 0 0 1rem;
+      margin: 0 0 0.35rem;
     }
-    .lead-select-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    @media (max-width: 600px) { .lead-select-grid { grid-template-columns: 1fr; } }
+    .lead-multi-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.75rem;
+      border: 1.5px solid #ddd;
+      border-radius: 20px;
+      background: #fafafa;
+      cursor: pointer;
+      font-size: 0.78rem;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .lead-multi-chip:hover { border-color: #E91E63; background: #fff9fb; }
+    .lead-multi-chip.checked { border-color: #E91E63; background: #fff0f5; }
+    .lead-multi-chip input[type="checkbox"] { display: none; }
+    .chip-name { font-weight: 600; color: #1a1a2e; }
+    .chip-company { font-size: 0.7rem; color: #888; }
+    .lead-multi-chip.checked .chip-name { color: #E91E63; }
 
     select.form-control {
       width: 100%;
@@ -267,18 +284,6 @@
       transition: border-color 0.15s;
     }
     select.form-control:focus { border-color: #E91E63; }
-
-    .selected-lead-info {
-      margin-top: 0.75rem;
-      padding: 0.75rem 1rem;
-      background: #f0fff4;
-      border-radius: 8px;
-      border: 1px solid #c8e6c9;
-      font-size: 0.8rem;
-      color: #2e7d32;
-      display: none;
-    }
-    .selected-lead-info.visible { display: block; }
 
     /* Discount preview inside sidebar */
     .disc-preview {
@@ -341,32 +346,32 @@
 
       <form id="proposalForm" action="/admin/proposals" method="POST">
 
-        <!-- ── Lead selector ── -->
+        <!-- ── Lead selector (multi) ── -->
         <div class="lead-select-card">
-          <h3>👤 Selecionar Lead</h3>
-          <div class="lead-select-grid">
-            <div class="form-group" style="margin:0">
-              <label for="lead_id" style="font-size:0.78rem;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.4px;display:block;margin-bottom:0.35rem">Lead *</label>
-              <select id="lead_id" name="lead_id" class="form-control" required onchange="onLeadChange(this)">
-                <option value="">— Selecione um lead —</option>
-                <% leads.forEach(lead => { %>
-                  <option value="<%= lead.id %>"
-                    data-name="<%= lead.name %>"
-                    data-wa="<%= lead.whatsapp %>"
-                    data-disc-m="<%= lead.discount_monthly || 0 %>"
-                    data-disc-o="<%= lead.discount_onetime || 0 %>"
-                    data-disc-exp="<%= lead.discount_expires || '' %>"
-                    <%= selectedLeadId == lead.id ? 'selected' : '' %>>
-                    <%= lead.name %> — <%= lead.whatsapp %>
-                  </option>
-                <% }) %>
-              </select>
-            </div>
-            <div id="leadInfoBox" class="selected-lead-info">
-              <strong id="leadInfoName"></strong><br>
-              <span id="leadInfoDisc"></span>
-            </div>
+          <h3>👥 Leads vinculados à proposta <span style="font-size:0.72rem;font-weight:400;color:#888">(mínimo 1, obrigatório)</span></h3>
+          <p style="font-size:0.78rem;color:#888;margin:0 0 0.75rem">Marque todos os leads que terão acesso a esta proposta. O primeiro marcado será o lead primário.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem">
+            <% leads.forEach(lead => { %>
+              <label class="lead-multi-chip <%= (selectedLeadId && selectedLeadId == lead.id) ? 'checked' : '' %>" id="chip-<%= lead.id %>">
+                <input type="checkbox"
+                       name="lead_ids[]"
+                       value="<%= lead.id %>"
+                       class="lead-chip-check"
+                       onchange="onLeadChipChange()"
+                       <%= (selectedLeadId && selectedLeadId == lead.id) ? 'checked' : '' %>>
+                <span class="chip-name"><%= lead.name %></span>
+                <% if (lead.company_name) { %>
+                  <span class="chip-company"><%= lead.company_name %></span>
+                <% } %>
+              </label>
+            <% }) %>
+            <% if (leads.length === 0) { %>
+              <p style="color:#bbb;font-size:0.8rem">Nenhum lead cadastrado. <a href="/admin/leads/new" style="color:#E91E63">Criar lead →</a></p>
+            <% } %>
           </div>
+          <div id="leadSelInfo" style="display:none;padding:0.5rem 0.75rem;background:#f0fff4;border-radius:8px;border:1px solid #c8e6c9;font-size:0.78rem;color:#2e7d32"></div>
+          <!-- Campo hidden para validação obrigatória -->
+          <input type="hidden" id="leadIdsValidation" value="">
         </div>
 
         <!-- ── Proposal Mode Selector ── -->
@@ -588,51 +593,34 @@
   </script>
 
   <script>
-    // ── Lead selector ─────────────────────────────────────────────────
-    function onLeadChange(sel) {
-      const opt = sel.options[sel.selectedIndex];
-      const infoBox = document.getElementById('leadInfoBox');
-      const infoName = document.getElementById('leadInfoName');
-      const infoDisc = document.getElementById('leadInfoDisc');
-      const discBlock = document.getElementById('discountPreviewBlock');
-      const discText  = document.getElementById('discountPreviewText');
-      const btnPreview = document.getElementById('btnPreview');
+    // ── Multi Lead selector ───────────────────────────────────────────
+    function onLeadChipChange() {
+      const checked = document.querySelectorAll('.lead-chip-check:checked');
+      // Update chip visual
+      document.querySelectorAll('.lead-multi-chip').forEach(chip => {
+        const chk = chip.querySelector('input[type="checkbox"]');
+        chip.classList.toggle('checked', chk.checked);
+      });
 
-      if (!opt || !opt.value) {
-        infoBox.classList.remove('visible');
-        currentLeadDiscount = { monthly: 0, onetime: 0, expires: '' };
-        discBlock.style.display = 'none';
-        btnPreview.style.display = 'none';
+      const infoEl = document.getElementById('leadSelInfo');
+      const valEl  = document.getElementById('leadIdsValidation');
+
+      if (checked.length === 0) {
+        infoEl.style.display = 'none';
+        valEl.value = '';
+        document.getElementById('btnPreview').style.display = 'none';
         return;
       }
 
-      const discM   = parseFloat(opt.dataset.discM) || 0;
-      const discO   = parseFloat(opt.dataset.discO) || 0;
-      const discExp = opt.dataset.discExp || '';
-      currentLeadDiscount = { monthly: discM, onetime: discO, expires: discExp };
+      const names = Array.from(checked).map(c => {
+        const chip = c.closest('.lead-multi-chip');
+        return chip.querySelector('.chip-name').textContent;
+      });
+      infoEl.style.display = 'block';
+      infoEl.textContent = `✅ ${checked.length} lead(s) selecionado(s): ${names.join(', ')}. O primeiro será o lead primário.`;
+      valEl.value = '1'; // marca como válido
 
-      infoName.textContent = opt.dataset.name || '';
-      let discStr = '';
-      let discActive = (discM > 0 || discO > 0);
-      if (discActive && discExp) {
-        const exp = new Date(discExp + 'T23:59:59');
-        if (exp < new Date()) { discActive = false; discStr = '⚠️ Desconto expirado'; }
-      }
-      if (discActive) {
-        const parts = [];
-        if (discM > 0) parts.push(`${discM}% em mensais`);
-        if (discO > 0) parts.push(`${discO}% em pontuais`);
-        discStr = '✅ Desconto: ' + parts.join(' · ');
-        if (discExp) discStr += ` (válido até ${discExp})`;
-        discBlock.style.display = 'block';
-        discText.textContent = discStr;
-      } else {
-        discBlock.style.display = 'none';
-      }
-
-      infoDisc.textContent = discStr;
-      infoBox.classList.add('visible');
-      btnPreview.style.display = sel.value ? 'inline-flex' : 'none';
+      document.getElementById('btnPreview').style.display = 'inline-flex';
       updatePreview();
     }
 
@@ -760,10 +748,10 @@
 
     // ── Inject hidden fields for selected items before submit ─────────
     document.getElementById('proposalForm').addEventListener('submit', function(e) {
-      const leadSel = document.getElementById('lead_id');
-      if (!leadSel.value) {
+      const checked = document.querySelectorAll('.lead-chip-check:checked');
+      if (checked.length === 0) {
         e.preventDefault();
-        alert('Por favor, selecione um lead.');
+        alert('Por favor, selecione pelo menos 1 lead.');
         return;
       }
 
@@ -797,17 +785,9 @@
       container.appendChild(hiddenItems);
     });
 
-    // ── Preview button: opens lead's proposal in new tab ─────────────
+    // ── Preview button: disponível somente após salvar ────────────────
     function previewProposal() {
-      const leadId = document.getElementById('lead_id').value;
-      if (!leadId) return;
-      const lead = LEADS_DATA.find(l => l.id == leadId);
-      if (!lead || !lead.token) {
-        alert('Lead sem token de proposta gerado ainda.');
-        return;
-      }
-      // Open admin direct preview with a flash message
-      window.open('/admin/proposals/preview?lead_id=' + leadId, '_blank');
+      alert('Salve a proposta primeiro para pré-visualizar.');
     }
 
     // ── Mode label highlight ──────────────────────────────────────────
@@ -822,9 +802,8 @@
       });
     }
 
-    // Init: trigger lead change if pre-selected
-    const preSelected = document.getElementById('lead_id').value;
-    if (preSelected) onLeadChange(document.getElementById('lead_id'));
+    // Init: trigger chip update if pre-selected
+    onLeadChipChange();
   </script>
 </body>
 </html>

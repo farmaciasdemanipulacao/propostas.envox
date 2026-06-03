@@ -49,7 +49,7 @@
   <!-- ── PAGES CONTAINER ── -->
   <main class="pages-container" id="pagesContainer">
     <% slides.forEach((slide, index) => { %>
-      <section class="page-section" 
+      <section class="page-section"
                id="page-<%= index %>"
                data-index="<%= index %>"
                data-slide="<%= slide.number %>">
@@ -75,27 +75,28 @@
 
   <!-- ── JS GLOBALS ── -->
   <script>
-    window.PROPOSAL_TOKEN   = '<%= token %>';
-    window.PROPOSAL_LEAD_ID = '<%= lead.id %>';
-    window.TOTAL_SLIDES     = <%= slides.length %>;
-    window.SLIDE_TITLES     = <%- JSON.stringify(slides.map(s => s.title)) %>;
-    window.LEAD_DISCOUNT_MONTHLY  = <%= lead.discount_monthly || 0 %>;
-    window.LEAD_DISCOUNT_ONETIME  = <%= lead.discount_onetime || 0 %>;
-    window.LEAD_DISCOUNT_EXPIRES  = '<%= lead.discount_expires || "" %>';
-    window.PROPOSAL_MODE = '<%= lead.proposal_mode || "both" %>';
-    window.COMPANY_NAME  = <%- JSON.stringify(lead.company_name || '') %>;
-    window.LEAD_NAME     = <%- JSON.stringify(lead.name || '') %>;
-    window.LEAD_CARGO    = <%- JSON.stringify(lead.cargo || '') %>;
-    window.WHATSAPP_URL  = 'https://wa.me/554133000404';
-    <% if (lead.proposal_items) { %>
-    window.PROPOSAL_ITEMS = <%- JSON.stringify(lead.proposal_items || []) %>;
-    window.PROPOSAL_DESC  = <%- JSON.stringify(lead.proposal_description || '') %>;
-    window.PROPOSAL_SCOPE = <%- JSON.stringify(lead.proposal_scope || '') %>;
-    window.PROPOSAL_TIMELINE = <%- JSON.stringify(lead.proposal_timeline || '') %>;
+    window.PROPOSAL_TOKEN    = '<%= token %>';
+    window.PROPOSAL_ID       = <%= proposal.id %>;
+    window.PROPOSAL_LEAD_ID  = <%= lead.id %>;
+    window.TOTAL_SLIDES      = <%= slides.length %>;
+    window.SLIDE_TITLES      = <%- JSON.stringify(slides.map(s => s.title)) %>;
+    window.LEAD_DISCOUNT_MONTHLY  = 0;
+    window.LEAD_DISCOUNT_ONETIME  = 0;
+    window.LEAD_DISCOUNT_EXPIRES  = '';
+    window.PROPOSAL_MODE     = '<%= proposal.proposal_mode || "both" %>';
+    window.COMPANY_NAME      = <%- JSON.stringify(lead.company_name || '') %>;
+    window.LEAD_NAME         = <%- JSON.stringify(lead.name || '') %>;
+    window.LEAD_CARGO        = <%- JSON.stringify(lead.cargo || '') %>;
+    window.WHATSAPP_URL      = 'https://wa.me/554133000404';
+    <% if (proposal.proposal_items) { %>
+    window.PROPOSAL_ITEMS    = <%- JSON.stringify(proposal.proposal_items || []) %>;
+    window.PROPOSAL_DESC     = <%- JSON.stringify(proposal.proposal_description || '') %>;
+    window.PROPOSAL_SCOPE    = <%- JSON.stringify(proposal.proposal_scope || '') %>;
+    window.PROPOSAL_TIMELINE = <%- JSON.stringify(proposal.proposal_timeline || '') %>;
     <% } else { %>
-    window.PROPOSAL_ITEMS = [];
-    window.PROPOSAL_DESC  = '';
-    window.PROPOSAL_SCOPE = '';
+    window.PROPOSAL_ITEMS    = [];
+    window.PROPOSAL_DESC     = '';
+    window.PROPOSAL_SCOPE    = '';
     window.PROPOSAL_TIMELINE = '';
     <% } %>
   </script>

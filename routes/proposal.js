@@ -5,8 +5,33 @@ const db = require('../database');
 const slides = require('../slides/content');
 const emailService = require('../services/email');
 
-// ── Shared token viewer — DEVE VIR ANTES de /:token ─────────────────────────
-// GET /proposta/s/:sharedToken — acesso via link compartilhado (auto-login)
+// ══════════════════════════════════════════════════════════
+// HELPER — determinar o lead autenticado para este token
+// Resolve: lead que fez login normal OU lead de link compartilhado
+// ══════════════════════════════════════════════════════════
+function getViewerLead(req, proposal) {
+  // Link compartilhado tem o lead_id gravado na sessão por shared-token
+  const sharedCtx = req.session.sharedAccess && req.session.sharedAccess[proposal.token];
+  if (sharedCtx && sharedCtx.lead_id) {
+    const lead = db.getLeadById(sharedCtx.lead_id);
+    if (lead) return lead;
+  }
+  // Override de admin (preview)
+  const override = req.session.proposalLeadOverride && req.session.proposalLeadOverride[proposal.token];
+  if (override) {
+    const lead = db.getLeadById(override);
+    if (lead) return lead;
+  }
+  // Lead primário da proposta
+  if (proposal.leads && proposal.leads.length > 0) {
+    const primary = proposal.leads.find(l => l.is_primary) || proposal.leads[0];
+    return primary;
+  }
+  return null;
+}
+
+// ── Shared token viewer — DEVE VIR ANTES de /:token ─────
+// GET /proposta/s/:sharedToken — acesso via link compartilhado
 router.get('/s/:sharedToken', (req, res) => {
   const { sharedToken } = req.params;
   const sharedRecord = db.getSharedLeadByToken(sharedToken);
@@ -19,8 +44,11 @@ router.get('/s/:sharedToken', (req, res) => {
     });
   }
 
-  const lead = db.getLeadById(sharedRecord.lead_id);
-  if (!lead) {
+  // sharedRecord tem proposal_token e new_lead_id
+  const proposalToken = sharedRecord.proposal_token;
+  const proposal = db.getProposalByTokenWithLeads(proposalToken);
+
+  if (!proposal) {
     return res.render('proposal/auth', {
       token: null,
       error: 'Proposta não encontrada. Entre em contato com a Envox.',
@@ -28,41 +56,47 @@ router.get('/s/:sharedToken', (req, res) => {
     });
   }
 
+  // Autenticar proposta na sessão
   if (!req.session.authenticatedTokens) req.session.authenticatedTokens = [];
-  if (!req.session.authenticatedTokens.includes(lead.token)) {
-    req.session.authenticatedTokens.push(lead.token);
+  if (!req.session.authenticatedTokens.includes(proposalToken)) {
+    req.session.authenticatedTokens.push(proposalToken);
   }
+
+  // Gravar contexto do lead compartilhado
   req.session.sharedAccess = req.session.sharedAccess || {};
-  req.session.sharedAccess[lead.token] = { sharedToken, name: sharedRecord.shared_name };
+  req.session.sharedAccess[proposalToken] = {
+    sharedToken,
+    lead_id: sharedRecord.new_lead_id,
+    name: sharedRecord.lead_name
+  };
 
-  db.logEvent(lead.id, null, 'shared_view', {
-    shared_token: sharedToken,
-    viewer_name: sharedRecord.shared_name,
-    viewer_email: sharedRecord.shared_email
-  });
+  if (sharedRecord.new_lead_id) {
+    db.logEvent(sharedRecord.new_lead_id, null, 'shared_view', {
+      shared_token: sharedToken,
+      viewer_name: sharedRecord.lead_name,
+    }, proposal.id);
+  }
 
-  return res.redirect(`/proposta/${lead.token}/view`);
+  return res.redirect(`/proposta/${proposalToken}/view`);
 });
 
 // GET /proposta/:token — tela de autenticação
 router.get('/:token', (req, res) => {
   const { token } = req.params;
-  const lead = db.getLeadByToken(token);
-  
-  if (!lead) {
-    return res.render('proposal/auth', { 
-      token, 
-      error: 'Link inválido ou expirado. Entre em contato com a Envox.',
-      validToken: false
+  const proposal = db.getProposalByToken(token);
+
+  if (!proposal) {
+    return res.render('proposal/auth', {
+      token, error: 'Link inválido ou expirado. Entre em contato com a Envox.', validToken: false
     });
   }
-  
-  // Verificar se já está autenticado para este token
-  if (req.session && req.session.authenticatedTokens && 
+
+  // Já autenticado → redirecionar direto
+  if (req.session && req.session.authenticatedTokens &&
       req.session.authenticatedTokens.includes(token)) {
     return res.redirect(`/proposta/${token}/view`);
   }
-  
+
   res.render('proposal/auth', { token, error: null, validToken: true });
 });
 
@@ -70,103 +104,167 @@ router.get('/:token', (req, res) => {
 router.post('/:token/auth', (req, res) => {
   const { token } = req.params;
   const { whatsapp, email } = req.body;
-  
-  const lead = db.getLeadByToken(token);
-  
-  if (!lead) {
-    return res.render('proposal/auth', { 
-      token, 
-      error: 'Link inválido. Entre em contato com a Envox.',
-      validToken: false
+  const proposal = db.getProposalByTokenWithLeads(token);
+
+  if (!proposal) {
+    return res.render('proposal/auth', {
+      token, error: 'Link inválido. Entre em contato com a Envox.', validToken: false
     });
   }
-  
-  // Normalizar WhatsApp para comparação (apenas dígitos)
+
+  // Verificar se algum lead vinculado tem as credenciais informadas
   const inputWa = (whatsapp || '').replace(/\D/g, '');
-  const storedWa = (lead.whatsapp || '').replace(/\D/g, '');
   const inputEmail = (email || '').trim().toLowerCase();
-  const storedEmail = (lead.email || '').trim().toLowerCase();
-  
-  // Verificar se os dados conferem (WhatsApp parcial: últimos 8 dígitos ou completo)
-  const waMatch = inputWa === storedWa || 
-    (inputWa.length >= 8 && storedWa.endsWith(inputWa.slice(-8)));
-  const emailMatch = inputEmail === storedEmail;
-  
-  if (!waMatch || !emailMatch) {
-    return res.render('proposal/auth', { 
-      token, 
-      error: 'Dados não conferem. Entre em contato com a Envox.',
-      validToken: true
+
+  const matchedLead = proposal.leads.find(lead => {
+    const storedWa = (lead.whatsapp || '').replace(/\D/g, '');
+    const storedEmail = (lead.email || '').trim().toLowerCase();
+    const waMatch = inputWa === storedWa ||
+      (inputWa.length >= 8 && storedWa.endsWith(inputWa.slice(-8)));
+    const emailMatch = inputEmail === storedEmail;
+    return waMatch && emailMatch;
+  });
+
+  if (!matchedLead) {
+    return res.render('proposal/auth', {
+      token, error: 'Dados não conferem. Entre em contato com a Envox.', validToken: true
     });
   }
-  
-  // Autenticar: salvar token na sessão
-  if (!req.session.authenticatedTokens) {
-    req.session.authenticatedTokens = [];
-  }
+
+  // Autenticar
+  if (!req.session.authenticatedTokens) req.session.authenticatedTokens = [];
   req.session.authenticatedTokens.push(token);
-  
+
+  // Guardar qual lead fez login
+  req.session.sharedAccess = req.session.sharedAccess || {};
+  req.session.sharedAccess[token] = { lead_id: matchedLead.id, name: matchedLead.name };
+
   return res.redirect(`/proposta/${token}/view`);
 });
 
 // GET /proposta/:token/view — visualizador da proposta
 router.get('/:token/view', (req, res) => {
   const { token } = req.params;
-  const lead = db.getLeadByToken(token);
-  
-  if (!lead) {
-    return res.redirect(`/proposta/${token}`);
-  }
-  
+  const proposal = db.getProposalByTokenWithLeads(token);
+
+  if (!proposal) return res.redirect(`/proposta/${token}`);
+
   // Verificar autenticação
-  if (!req.session || !req.session.authenticatedTokens || 
+  if (!req.session || !req.session.authenticatedTokens ||
       !req.session.authenticatedTokens.includes(token)) {
     return res.redirect(`/proposta/${token}`);
   }
 
+  // Resolver lead viewer
+  const viewerLead = getViewerLead(req, proposal);
+  if (!viewerLead) return res.redirect(`/proposta/${token}`);
+
   // Se proposta foi rejeitada, mostrar tela de rejeição
-  if (lead.proposal_status === 'rejected') {
-    return res.render('proposal/rejected', { lead, token });
+  if (proposal.proposal_status === 'rejected') {
+    return res.render('proposal/rejected', {
+      lead: viewerLead, proposal, token
+    });
   }
 
-  // Attach proposal items and content fields to the lead object
-  const proposalItems = db.getProposalItemsByLead(lead.id);
-  const enrichedLead  = {
-    ...lead,
-    proposal_items:       proposalItems.length > 0 ? proposalItems : null,
-    proposal_description: lead.proposal_description || null,
-    proposal_scope:       lead.proposal_scope       || null,
-    proposal_timeline:    lead.proposal_timeline     || null,
+  // Montar itens e enriquecer proposta para o viewer
+  const proposalItems = db.getProposalItems(proposal.id);
+  const enrichedProposal = {
+    ...proposal,
+    proposal_items: proposalItems.length > 0 ? proposalItems : null,
   };
-  
-  res.render('proposal/viewer', { 
-    lead:   enrichedLead, 
+
+  res.render('proposal/viewer', {
+    proposal: enrichedProposal,
+    lead: viewerLead,
     slides,
     token
   });
+});
+
+// ── API: Session tracking ─────────────────────────────────────────────────────
+
+// POST /proposta/session/start
+router.post('/session/start', (req, res) => {
+  const { token, lead_id } = req.body;
+  const proposal = token ? db.getProposalByToken(token) : null;
+  const resolvedLeadId = parseInt(lead_id);
+  if (!resolvedLeadId || isNaN(resolvedLeadId)) {
+    return res.status(400).json({ error: 'lead_id required' });
+  }
+  try {
+    const sessionId = db.createSession(resolvedLeadId, proposal ? proposal.id : null);
+    db.logEvent(resolvedLeadId, sessionId, 'proposal_opened', {}, proposal ? proposal.id : null);
+    return res.json({ success: true, sessionId });
+  } catch (err) {
+    console.error('[Session/start]', err);
+    return res.status(500).json({ error: 'Failed to create session' });
+  }
+});
+
+// POST /proposta/session/end
+router.post('/session/end', (req, res) => {
+  const { session_id, total_duration, lead_id, token } = req.body;
+  const sessionId = parseInt(session_id);
+  const duration = parseFloat(total_duration) || 0;
+  const resolvedLeadId = parseInt(lead_id);
+  if (!sessionId) return res.status(400).json({ error: 'session_id required' });
+  try {
+    db.closeSession(sessionId, Math.round(duration));
+    const proposal = token ? db.getProposalByToken(token) : null;
+    if (resolvedLeadId) {
+      db.logEvent(resolvedLeadId, sessionId, 'proposal_closed', { total_duration: duration }, proposal ? proposal.id : null);
+    }
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('[Session/end]', err);
+    return res.status(500).json({ error: 'Failed to close session' });
+  }
+});
+
+// POST /proposta/slide/event
+router.post('/slide/event', (req, res) => {
+  const { session_id, lead_id, token, slide_number, event_type, duration_seconds } = req.body;
+  const resolvedLeadId = parseInt(lead_id);
+  const slideNum = parseInt(slide_number);
+  if (!resolvedLeadId || !slideNum || !event_type) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  try {
+    const proposal = token ? db.getProposalByToken(token) : null;
+    db.recordSlideEvent(
+      session_id ? parseInt(session_id) : null,
+      resolvedLeadId,
+      proposal ? proposal.id : null,
+      slideNum,
+      event_type,
+      parseFloat(duration_seconds) || 0
+    );
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('[Slide/event]', err);
+    return res.status(500).json({ error: 'Failed to record event' });
+  }
 });
 
 // ── API: Save Proposal Action (Accept / Counter / Reject) ────────────────────
 router.post('/action', async (req, res) => {
   const { token, lead_id, action_type, comment, counter_value, current_page } = req.body;
 
-  if (!token || !action_type) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
+  if (!token || !action_type) return res.status(400).json({ error: 'Missing required fields' });
 
-  const lead = db.getLeadByToken(token);
-  let resolvedLeadId = lead ? lead.id : parseInt(lead_id);
+  const proposal = db.getProposalByToken(token);
+  if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
 
-  if (!resolvedLeadId) {
-    return res.status(404).json({ error: 'Lead not found' });
-  }
+  const resolvedLeadId = parseInt(lead_id);
+  if (!resolvedLeadId) return res.status(400).json({ error: 'lead_id required' });
 
-  if (!['accept','counter','reject'].includes(action_type)) {
+  if (!['accept', 'counter', 'reject'].includes(action_type)) {
     return res.status(400).json({ error: 'Invalid action_type' });
   }
 
   try {
     const actionId = db.saveProposalAction(
+      proposal.id,
       resolvedLeadId,
       action_type,
       comment || null,
@@ -177,27 +275,26 @@ router.post('/action', async (req, res) => {
       comment: comment ? comment.substring(0, 200) : null,
       counter_value: counter_value || null,
       current_page: current_page || null
-    });
+    }, proposal.id);
 
-    // Se REJEITAR: inativar proposta e notificar admin
+    const leadData = db.getLeadById(resolvedLeadId);
+    const leadName = leadData ? leadData.name : `Lead #${resolvedLeadId}`;
+    const company = leadData ? (leadData.company_name || '') : '';
+
     if (action_type === 'reject') {
-      db.setProposalStatus(resolvedLeadId, 'rejected');
-      const leadData = lead || db.getLeadById(resolvedLeadId);
+      db.setProposalStatus(proposal.id, 'rejected');
       const motivo = comment ? comment.substring(0, 300) : '(sem motivo informado)';
-      // Notificar admin via email (não bloqueante)
       emailService.sendAdminNotification({
-        subject: `❌ Proposta REJEITADA — ${leadData ? leadData.name : 'Lead #'+resolvedLeadId}`,
-        body: `O lead ${leadData ? leadData.name : '#'+resolvedLeadId} (${leadData ? leadData.company_name || '' : ''}) rejeitou a proposta.\n\nMotivo: ${motivo}\n\nAcesse o painel para ver detalhes.`
-      }).catch(e => console.error('[Action] Notif email err:', e));
+        subject: `❌ Proposta REJEITADA — ${leadName}`,
+        body: `${leadName} (${company}) rejeitou a proposta.\n\nMotivo: ${motivo}\n\nAcesse o painel para ver detalhes.`
+      }).catch(e => console.error('[Action] Admin notif err:', e));
     }
 
-    // Se ACEITAR: notificar admin
     if (action_type === 'accept') {
-      const leadData = lead || db.getLeadById(resolvedLeadId);
       emailService.sendAdminNotification({
-        subject: `✅ Proposta ACEITA — ${leadData ? leadData.name : 'Lead #'+resolvedLeadId}`,
-        body: `O lead ${leadData ? leadData.name : '#'+resolvedLeadId} (${leadData ? leadData.company_name || '' : ''}) ACEITOU a proposta!\n\nAcesse o painel para dar andamento.`
-      }).catch(e => console.error('[Action] Notif email err:', e));
+        subject: `✅ Proposta ACEITA — ${leadName}`,
+        body: `${leadName} (${company}) ACEITOU a proposta!\n\nAcesse o painel para dar andamento.`
+      }).catch(e => console.error('[Action] Admin notif err:', e));
     }
 
     return res.json({ success: true, actionId });
@@ -213,15 +310,19 @@ router.post('/request-new', async (req, res) => {
   if (!company_name || !briefing) {
     return res.status(400).json({ error: 'Preencha empresa e briefing' });
   }
-  const lead = token ? db.getLeadByToken(token) : null;
-  const resolvedLeadId = lead ? lead.id : (parseInt(lead_id) || null);
+  const proposal = token ? db.getProposalByToken(token) : null;
+  const resolvedLeadId = parseInt(lead_id) || null;
   try {
-    const reqId = db.createProposalRequest(resolvedLeadId, company_name, cargo||'', briefing);
-    db.logEvent(resolvedLeadId || 0, null, 'new_proposal_request', { company_name, cargo, briefing: briefing.substring(0,200) });
-    const leadData = lead || (resolvedLeadId ? db.getLeadById(resolvedLeadId) : null);
+    const reqId = db.createProposalRequest(resolvedLeadId, proposal ? proposal.id : null, company_name, cargo || '', briefing);
+    if (resolvedLeadId) {
+      db.logEvent(resolvedLeadId, null, 'new_proposal_request', {
+        company_name, cargo, briefing: briefing.substring(0, 200)
+      }, proposal ? proposal.id : null);
+    }
+    const leadData = resolvedLeadId ? db.getLeadById(resolvedLeadId) : null;
     emailService.sendAdminNotification({
       subject: `🆕 Solicitação de Nova Proposta — ${company_name}`,
-      body: `${leadData ? leadData.name : 'Lead'} solicitou uma nova proposta.\n\nEmpresa: ${company_name}\nCargo: ${cargo||''}\n\nBriefing:\n${briefing}\n\nAcesse o painel para criar a proposta.`
+      body: `${leadData ? leadData.name : 'Lead'} solicitou uma nova proposta.\n\nEmpresa: ${company_name}\nCargo: ${cargo || ''}\n\nBriefing:\n${briefing}\n\nAcesse o painel para criar a proposta.`
     }).catch(e => console.error('[RequestNew] Email err:', e));
     return res.json({ success: true, requestId: reqId });
   } catch(err) {
@@ -234,16 +335,23 @@ router.post('/request-new', async (req, res) => {
 router.post('/send-plan-email', async (req, res) => {
   const { token, lead_id, email, plan_html } = req.body;
   if (!email) return res.status(400).json({ error: 'Email obrigatório' });
-  const lead = token ? db.getLeadByToken(token) : null;
-  const resolvedLeadId = lead ? lead.id : (parseInt(lead_id)||null);
+  const proposal = token ? db.getProposalByToken(token) : null;
+  const resolvedLeadId = parseInt(lead_id) || null;
+  const leadData = resolvedLeadId ? db.getLeadById(resolvedLeadId) : null;
   try {
-    await emailService.sendPlanEmail({ to: email, leadName: lead ? lead.name : '', companyName: lead ? lead.company_name||'' : '', planHtml: plan_html||'' });
-    if (resolvedLeadId) db.logEvent(resolvedLeadId, null, 'plan_email_sent', { to: email });
-    // Notify admin
+    await emailService.sendPlanEmail({
+      to: email,
+      leadName: leadData ? leadData.name : '',
+      companyName: leadData ? (leadData.company_name || '') : '',
+      planHtml: plan_html || ''
+    });
+    if (resolvedLeadId) {
+      db.logEvent(resolvedLeadId, null, 'plan_email_sent', { to: email }, proposal ? proposal.id : null);
+    }
     emailService.sendAdminNotification({
-      subject: `📧 Cliente enviou plano por email — ${lead ? lead.name : email}`,
-      body: `O lead ${lead ? lead.name : email} enviou seu plano personalizado para ${email}. Acesse o painel para acompanhar.`
-    }).catch(()=>{});
+      subject: `📧 Cliente enviou plano por email — ${leadData ? leadData.name : email}`,
+      body: `O lead ${leadData ? leadData.name : email} enviou seu plano personalizado para ${email}.`
+    }).catch(() => {});
     return res.json({ success: true });
   } catch(err) {
     console.error('[SendPlanEmail] Error:', err);
@@ -251,7 +359,7 @@ router.post('/send-plan-email', async (req, res) => {
   }
 });
 
-// ── API: Share Proposal (add secondary viewer + email + auto-lead) ──────────
+// ── API: Share Proposal (encaminhar para novo lead) ───────────────────────────
 router.post('/share', async (req, res) => {
   const { token, lead_id, name, whatsapp, email, cargo } = req.body;
 
@@ -259,79 +367,80 @@ router.post('/share', async (req, res) => {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  const lead = db.getLeadByToken(token);
-  const resolvedLeadId = lead ? lead.id : parseInt(lead_id);
+  const proposal = db.getProposalByToken(token);
+  if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
 
-  if (!resolvedLeadId) {
-    return res.status(404).json({ error: 'Lead not found' });
-  }
-
-  const cleanEmail    = email.trim().toLowerCase();
+  const fromLeadId = parseInt(lead_id) || null;
+  const cleanEmail = email.trim().toLowerCase();
   const cleanWhatsapp = whatsapp.replace(/\D/g, '');
-  const cleanName     = name.trim();
-  const cleanCargo    = (cargo||'').trim();
+  const cleanName = name.trim();
+  const cleanCargo = (cargo || '').trim();
+
+  // Obter company_name do lead origem
+  const fromLead = fromLeadId ? db.getLeadById(fromLeadId) : null;
+  const origCompany = fromLead ? (fromLead.company_name || '') : '';
+  const fromName = fromLead ? fromLead.name : 'um colega';
 
   try {
-    // 1. Gerar token compartilhado
-    const sharedToken = uuidv4().replace(/-/g, '').substring(0, 16);
-    const sharedId = db.addSharedLead(
-      resolvedLeadId,
-      cleanName,
-      cleanWhatsapp,
-      cleanEmail,
-      sharedToken,
-      cleanCargo
-    );
-
-    // 2. Auto-cadastrar como lead no painel com cargo e empresa
-    let sharedLeadRecord = db.getLeadByEmail ? db.getLeadByEmail(cleanEmail) : null;
-    if (!sharedLeadRecord) {
+    // 1. Criar ou encontrar o novo lead
+    let newLead = db.getLeadByEmail(cleanEmail);
+    if (!newLead) {
       try {
-        const newLeadToken = uuidv4().replace(/-/g, '').substring(0, 16);
-        db.createLead(cleanName, cleanWhatsapp, cleanEmail, newLeadToken);
-        sharedLeadRecord = db.getLeadByToken(newLeadToken);
-        // Set company_name and cargo from the original lead
-        if (sharedLeadRecord) {
-          const origCompany = lead ? lead.company_name || '' : '';
-          db.updateLeadCompany(sharedLeadRecord.id, origCompany, cleanCargo);
-        }
-        console.log(`[ProposalShare] Auto-cadastrou lead: ${cleanName} <${cleanEmail}> (${cleanCargo})`);
+        const newLeadId = db.createLead(cleanName, cleanWhatsapp, cleanEmail, origCompany, cleanCargo);
+        newLead = db.getLeadById(newLeadId);
+        console.log(`[Share] Novo lead criado: ${cleanName} <${cleanEmail}>`);
       } catch (leadErr) {
-        console.log(`[ProposalShare] Lead já existe para ${cleanEmail}.`);
+        // Email já existe mas getLeadByEmail não retornou — tentar novamente
+        newLead = db.getLeadByEmail(cleanEmail);
+        if (!newLead) throw leadErr;
+        console.log(`[Share] Lead já existe para ${cleanEmail}`);
+      }
+    } else {
+      // Atualizar cargo se vier diferente
+      if (cleanCargo && !newLead.cargo) {
+        db.updateLeadCompany(newLead.id, newLead.company_name || origCompany, cleanCargo);
+        newLead = db.getLeadById(newLead.id);
       }
     }
 
-    // 3. Montar link de acesso com o token compartilhado
-    const baseUrl   = (process.env.BASE_URL || 'https://envox.com.br').replace(/\/$/, '');
+    // 2. Vincular novo lead à MESMA proposta
+    db.linkLeadToProposal(proposal.id, newLead.id, false);
+
+    // 3. Gerar shared token para acesso direto
+    const sharedToken = uuidv4().replace(/-/g, '').substring(0, 16);
+    db.addSharedLead(proposal.id, fromLeadId, newLead.id, sharedToken);
+
+    // 4. Montar link de acesso
+    const baseUrl = (process.env.BASE_URL || 'https://envox.com.br').replace(/\/$/, '');
     const shareLink = `${baseUrl}/proposta/s/${sharedToken}`;
 
-    // 4. Enviar email com link de acesso (não-bloqueante)
+    // 5. Enviar email com link (não-bloqueante)
     emailService.sendSharedProposalEmail({
-      to:         cleanEmail,
-      toName:     cleanName,
-      fromName:   lead ? lead.name : 'um colega',
+      to: cleanEmail,
+      toName: cleanName,
+      fromName,
       shareLink,
-      whatsapp:   cleanWhatsapp,
+      whatsapp: cleanWhatsapp,
     }).then(result => {
-      if (result && result.ok) {
-        console.log(`[ProposalShare] Email enviado para ${cleanEmail}`);
-      } else if (result && !result.skipped) {
-        console.warn(`[ProposalShare] Falha ao enviar email para ${cleanEmail}:`, result.error);
-      }
-    }).catch(err => console.error('[ProposalShare] Email error:', err));
+      if (result && result.ok) console.log(`[Share] Email enviado para ${cleanEmail}`);
+      else if (result && !result.skipped) console.warn(`[Share] Falha email para ${cleanEmail}:`, result.error);
+    }).catch(err => console.error('[Share] Email error:', err));
 
-    // 5. Notificar admin sobre compartilhamento
-    const companyName = lead ? (lead.company_name || '') : '';
+    // 6. Notificar admin
     emailService.sendAdminNotification({
-      subject: `📤 Proposta compartilhada — ${lead ? lead.name : 'Lead'} → ${cleanName}`,
-      body: `${lead ? lead.name : 'Um lead'} compartilhou a proposta${companyName ? ' de '+companyName : ''} com:\n\nNome: ${cleanName}\nCargo: ${cleanCargo||'não informado'}\nWhatsApp: ${cleanWhatsapp}\nEmail: ${cleanEmail}\n\nLink de acesso gerado: ${shareLink}\nAcesse o painel para ver o histórico completo.`
-    }).catch(e => console.error('[ProposalShare] Admin notif err:', e));
+      subject: `📤 Proposta compartilhada — ${fromName} → ${cleanName}`,
+      body: `${fromName} compartilhou a proposta${origCompany ? ' de ' + origCompany : ''} com:\n\nNome: ${cleanName}\nCargo: ${cleanCargo || 'não informado'}\nWhatsApp: ${cleanWhatsapp}\nEmail: ${cleanEmail}\n\nLink de acesso: ${shareLink}`
+    }).catch(e => console.error('[Share] Admin notif err:', e));
 
-    db.logEvent(resolvedLeadId, null, 'proposal_shared', { shared_with: cleanEmail, name: cleanName, cargo: cleanCargo });
+    if (fromLeadId) {
+      db.logEvent(fromLeadId, null, 'proposal_shared', {
+        shared_with: cleanEmail, name: cleanName, cargo: cleanCargo, new_lead_id: newLead.id
+      }, proposal.id);
+    }
 
-    return res.json({ success: true, sharedId, sharedToken });
+    return res.json({ success: true, sharedToken, newLeadId: newLead.id });
   } catch (err) {
-    console.error('[ProposalShare] Error:', err);
+    console.error('[Share] Error:', err);
     return res.status(500).json({ error: 'Failed to share proposal' });
   }
 });
