@@ -296,20 +296,32 @@
       }
     });
 
+    // ── Heatmap colour scale (frio → quente) ──────────────────────────
+    function heatClass(dur) {
+      if (dur <= 0)  return 'heat-none';
+      if (dur < 15)  return 'heat-1';
+      if (dur < 45)  return 'heat-2';
+      if (dur < 120) return 'heat-3';
+      if (dur < 300) return 'heat-4';
+      return 'heat-5';
+    }
+
     // ── Heatmap renderer ──────────────────────────────────────────────
     function renderHeatmap(durations, viewCounts) {
       const vc = viewCounts || new Array(10).fill(0);
       for (let i = 1; i <= 10; i++) {
         const cell = document.getElementById('hcell-' + i);
         if (!cell) continue;
-        const dur = durations[i - 1] || 0;
-        let heatClass = 'heat-none';
-        if (dur > 0 && dur < 20) heatClass = 'heat-low';
-        else if (dur >= 20 && dur < 60) heatClass = 'heat-medium';
-        else if (dur >= 60) heatClass = 'heat-high';
-        cell.className = 'heatmap-cell ' + heatClass;
-        cell.querySelector('.heat-time').textContent  = Math.round(dur) + 's';
-        cell.querySelector('.heat-views').textContent = vc[i - 1] + ' viz.';
+        const dur   = Math.round(durations[i - 1] || 0);
+        const views = vc[i - 1] || 0;
+        const avg   = views > 0 ? Math.round(dur / views) : 0;
+        cell.className = 'heatmap-cell ' + heatClass(dur);
+        const durEl   = document.getElementById('hcell-' + i + '-dur');
+        const viewsEl = document.getElementById('hcell-' + i + '-views');
+        const avgEl   = document.getElementById('hcell-' + i + '-avg');
+        if (durEl)   durEl.textContent   = dur + 's';
+        if (viewsEl) viewsEl.textContent = views + ' viz.';
+        if (avgEl)   avgEl.textContent   = avg + 's/viz';
       }
     }
 

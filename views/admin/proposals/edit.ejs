@@ -79,16 +79,23 @@
     /* Heatmap */
     .heatmap-grid { display:grid;grid-template-columns:repeat(5,1fr);gap:0.5rem;margin-bottom:1rem; }
     @media(max-width:700px){ .heatmap-grid { grid-template-columns:repeat(2,1fr); } }
-    .heatmap-cell { border-radius:8px;padding:0.6rem 0.4rem;text-align:center;border:1px solid #eee; }
-    .heat-none { background:#f5f5f5; }
-    .heat-low  { background:#e8f5e9; border-color:#c8e6c9; }
-    .heat-medium { background:#fff8e1; border-color:#ffe082; }
-    .heat-high { background:#fce4ec; border-color:#f48fb1; }
-    .heat-number { font-size:0.65rem;font-weight:700;color:#999;margin-bottom:2px; }
-    .heat-name { font-size:0.58rem;color:#555;font-weight:500;line-height:1.2; }
-    .heat-time { font-size:0.72rem;font-weight:700;color:#1a1a2e; }
-    .heat-views { font-size:0.58rem;color:#aaa; }
-    .heatmap-legend { display:flex;gap:1rem;flex-wrap:wrap;font-size:0.72rem;color:#666; }
+    .heatmap-cell { border-radius:10px;padding:0.75rem 0.4rem 0.6rem;text-align:center;border:1.5px solid transparent;transition:transform 0.15s; }
+    .heatmap-cell:hover { transform:translateY(-2px); }
+    /* Escala fria→quente */
+    .heat-none   { background:#f0f0f2;border-color:#ddd;color:#999; }
+    .heat-1      { background:#dbeafe;border-color:#93c5fd;color:#1e40af; }  /* azul frio */
+    .heat-2      { background:#d1fae5;border-color:#6ee7b7;color:#065f46; }  /* verde-azul */
+    .heat-3      { background:#fef9c3;border-color:#fde047;color:#713f12; }  /* amarelo */
+    .heat-4      { background:#ffedd5;border-color:#fb923c;color:#7c2d12; }  /* laranja */
+    .heat-5      { background:#fee2e2;border-color:#f87171;color:#7f1d1d; }  /* vermelho */
+    .heat-number { font-size:0.62rem;font-weight:700;opacity:0.55;margin-bottom:3px; }
+    .heat-name   { font-size:0.6rem;font-weight:600;line-height:1.25;margin-bottom:6px;min-height:28px;display:flex;align-items:center;justify-content:center; }
+    .heat-stats  { display:flex;flex-direction:column;gap:3px;margin-top:2px; }
+    .heat-stat   { font-size:0.72rem;font-weight:700;line-height:1; }
+    .heat-stat-label { font-size:0.55rem;font-weight:500;opacity:0.65;margin-top:1px;letter-spacing:0.3px;text-transform:uppercase; }
+    .heat-divider { height:1px;background:currentColor;opacity:0.15;margin:4px 8px; }
+    .heatmap-legend { display:flex;gap:0.6rem;flex-wrap:wrap;font-size:0.7rem;color:#666;align-items:center; }
+    .legend-dot { display:inline-flex;align-items:center;gap:0.3rem;padding:3px 9px;border-radius:20px;border:1.5px solid transparent; }
 
     /* Metrics grid */
     .metrics-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:1rem; }
@@ -364,31 +371,56 @@
         <h3 class="card-title">🔥 Mapa de Calor — Engajamento por Slide</h3>
         <div class="heatmap-grid" id="heatmapGrid">
           <%
-          const _slideNames = ['','Capa','O Problema','A Solução','Diferencial SDR',
-            'Quem Confia','Como Trabalhamos','Orçamento','Minha Proposta',
-            'Perguntas','Vamos Conversar?'];
-          for (let _i = 1; _i <= 10; _i++) {
+          <%
+          const _slideNames = ['','Capa','O Problema','A Solução','SDR + Ads',
+            'Clientes','Como Trabalhamos','Orçamento','Solicitar Proposta',
+            'FAQ','Agradecimento'];
+          function _heatClass(dur) {
+            if (dur <= 0)   return 'heat-none';
+            if (dur < 15)   return 'heat-1';
+            if (dur < 45)   return 'heat-2';
+            if (dur < 120)  return 'heat-3';
+            if (dur < 300)  return 'heat-4';
+            return 'heat-5';
+          }
+          %>
+          <% for (let _i = 1; _i <= 10; _i++) {
             const _ss = (stats.slideStats || []).find(s => s.slide_number === _i);
             const _dur = _ss ? Math.round(_ss.total_duration || 0) : 0;
             const _views = _ss ? (_ss.view_count || 0) : 0;
-            let _hc = 'heat-none';
-            if (_dur > 0 && _dur < 20) _hc = 'heat-low';
-            else if (_dur >= 20 && _dur < 60) _hc = 'heat-medium';
-            else if (_dur >= 60) _hc = 'heat-high';
+            const _avg = (_views > 0) ? Math.round(_dur / _views) : 0;
+            const _hc = _heatClass(_dur);
           %>
             <div class="heatmap-cell <%= _hc %>" id="hcell-<%= _i %>">
               <div class="heat-number"><%= _i %></div>
               <div class="heat-name"><%= _slideNames[_i] %></div>
-              <div class="heat-time"><%= _dur %>s</div>
-              <div class="heat-views"><%= _views %> viz.</div>
+              <div class="heat-stats">
+                <div>
+                  <div class="heat-stat" id="hcell-<%= _i %>-dur"><%= _dur %>s</div>
+                  <div class="heat-stat-label">tempo total</div>
+                </div>
+                <div class="heat-divider"></div>
+                <div>
+                  <div class="heat-stat" id="hcell-<%= _i %>-views"><%= _views %> viz.</div>
+                  <div class="heat-stat-label">visualizações</div>
+                </div>
+                <div class="heat-divider"></div>
+                <div>
+                  <div class="heat-stat" id="hcell-<%= _i %>-avg"><%= _avg %>s/viz</div>
+                  <div class="heat-stat-label">média</div>
+                </div>
+              </div>
             </div>
           <% } %>
         </div>
         <div class="heatmap-legend">
-          <span class="legend-item heat-none">⬜ Não visto</span>
-          <span class="legend-item heat-low">🟩 Pouco (&lt;20s)</span>
-          <span class="legend-item heat-medium">🟨 Médio (20-60s)</span>
-          <span class="legend-item heat-high">🟥 Alto (&gt;60s)</span>
+          <span style="font-size:0.7rem;color:#888;font-weight:600;margin-right:4px">Escala:</span>
+          <span class="legend-dot heat-none">□ Não visto</span>
+          <span class="legend-dot heat-1">■ 1–14s</span>
+          <span class="legend-dot heat-2">■ 15–44s</span>
+          <span class="legend-dot heat-3">■ 45–119s</span>
+          <span class="legend-dot heat-4">■ 120–299s</span>
+          <span class="legend-dot heat-5">■ 300s+</span>
         </div>
       </div>
 
@@ -547,20 +579,32 @@
     // ── View counts por slide (agregado) — vindos do server ──────────
     const ALL_VIEW_COUNTS = <%- JSON.stringify(Array.from({length:10},(_,i)=>{ const s=(stats.slideStats||[]).find(x=>x.slide_number===i+1); return s ? (s.view_count||0) : 0; })) %>;
 
-    // ── Heatmap renderer (restaurado do original — com viz.) ──────────
+    // ── Heatmap colour scale (frio → quente) ──────────────────
+    function heatClass(dur) {
+      if (dur <= 0)  return 'heat-none';
+      if (dur < 15)  return 'heat-1';
+      if (dur < 45)  return 'heat-2';
+      if (dur < 120) return 'heat-3';
+      if (dur < 300) return 'heat-4';
+      return 'heat-5';
+    }
+
+    // ── Heatmap renderer ─────────────────────────────────
     function renderHeatmap(durations, viewCounts) {
       const vc = viewCounts || new Array(10).fill(0);
       for (let i = 1; i <= 10; i++) {
         const cell = document.getElementById('hcell-' + i);
         if (!cell) continue;
-        const dur = durations[i - 1] || 0;
-        let heatClass = 'heat-none';
-        if (dur > 0 && dur < 20) heatClass = 'heat-low';
-        else if (dur >= 20 && dur < 60) heatClass = 'heat-medium';
-        else if (dur >= 60) heatClass = 'heat-high';
-        cell.className = 'heatmap-cell ' + heatClass;
-        cell.querySelector('.heat-time').textContent  = Math.round(dur) + 's';
-        cell.querySelector('.heat-views').textContent = vc[i - 1] + ' viz.';
+        const dur   = Math.round(durations[i - 1] || 0);
+        const views = vc[i - 1] || 0;
+        const avg   = views > 0 ? Math.round(dur / views) : 0;
+        cell.className = 'heatmap-cell ' + heatClass(dur);
+        const durEl   = document.getElementById('hcell-' + i + '-dur');
+        const viewsEl = document.getElementById('hcell-' + i + '-views');
+        const avgEl   = document.getElementById('hcell-' + i + '-avg');
+        if (durEl)   durEl.textContent   = dur + 's';
+        if (viewsEl) viewsEl.textContent = views + ' viz.';
+        if (avgEl)   avgEl.textContent   = avg + 's/viz';
       }
     }
 
