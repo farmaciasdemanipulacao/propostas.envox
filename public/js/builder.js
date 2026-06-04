@@ -490,9 +490,9 @@
           ${accordionHTML}
           <div id="discount-combo-alert" class="discount-combo-alert" style="display:none"></div>
         </div>
+      </div>
 
-        <div class="builder-summary-anchor" id="builder-summary-anchor"></div>
-        <div class="builder-summary" id="builder-summary">
+      <div class="builder-summary" id="builder-summary">
           <div class="summary-title">✦ Seu Plano${company ? '<br><small style="font-size:0.7rem;font-weight:400;color:#E91E63">' + company + '</small>' : ''}</div>
           <div id="summary-items" class="summary-items">
             <p class="summary-empty">Selecione pelo menos um serviço</p>
@@ -523,8 +523,7 @@
               💬 Fale com a gente
             </a>
           </div>
-        </div><!-- /builder-summary -->
-      </div>
+      </div><!-- /builder-summary -->
 
       <!-- Inline actions for custom builder -->
       <div class="builder-inline-actions" id="builder-inline-actions" style="display:none">
@@ -674,13 +673,18 @@
 
     if (!summaryItems) return;
 
+    // Mostrar/ocultar painel via has-items
+    const bsPanel = document.getElementById('builder-summary');
+
     if (items.length === 0) {
       summaryItems.innerHTML = '<p class="summary-empty">Selecione pelo menos um serviço</p>';
       [summaryMon, summaryMonDisc, summaryOne, summaryOneDisc, btnSendEmail, btnFinalizar].forEach(el => { if (el) el.style.display = 'none'; });
       if (comboAlert) comboAlert.style.display = 'none';
       if (inlineActions) inlineActions.style.display = 'none';
+      if (bsPanel) bsPanel.classList.remove('has-items');
       return;
     }
+    if (bsPanel) bsPanel.classList.add('has-items');
 
     summaryItems.innerHTML = items.map(i =>
       `<div class="summary-item">
@@ -903,39 +907,17 @@
     window.location.href = '/proposta/' + token + '/finalizar';
   };
 
-  // ── Builder-summary: sempre fixed, posicionado pelo anchor ───────
-  // Chamado DEPOIS que renderBuilder() cria o DOM
+  // ── Builder-summary: painel fixo na esquerda ─────────────────────
+  // Sem âncora — posição é sempre left:16px via CSS
+  // Esta função só faz o bounce de entrada
   function initSummaryFixed() {
-    const bs     = document.getElementById('builder-summary');
-    const anchor = document.getElementById('builder-summary-anchor');
-    if (!bs || !anchor) return;
-    if (anchor._fixedInit) return;
-    anchor._fixedInit = true;
-
-    function positionSummary() {
-      if (window.innerWidth <= 768) {
-        // mobile: reseta para flow normal via CSS
-        bs.style.left = bs.style.width = bs.style.top = '';
-        return;
-      }
-      // position:fixed coords are viewport-relative — use getBoundingClientRect directly
-      const ar = anchor.getBoundingClientRect();
-      // Read header height from CSS variable, fallback to 50px
-      const headerH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 50;
-      bs.style.left  = ar.left + 'px';
-      bs.style.width = ar.width + 'px';
-      bs.style.top   = (headerH + 14) + 'px';
-    }
-
+    const bs = document.getElementById('builder-summary');
+    if (!bs || bs._summaryInited) return;
+    bs._summaryInited = true;
     // Bounce de entrada
     bs.classList.remove('float-bounce');
     void bs.offsetWidth;
     bs.classList.add('float-bounce');
-
-    positionSummary();
-    window.addEventListener('resize',  positionSummary, { passive: true });
-    // scroll horizontal raro, mas garante
-    window.addEventListener('scroll',  positionSummary, { passive: true });
   }
 
 })();
