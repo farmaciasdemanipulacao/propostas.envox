@@ -139,13 +139,23 @@
     }
 
     /* Budget preview sidebar */
+    .budget-preview-anchor { align-self: start; }
     .budget-preview {
       background: #fff;
       border-radius: 12px;
       border: 1px solid #eee;
-      position: sticky;
-      top: 80px;
+      width: 300px;
+      transition: box-shadow 0.3s, border-color 0.3s;
     }
+    .budget-preview.bp-fixed {
+      position: fixed;
+      top: 24px;
+      box-shadow: 0 8px 32px rgba(233,30,99,0.18);
+      border-color: rgba(233,30,99,0.3);
+      z-index: 100;
+    }
+    @keyframes floatPulse{0%{transform:translateY(0)}40%{transform:translateY(-6px)}70%{transform:translateY(3px)}100%{transform:translateY(0)}}
+    .budget-preview.float-bounce { animation: floatPulse 0.45s ease; }
     .budget-preview-header {
       padding: 0.9rem 1.1rem;
       background: #1a1a2e;
@@ -549,8 +559,8 @@
           </div>
 
           <!-- RIGHT: Budget preview sidebar -->
-          <div>
-            <div class="budget-preview">
+          <div class="budget-preview-anchor" id="budgetAnchor">
+            <div class="budget-preview" id="budgetPreview">
               <div class="budget-preview-header">
                 📊 Resumo do Orçamento
               </div>
@@ -804,6 +814,34 @@
 
     // Init: trigger chip update if pre-selected
     onLeadChipChange();
+
+    // ── Budget preview fixed ao rolar ─────────────────────────
+    (function() {
+      const bp     = document.getElementById('budgetPreview');
+      const anchor = document.getElementById('budgetAnchor');
+      if (!bp || !anchor) return;
+      let wasFixed = false;
+      function syncFixed() {
+        const ar = anchor.getBoundingClientRect();
+        const shouldFix = ar.top < 24;
+        if (shouldFix === wasFixed) return;
+        wasFixed = shouldFix;
+        if (shouldFix) {
+          bp.style.left  = ar.left + 'px';
+          bp.style.width = ar.width + 'px';
+          bp.classList.add('bp-fixed');
+          bp.classList.remove('float-bounce');
+          void bp.offsetWidth;
+          bp.classList.add('float-bounce');
+        } else {
+          bp.classList.remove('bp-fixed', 'float-bounce');
+          bp.style.left = bp.style.width = '';
+        }
+      }
+      window.addEventListener('scroll',  syncFixed, { passive: true });
+      window.addEventListener('resize',  syncFixed, { passive: true });
+      syncFixed();
+    })();
   </script>
 </body>
 </html>

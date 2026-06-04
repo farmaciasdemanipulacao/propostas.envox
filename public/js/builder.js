@@ -539,6 +539,9 @@
       const firstArrow = document.getElementById('acc-arrow-0');
       if (firstArrow) firstArrow.textContent = '▴';
     }
+
+    // Inicia o fixed DEPOIS que o DOM do summary foi criado
+    initSummaryFixed();
   }
 
   // Accordion toggle
@@ -881,24 +884,35 @@
   }
 
   // ── Builder-summary: fixed ao rolar ───────────────────────
-  (function() {
+  // Chamado DEPOIS que renderBuilder() cria o DOM
+  function initSummaryFixed() {
     const bs     = document.getElementById('builder-summary');
     const anchor = document.getElementById('builder-summary-anchor');
     if (!bs || !anchor) return;
 
-    const headerH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 70;
-    const GAP = 12;
-    const TOP = headerH + GAP;
+    // evita duplicar listeners se chamado mais de uma vez
+    if (anchor._fixedInit) return;
+    anchor._fixedInit = true;
 
+    const headerH = parseInt(getComputedStyle(document.documentElement)
+      .getPropertyValue('--header-h')) || 70;
+    const TOP = headerH + 12;
     let wasFixed = false;
 
     function syncFixed() {
+      // em mobile não aplica
+      if (window.innerWidth <= 768) {
+        if (wasFixed) {
+          bs.classList.remove('bs-fixed', 'float-bounce');
+          bs.style.left = bs.style.width = '';
+          wasFixed = false;
+        }
+        return;
+      }
       const ar = anchor.getBoundingClientRect();
       const shouldFix = ar.top < TOP;
-
       if (shouldFix === wasFixed) return;
       wasFixed = shouldFix;
-
       if (shouldFix) {
         bs.style.left  = ar.left + 'px';
         bs.style.width = ar.width + 'px';
@@ -908,13 +922,13 @@
         bs.classList.add('float-bounce');
       } else {
         bs.classList.remove('bs-fixed', 'float-bounce');
-        bs.style.left  = '';
-        bs.style.width = '';
+        bs.style.left = bs.style.width = '';
       }
     }
 
     window.addEventListener('scroll', syncFixed, { passive: true });
     window.addEventListener('resize', syncFixed, { passive: true });
-  })();
+    syncFixed(); // checa estado inicial
+  }
 
 })();
