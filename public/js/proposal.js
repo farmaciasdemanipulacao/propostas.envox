@@ -76,8 +76,9 @@
     showTitleToast();
 
     // Prev/Next buttons
+    const pageCount = getPages().length || totalSlides;
     if (btnPrev) btnPrev.disabled = idx === 0;
-    if (btnNext) btnNext.disabled = idx === totalSlides - 1;
+    if (btnNext) btnNext.disabled = idx >= pageCount - 1;
 
     // Step dots
     stepDots.forEach((dot, i) => {
@@ -101,28 +102,47 @@
     }, 2200);
   }
 
-  // ── IntersectionObserver: detect which section is in view ─────────
-  function initObserver() {
+  // ── Scroll-based detection: works with slides of ANY height ─────────
+  // Finds the page whose top edge is closest to (and just above) the
+  // 30% mark of the viewport — robust against tall builder/budget slides.
+  function getActiveIndexByScroll() {
     const pages = getPages();
-    if (!pages.length) return;
+    if (!pages.length) return 0;
+    const trigger = window.innerHeight * 0.30; // 30% from top of viewport
+    let best = 0;
+    let bestDist = Infinity;
+    pages.forEach((page, i) => {
+      const rect = page.getBoundingClientRect();
+      // Distance between the slide's top and the trigger line
+      // We want the slide whose top is just above (or at) the trigger
+      const dist = Math.abs(rect.top - trigger);
+      if (rect.top <= trigger + 10 && dist < bestDist) {
+        bestDist = dist;
+        best = i;
+      }
+    });
+    return best;
+  }
 
-    const observer = new IntersectionObserver((entries) => {
+  function initObserver() {
+    let rafPending = false;
+    let lastIdx = -1;
+
+    function onScroll() {
       if (isScrolling) return;
-      entries.forEach(entry => {
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.35) {
-          const idx = parseInt(entry.target.dataset.index, 10);
-          if (!isNaN(idx) && idx !== currentIndex) {
-            setCurrentIndex(idx);
-          }
+      if (rafPending) return;
+      rafPending = true;
+      requestAnimationFrame(() => {
+        rafPending = false;
+        const idx = getActiveIndexByScroll();
+        if (idx !== lastIdx) {
+          lastIdx = idx;
+          setCurrentIndex(idx);
         }
       });
-    }, {
-      root: null,
-      rootMargin: '-15% 0px -15% 0px',
-      threshold: [0.35]
-    });
+    }
 
-    pages.forEach(p => observer.observe(p));
+    window.addEventListener('scroll', onScroll, { passive: true });
   }
 
   // ── Keyboard navigation ───────────────────────────────────────────

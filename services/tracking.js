@@ -19,7 +19,7 @@ function trackSlide(sessionId, leadId, slideNumber, duration, isRevisit, proposa
     } catch(e) {}
   }
   db.recordSlideEvent(sessionId, leadId, resolvedProposalId, slideNumber, eventType, duration);
-  const SLIDE_NAMES = ['','Capa','O Problema','Nossa Solução','Plano 1 - Crescimento','Plano 2 - Presença Forte','Plano 3 - Performance+','Comparativo','Monte seu Plano','Adicionais','Separados','Por que a Envox?','Encerramento'];
+  const SLIDE_NAMES = ['','Capa','O Problema','A Solução','Diferencial SDR','Quem Confia na Envox','Como Trabalhamos','Orçamento','Minha Própria Proposta','Perguntas Frequentes','Vamos Conversar?'];
   const slideName = SLIDE_NAMES[slideNumber] || `Slide ${slideNumber}`;
   const msg = isRevisit ? `Voltou ao slide ${slideNumber} (${slideName})` : `Visualizou slide ${slideNumber} (${slideName})`;
   db.logEvent(leadId, sessionId, isRevisit ? 'slide_revisited' : 'slide_viewed', { slide_number: slideNumber, slide_name: slideName, duration_seconds: duration, message: msg }, resolvedProposalId);

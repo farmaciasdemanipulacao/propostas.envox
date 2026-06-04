@@ -121,7 +121,7 @@ router.get('/leads/:id', requireAdmin, (req, res) => {
   const slideLabels = [];
   const slideDurations = [];
   const slideColors = [];
-  for (let i = 1; i <= 12; i++) {
+  for (let i = 1; i <= 10; i++) {
     const slideStat = stats.slideStats.find(s => s.slide_number === i);
     const dur = slideStat ? Math.round(slideStat.total_duration || 0) : 0;
     slideLabels.push(`Slide ${i}`);
@@ -378,7 +378,7 @@ router.get('/proposals/:proposalId/edit', requireAdmin, (req, res) => {
   const slideLabels = [];
   const slideDurationsAll = [];
   const slideColorsAll = [];
-  for (let i = 1; i <= 12; i++) {
+  for (let i = 1; i <= 10; i++) {
     const slideStat = stats.slideStats.find(s => s.slide_number === i);
     const dur = slideStat ? Math.round(slideStat.total_duration || 0) : 0;
     slideLabels.push(`Slide ${i}`);
@@ -394,7 +394,7 @@ router.get('/proposals/:proposalId/edit', requireAdmin, (req, res) => {
     const individualSlideStats = db.getLeadSlideStatsForProposal(lead.id, proposalId);
     const durations = [], colors = [], viewCounts = [];
     let totalDur = 0, slidesSeen = 0, revisits = 0;
-    for (let i = 1; i <= 12; i++) {
+    for (let i = 1; i <= 10; i++) {
       const ss = individualSlideStats.find(s => s.slide_number === i);
       const dur = ss ? Math.round(ss.total_duration || 0) : 0;
       durations.push(dur);
@@ -448,7 +448,7 @@ router.get('/proposals/:proposalId/heat', requireAdmin, (req, res) => {
   const slideLabels = [];
   const slideDurationsAll = [];
   const slideColorsAll = [];
-  for (let i = 1; i <= 12; i++) {
+  for (let i = 1; i <= 10; i++) {
     const slideStat = stats.slideStats.find(s => s.slide_number === i);
     const dur = slideStat ? Math.round(slideStat.total_duration || 0) : 0;
     slideLabels.push(`Slide ${i}`);
@@ -464,7 +464,7 @@ router.get('/proposals/:proposalId/heat', requireAdmin, (req, res) => {
     const individualSlideStats = db.getLeadSlideStatsForProposal(lead.id, proposalId);
     const durations = [], colors = [], viewCounts = [];
     let totalDur = 0, slidesSeen = 0, revisits = 0;
-    for (let i = 1; i <= 12; i++) {
+    for (let i = 1; i <= 10; i++) {
       const ss = individualSlideStats.find(s => s.slide_number === i);
       const dur = ss ? Math.round(ss.total_duration || 0) : 0;
       durations.push(dur);

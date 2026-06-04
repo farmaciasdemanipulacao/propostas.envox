@@ -10,8 +10,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     /* ── Heatmap ─────────────────────────────────────────────────── */
-    .heatmap-grid { display:grid;grid-template-columns:repeat(6,1fr);gap:0.5rem;margin-bottom:1rem; }
-    @media(max-width:700px){ .heatmap-grid { grid-template-columns:repeat(3,1fr); } }
+    .heatmap-grid { display:grid;grid-template-columns:repeat(5,1fr);gap:0.5rem;margin-bottom:1rem; }
+    @media(max-width:700px){ .heatmap-grid { grid-template-columns:repeat(2,1fr); } }
     .heatmap-cell { border-radius:8px;padding:0.6rem 0.4rem;text-align:center;border:1px solid #eee; }
     .heat-none   { background:#f8f9fa;color:#bbb; }
     .heat-low    { background:#e8f5e9;color:#2e7d32; }
@@ -138,7 +138,7 @@
             <div class="metric-label">Tempo Total</div>
           </div>
           <div class="metric-item">
-            <div class="metric-value" id="metricSlides"><%= stats.totalSlidesSeen %>/12</div>
+            <div class="metric-value" id="metricSlides"><%= stats.totalSlidesSeen %>/10</div>
             <div class="metric-label">Slides Vistos</div>
           </div>
           <div class="metric-item">
@@ -165,7 +165,7 @@
           const _slideNames = ['','Capa','O Problema','Nossa Solução','Plano Crescimento',
             'Plano Presença Forte','Plano Performance','Como Trabalhamos','Monte seu Plano',
             'Adicionais','Separados','Por que Envox?','Encerramento'];
-          for (let _i = 1; _i <= 12; _i++) {
+          for (let _i = 1; _i <= 10; _i++) {
             const _ss = (stats.slideStats || []).find(s => s.slide_number === _i);
             const _dur = _ss ? Math.round(_ss.total_duration || 0) : 0;
             const _views = _ss ? (_ss.view_count || 0) : 0;
@@ -266,7 +266,7 @@
     const ALL_DURATIONS  = <%- slideDurationsAll %>;
     const ALL_COLORS     = <%- slideColorsAll %>;
     const PER_LEAD_STATS = <%- perLeadStats %>;
-    const ALL_VIEW_COUNTS = <%- JSON.stringify(Array.from({length:12},(_,i)=>{ const s=(stats.slideStats||[]).find(x=>x.slide_number===i+1); return s ? (s.view_count||0) : 0; })) %>;
+    const ALL_VIEW_COUNTS = <%- JSON.stringify(Array.from({length:10},(_,i)=>{ const s=(stats.slideStats||[]).find(x=>x.slide_number===i+1); return s ? (s.view_count||0) : 0; })) %>;
 
     // ── Chart.js ──────────────────────────────────────────────────────
     const ctx = document.getElementById('slideChart').getContext('2d');
@@ -298,8 +298,8 @@
 
     // ── Heatmap renderer ──────────────────────────────────────────────
     function renderHeatmap(durations, viewCounts) {
-      const vc = viewCounts || new Array(12).fill(0);
-      for (let i = 1; i <= 12; i++) {
+      const vc = viewCounts || new Array(10).fill(0);
+      for (let i = 1; i <= 10; i++) {
         const cell = document.getElementById('hcell-' + i);
         if (!cell) continue;
         const dur = durations[i - 1] || 0;
@@ -333,9 +333,9 @@
         revisits   = <%= stats.slideStats ? stats.slideStats.filter(s => s.revisit_count > 0).length : 0 %>;
       } else {
         const perLead = PER_LEAD_STATS.find(p => p.lead_id == leadId);
-        durations  = perLead ? perLead.durations  : new Array(12).fill(0);
-        colors     = perLead ? perLead.colors      : new Array(12).fill('#e0e0e0');
-        viewCounts = perLead ? (perLead.viewCounts || new Array(12).fill(0)) : new Array(12).fill(0);
+        durations  = perLead ? perLead.durations  : new Array(10).fill(0);
+        colors     = perLead ? perLead.colors      : new Array(10).fill('#e0e0e0');
+        viewCounts = perLead ? (perLead.viewCounts || new Array(10).fill(0)) : new Array(10).fill(0);
         accesses   = perLead ? (perLead.accesses   || 0) : 0;
         totalDur   = perLead ? (perLead.totalDur   || 0) : 0;
         slidesSeen = perLead ? (perLead.slidesSeen || 0) : 0;
@@ -354,7 +354,7 @@
       document.getElementById('metricAccesses').textContent = accesses;
       const mm = Math.floor(totalDur / 60), ms = totalDur % 60;
       document.getElementById('metricDuration').textContent = mm + 'm' + ms + 's';
-      document.getElementById('metricSlides').textContent   = slidesSeen + '/12';
+      document.getElementById('metricSlides').textContent   = slidesSeen + '/10';
       document.getElementById('metricRevisits').textContent = revisits;
     }
   </script>
