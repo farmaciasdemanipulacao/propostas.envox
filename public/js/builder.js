@@ -482,7 +482,6 @@
 
     container.innerHTML = `
       <div class="builder-layout">
-        <div class="builder-summary-anchor" id="builder-summary-anchor"></div>
         <div class="builder-main">
           <div class="builder-header">
             <h2>Monte seu <span class="text-pink">plano ideal</span></h2>
@@ -492,6 +491,7 @@
           <div id="discount-combo-alert" class="discount-combo-alert" style="display:none"></div>
         </div>
 
+        <div class="builder-summary-anchor" id="builder-summary-anchor"></div>
         <div class="builder-summary" id="builder-summary">
           <div class="summary-title">✦ Seu Plano${company ? '<br><small style="font-size:0.7rem;font-weight:400;color:#E91E63">' + company + '</small>' : ''}</div>
           <div id="summary-items" class="summary-items">
@@ -918,11 +918,13 @@
         bs.style.left = bs.style.width = bs.style.top = '';
         return;
       }
-      // position:fixed coords are viewport-relative — use ar.left directly
+      // position:fixed coords are viewport-relative — use getBoundingClientRect directly
       const ar = anchor.getBoundingClientRect();
+      // Read header height from CSS variable, fallback to 50px
+      const headerH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 50;
       bs.style.left  = ar.left + 'px';
       bs.style.width = ar.width + 'px';
-      bs.style.top   = 'calc(var(--header-h, 50px) + 14px)';
+      bs.style.top   = (headerH + 14) + 'px';
     }
 
     // Bounce de entrada

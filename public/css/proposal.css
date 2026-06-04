@@ -153,8 +153,8 @@ body.proposal-body {
 .pages-container {
   margin-top: calc(var(--header-h) + var(--progress-h));
   padding: 0;
-  overflow-x: hidden;
-  /* right padding for step-nav */
+  /* overflow-x: clip — NÃO cria containing block para position:fixed (hidden quebraria o painel fixo) */
+  overflow-x: clip;
 }
 
 /* ── PAGE SECTION ── */
@@ -988,7 +988,7 @@ body.proposal-body {
 .bs-qty-note { font-size: 0.8rem; color: var(--gray-600); }
 .bs-qty-note strong { color: var(--pink); }
 
-/* anchor ocupa espaco no flow mas o painel fica fixed */
+/* anchor: ocupa espaço no flow — DIREITA do builder-main — painel fixed se posiciona sobre ele */
 .builder-summary-anchor { flex: 0 0 280px; min-height: 1px; align-self: stretch; }
 .builder-summary {
   position: fixed;
@@ -1915,8 +1915,8 @@ body.proposal-body {
 
   /* Builder layout — mobile only */
   .builder-layout { flex-direction: column; gap: 1rem; }
-  .builder-summary { position: static !important; width: 100% !important; left: auto !important; order: -1; }
-  .builder-summary-anchor { flex: none; width: 100%; min-height: 0; }
+  .builder-summary-anchor { display: none; }
+  .builder-summary { position: static !important; width: 100% !important; left: auto !important; top: auto !important; order: -1; }
   .builder-main { width: 100%; }
 
   /* Inline action buttons */
