@@ -126,10 +126,12 @@ router.get('/leads/:id', requireAdmin, (req, res) => {
     const dur = slideStat ? Math.round(slideStat.total_duration || 0) : 0;
     slideLabels.push(`Slide ${i}`);
     slideDurations.push(dur);
-    if (dur === 0) slideColors.push('#e0e0e0');
-    else if (dur < 20) slideColors.push('#66bb6a');
-    else if (dur < 60) slideColors.push('#ffa726');
-    else slideColors.push('#e91e63');
+    if (dur <= 0)   slideColors.push('#e2e8f0');
+    else if (dur < 15)  slideColors.push('#93c5fd');
+    else if (dur < 45)  slideColors.push('#6ee7b7');
+    else if (dur < 120) slideColors.push('#fde047');
+    else if (dur < 300) slideColors.push('#fb923c');
+    else                slideColors.push('#f87171');
   }
 
   const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
@@ -383,10 +385,12 @@ router.get('/proposals/:proposalId/edit', requireAdmin, (req, res) => {
     const dur = slideStat ? Math.round(slideStat.total_duration || 0) : 0;
     slideLabels.push(`Slide ${i}`);
     slideDurationsAll.push(dur);
-    if (dur === 0) slideColorsAll.push('#e0e0e0');
-    else if (dur < 20) slideColorsAll.push('#66bb6a');
-    else if (dur < 60) slideColorsAll.push('#ffa726');
-    else slideColorsAll.push('#e91e63');
+    if (dur <= 0)   slideColorsAll.push('#e2e8f0');
+    else if (dur < 15)  slideColorsAll.push('#93c5fd');
+    else if (dur < 45)  slideColorsAll.push('#6ee7b7');
+    else if (dur < 120) slideColorsAll.push('#fde047');
+    else if (dur < 300) slideColorsAll.push('#fb923c');
+    else                slideColorsAll.push('#f87171');
   }
 
   // Stats individuais por lead (para o seletor — inclui viewCounts e métricas)
@@ -399,10 +403,12 @@ router.get('/proposals/:proposalId/edit', requireAdmin, (req, res) => {
       const dur = ss ? Math.round(ss.total_duration || 0) : 0;
       durations.push(dur);
       viewCounts.push(ss ? (ss.view_count || 0) : 0);
-      if (dur === 0) colors.push('#e0e0e0');
-      else if (dur < 20) colors.push('#66bb6a');
-      else if (dur < 60) colors.push('#ffa726');
-      else colors.push('#e91e63');
+      if (dur <= 0)   colors.push('#e2e8f0');
+      else if (dur < 15)  colors.push('#93c5fd');
+      else if (dur < 45)  colors.push('#6ee7b7');
+      else if (dur < 120) colors.push('#fde047');
+      else if (dur < 300) colors.push('#fb923c');
+      else                colors.push('#f87171');
       if (dur > 0) slidesSeen++;
       totalDur += dur;
       if (ss && ss.revisit_count > 0) revisits++;
@@ -453,10 +459,12 @@ router.get('/proposals/:proposalId/heat', requireAdmin, (req, res) => {
     const dur = slideStat ? Math.round(slideStat.total_duration || 0) : 0;
     slideLabels.push(`Slide ${i}`);
     slideDurationsAll.push(dur);
-    if (dur === 0) slideColorsAll.push('#e0e0e0');
-    else if (dur < 20) slideColorsAll.push('#66bb6a');
-    else if (dur < 60) slideColorsAll.push('#ffa726');
-    else slideColorsAll.push('#e91e63');
+    if (dur <= 0)   slideColorsAll.push('#e2e8f0');
+    else if (dur < 15)  slideColorsAll.push('#93c5fd');
+    else if (dur < 45)  slideColorsAll.push('#6ee7b7');
+    else if (dur < 120) slideColorsAll.push('#fde047');
+    else if (dur < 300) slideColorsAll.push('#fb923c');
+    else                slideColorsAll.push('#f87171');
   }
 
   // Stats individuais por lead
@@ -469,10 +477,12 @@ router.get('/proposals/:proposalId/heat', requireAdmin, (req, res) => {
       const dur = ss ? Math.round(ss.total_duration || 0) : 0;
       durations.push(dur);
       viewCounts.push(ss ? (ss.view_count || 0) : 0);
-      if (dur === 0) colors.push('#e0e0e0');
-      else if (dur < 20) colors.push('#66bb6a');
-      else if (dur < 60) colors.push('#ffa726');
-      else colors.push('#e91e63');
+      if (dur <= 0)   colors.push('#e2e8f0');
+      else if (dur < 15)  colors.push('#93c5fd');
+      else if (dur < 45)  colors.push('#6ee7b7');
+      else if (dur < 120) colors.push('#fde047');
+      else if (dur < 300) colors.push('#fb923c');
+      else                colors.push('#f87171');
       if (dur > 0) slidesSeen++;
       totalDur += dur;
       if (ss && ss.revisit_count > 0) revisits++;
