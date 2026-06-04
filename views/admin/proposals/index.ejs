@@ -105,6 +105,7 @@
                 <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
                   <a href="/admin/proposals/<%= proposal.id %>/edit" class="btn-sm btn-outline" title="Editar proposta">✏️ Editar</a>
                   <a href="/admin/proposals/<%= proposal.id %>/view" class="btn-sm btn-outline" title="Ver proposta no painel">👁️ Ver</a>
+                  <button class="btn-sm btn-copy" title="Copiar link da proposta" onclick="copyProposalLink('<%= proposal.token %>', this)">🔗 Copiar</button>
                   <a href="/admin/proposals/<%= proposal.id %>/heat" class="btn-sm btn-heat" title="Relatório de engajamento">🌡️ Calor</a>
                   <form action="/admin/proposals/<%= proposal.id %>/archive" method="POST" style="display:inline" onsubmit="return confirm('<%= proposal.proposal_status === 'archived' ? 'Reativar' : 'Arquivar' %> esta proposta?')">
                     <input type="hidden" name="archived" value="<%= proposal.proposal_status === 'archived' ? 0 : 1 %>">
@@ -130,6 +131,39 @@
     .btn-danger-outline:hover { background:rgba(220,38,38,0.14); }
     .btn-heat { border-color:#f97316;color:#ea580c;background:rgba(249,115,22,0.07);border:1px solid #f97316;border-radius:6px;padding:4px 10px;font-size:0.75rem;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:3px;cursor:pointer; }
     .btn-heat:hover { background:rgba(249,115,22,0.16); }
+    .btn-copy { border:1px solid #7c3aed;color:#7c3aed;background:rgba(124,58,237,0.07);border-radius:6px;padding:4px 10px;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;display:inline-flex;align-items:center;gap:3px;transition:all 0.15s; }
+    .btn-copy:hover { background:rgba(124,58,237,0.15); }
+    .btn-copy.copied { border-color:#16a34a;color:#16a34a;background:rgba(22,163,74,0.1); }
+    #copy-toast { position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a2e;color:#fff;padding:0.6rem 1.4rem;border-radius:24px;font-size:0.82rem;font-weight:600;font-family:Poppins,sans-serif;opacity:0;transition:all 0.25s;pointer-events:none;z-index:9999; }
+    #copy-toast.show { opacity:1;transform:translateX(-50%) translateY(0); }
   </style>
+  <div id="copy-toast">🔗 Link copiado!</div>
+  <script>
+    function copyProposalLink(token, btn) {
+      const link = window.location.origin + '/proposta/' + token;
+      navigator.clipboard.writeText(link).then(() => {
+        btn.textContent = '✅ Copiado';
+        btn.classList.add('copied');
+        const toast = document.getElementById('copy-toast');
+        toast.classList.add('show');
+        setTimeout(() => {
+          btn.textContent = '🔗 Copiar';
+          btn.classList.remove('copied');
+          toast.classList.remove('show');
+        }, 2000);
+      }).catch(() => {
+        // fallback para navegadores sem clipboard API
+        const ta = document.createElement('textarea');
+        ta.value = window.location.origin + '/proposta/' + token;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        btn.textContent = '✅ Copiado';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = '🔗 Copiar'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+  </script>
 </body>
 </html>
