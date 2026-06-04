@@ -474,7 +474,7 @@
         📧 Enviar para meu e-mail
       </button>
       <button id="btn-finalizar" class="btn-finalizar-builder" style="display:none" onclick="abrirFinalizacao()">
-        ✔️ Finalizar
+        ✅ Finalizar Proposta
       </button>
       <div id="builder-email-sent" class="builder-email-sent" style="display:none">
         ✅ E-mail enviado!
@@ -915,12 +915,14 @@
     function positionSummary() {
       if (window.innerWidth <= 768) {
         // mobile: reseta para flow normal via CSS
-        bs.style.left = bs.style.width = '';
+        bs.style.left = bs.style.width = bs.style.top = '';
         return;
       }
+      // position:fixed coords are viewport-relative — use ar.left directly
       const ar = anchor.getBoundingClientRect();
-      bs.style.left  = (ar.left + window.scrollX) + 'px';
+      bs.style.left  = ar.left + 'px';
       bs.style.width = ar.width + 'px';
+      bs.style.top   = 'calc(var(--header-h, 50px) + 14px)';
     }
 
     // Bounce de entrada
