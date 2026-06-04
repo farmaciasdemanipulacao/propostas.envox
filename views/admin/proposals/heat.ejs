@@ -12,17 +12,28 @@
     /* ── Heatmap ─────────────────────────────────────────────────── */
     .heatmap-grid { display:grid;grid-template-columns:repeat(5,1fr);gap:0.5rem;margin-bottom:1rem; }
     @media(max-width:700px){ .heatmap-grid { grid-template-columns:repeat(2,1fr); } }
-    .heatmap-cell { border-radius:8px;padding:0.6rem 0.4rem;text-align:center;border:1px solid #eee; }
-    .heat-none   { background:#f8f9fa;color:#bbb; }
-    .heat-low    { background:#e8f5e9;color:#2e7d32; }
-    .heat-medium { background:#fff9c4;color:#f57f17; }
-    .heat-high   { background:#ffebee;color:#c62828; }
+    .heatmap-cell { border-radius:8px;padding:0.65rem 0.4rem;text-align:center;border:2px solid #eee;transition:transform 0.1s; }
+    .heatmap-cell:hover { transform:scale(1.03); }
+    .heat-none { background:#f0f0f2;border-color:#ddd;color:#999; }
+    .heat-1    { background:#dbeafe;border-color:#93c5fd;color:#1e40af; }
+    .heat-2    { background:#d1fae5;border-color:#6ee7b7;color:#065f46; }
+    .heat-3    { background:#fef9c3;border-color:#fde047;color:#713f12; }
+    .heat-4    { background:#ffedd5;border-color:#fb923c;color:#7c2d12; }
+    .heat-5    { background:#fee2e2;border-color:#f87171;color:#7f1d1d; }
     .heat-number { font-size:0.65rem;font-weight:700;opacity:0.6;margin-bottom:2px; }
-    .heat-name   { font-size:0.62rem;font-weight:600;line-height:1.2;margin-bottom:4px;min-height:24px; }
-    .heat-time   { font-size:0.85rem;font-weight:800; }
-    .heat-views  { font-size:0.66rem;opacity:0.7;margin-top:2px; }
-    .heatmap-legend { display:flex;gap:1rem;flex-wrap:wrap;font-size:0.72rem;color:#666; }
-    .legend-item { display:inline-flex;align-items:center;gap:0.3rem;padding:3px 8px;border-radius:12px; }
+    .heat-name   { font-size:0.62rem;font-weight:600;line-height:1.2;margin-bottom:6px;min-height:26px; }
+    .heat-stats  { display:flex;flex-direction:column;gap:2px; }
+    .heat-stat   { font-size:0.78rem;font-weight:800; }
+    .heat-stat-label { font-size:0.58rem;font-weight:600;opacity:0.65;letter-spacing:0.02em;text-transform:uppercase; }
+    .heat-divider { height:1px;background:currentColor;opacity:0.15;margin:3px 0; }
+    .heatmap-legend { display:flex;gap:0.75rem;flex-wrap:wrap;font-size:0.72rem;color:#444;align-items:center;margin-top:0.75rem; }
+    .legend-dot { width:12px;height:12px;border-radius:3px;display:inline-block;margin-right:3px;vertical-align:middle; }
+    .ld-none { background:#f0f0f2;border:1.5px solid #ddd; }
+    .ld-1    { background:#dbeafe;border:1.5px solid #93c5fd; }
+    .ld-2    { background:#d1fae5;border:1.5px solid #6ee7b7; }
+    .ld-3    { background:#fef9c3;border:1.5px solid #fde047; }
+    .ld-4    { background:#ffedd5;border:1.5px solid #fb923c; }
+    .ld-5    { background:#fee2e2;border:1.5px solid #f87171; }
 
     /* ── Report lead selector ─────────────────────────────────────── */
     .report-lead-selector { display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center; }
@@ -162,31 +173,47 @@
         <h3 class="card-title">🔥 Mapa de Calor — Engajamento por Slide</h3>
         <div class="heatmap-grid" id="heatmapGrid">
           <%
-          const _slideNames = ['','Capa','O Problema','Nossa Solução','Plano Crescimento',
-            'Plano Presença Forte','Plano Performance','Como Trabalhamos','Monte seu Plano',
-            'Adicionais','Separados','Por que Envox?','Encerramento'];
+          const _slideNames = ['','Capa','O Problema','A Solução','SDR + Ads',
+            'Clientes','Como Trabalhamos','Orçamento','Solicitar Proposta',
+            'FAQ','Agradecimento'];
+          function _heatClass(dur) {
+            if (dur <= 0)   return 'heat-none';
+            if (dur < 15)   return 'heat-1';
+            if (dur < 45)   return 'heat-2';
+            if (dur < 120)  return 'heat-3';
+            if (dur < 300)  return 'heat-4';
+            return 'heat-5';
+          }
           for (let _i = 1; _i <= 10; _i++) {
             const _ss = (stats.slideStats || []).find(s => s.slide_number === _i);
             const _dur = _ss ? Math.round(_ss.total_duration || 0) : 0;
             const _views = _ss ? (_ss.view_count || 0) : 0;
-            let _hc = 'heat-none';
-            if (_dur > 0 && _dur < 20) _hc = 'heat-low';
-            else if (_dur >= 20 && _dur < 60) _hc = 'heat-medium';
-            else if (_dur >= 60) _hc = 'heat-high';
+            const _avg = _views > 0 ? Math.round(_dur / _views) : 0;
+            const _hc = _heatClass(_dur);
           %>
             <div class="heatmap-cell <%= _hc %>" id="hcell-<%= _i %>">
               <div class="heat-number"><%= _i %></div>
               <div class="heat-name"><%= _slideNames[_i] %></div>
-              <div class="heat-time"><%= _dur %>s</div>
-              <div class="heat-views"><%= _views %> viz.</div>
+              <div class="heat-stats">
+                <div class="heat-stat" id="hcell-<%= _i %>-dur"><%= _dur %>s</div>
+                <div class="heat-stat-label">tempo total</div>
+                <div class="heat-divider"></div>
+                <div class="heat-stat" id="hcell-<%= _i %>-views"><%= _views %> viz.</div>
+                <div class="heat-stat-label">visualizações</div>
+                <div class="heat-divider"></div>
+                <div class="heat-stat" id="hcell-<%= _i %>-avg"><%= _avg %>s/viz</div>
+                <div class="heat-stat-label">média</div>
+              </div>
             </div>
           <% } %>
         </div>
         <div class="heatmap-legend">
-          <span class="legend-item heat-none">⬜ Não visto</span>
-          <span class="legend-item heat-low">🟩 Pouco (&lt;20s)</span>
-          <span class="legend-item heat-medium">🟨 Médio (20–60s)</span>
-          <span class="legend-item heat-high">🟥 Alto (&gt;60s)</span>
+          <span><span class="legend-dot ld-none"></span> Não visto</span>
+          <span><span class="legend-dot ld-1"></span> Frio (&lt;15s)</span>
+          <span><span class="legend-dot ld-2"></span> Baixo (15–44s)</span>
+          <span><span class="legend-dot ld-3"></span> Médio (45–119s)</span>
+          <span><span class="legend-dot ld-4"></span> Quente (120–299s)</span>
+          <span><span class="legend-dot ld-5"></span> Muito Quente (300s+)</span>
         </div>
       </div>
 
