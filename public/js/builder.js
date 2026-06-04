@@ -513,6 +513,9 @@
             <div class="summary-price-small summary-price-disc" id="summary-onetime-disc-val">${fmtBRL(0)}</div>
           </div>
           ${emailBtn}
+          <button class="btn-go-orcamento" onclick="(function(){const pages=document.querySelectorAll('.page-section');let idx=-1;pages.forEach((p,i)=>{if((p.dataset.slideTitle||'').toLowerCase().includes('orçamento')||(p.dataset.slide=='7'))idx=i;});if(idx>=0&&window.scrollToSlide)window.scrollToSlide(idx);else if(idx>=0)pages[idx].scrollIntoView({behavior:'smooth'});})()">
+            💰 Ver Orçamento Pronto
+          </button>
           <div class="builder-cta-doubt">
             Ficou com dúvida?<br>
             <a href="${waUrl('Olá! Tenho dúvida sobre os valores da proposta' + (company ? ' para ' + company : '') + '.')}" target="_blank" class="btn-doubt-wa">
@@ -874,5 +877,41 @@
   } else {
     init();
   }
+
+  // ── Builder-summary float scroll effect ───────────────────────
+  (function() {
+    let wasFloating = false;
+    function checkFloat() {
+      const bs = document.getElementById('builder-summary');
+      if (!bs) return;
+      const rect = bs.getBoundingClientRect();
+      // é considerado "flutuando" quando já colou no topo (top ≤ 20px) e a página rolou
+      const isFloating = rect.top <= 20 && window.scrollY > 40;
+      if (isFloating !== wasFloating) {
+        bs.classList.toggle('is-floating', isFloating);
+        if (isFloating) {
+          bs.classList.remove('float-bounce');
+          void bs.offsetWidth;
+          bs.classList.add('float-bounce');
+        }
+        wasFloating = isFloating;
+      }
+    }
+    // observa o slide de orçamento para ativar quando ele entrar na tela
+    const builderSection = document.querySelector('[data-slide="7"]');
+    if (builderSection) {
+      const io = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting) {
+          window.addEventListener('scroll', checkFloat, { passive: true });
+        } else {
+          window.removeEventListener('scroll', checkFloat);
+          const bs = document.getElementById('builder-summary');
+          if (bs) { bs.classList.remove('is-floating','float-bounce'); }
+          wasFloating = false;
+        }
+      }, { threshold: 0.05 });
+      io.observe(builderSection);
+    }
+  })();
 
 })();
