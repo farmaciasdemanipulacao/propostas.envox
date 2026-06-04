@@ -470,18 +470,19 @@
 
     const company = window.COMPANY_NAME || '';
     const emailBtn = `
-      <button id="btn-send-plan" class="btn-whatsapp-builder" style="display:none" onclick="sendPlanWhatsApp()">
-        💬 Enviar pelo WhatsApp
-      </button>
-      <button id="btn-send-plan-email" class="btn-email-builder" style="display:none" onclick="sendBuilderPlanEmail()">
+      <button id="btn-send-plan-email" class="btn-email-builder-sm" style="display:none" onclick="sendBuilderPlanEmail()">
         📧 Enviar para meu e-mail
       </button>
+      <button id="btn-finalizar" class="btn-finalizar-builder" style="display:none" onclick="abrirFinalizacao()">
+        ✔️ Finalizar
+      </button>
       <div id="builder-email-sent" class="builder-email-sent" style="display:none">
-        ✅ E-mail enviado com sucesso!
+        ✅ E-mail enviado!
       </div>`;
 
     container.innerHTML = `
       <div class="builder-layout">
+        <div class="builder-summary-anchor" id="builder-summary-anchor"></div>
         <div class="builder-main">
           <div class="builder-header">
             <h2>Monte seu <span class="text-pink">plano ideal</span></h2>
@@ -491,7 +492,6 @@
           <div id="discount-combo-alert" class="discount-combo-alert" style="display:none"></div>
         </div>
 
-        <div class="builder-summary-anchor" id="builder-summary-anchor">
         <div class="builder-summary" id="builder-summary">
           <div class="summary-title">✦ Seu Plano${company ? '<br><small style="font-size:0.7rem;font-weight:400;color:#E91E63">' + company + '</small>' : ''}</div>
           <div id="summary-items" class="summary-items">
@@ -524,7 +524,6 @@
             </a>
           </div>
         </div><!-- /builder-summary -->
-        </div><!-- /anchor -->
       </div>
 
       <!-- Inline actions for custom builder -->
@@ -668,8 +667,8 @@
     const summaryOneVal   = document.getElementById('summary-onetime-val');
     const summaryOneDisc  = document.getElementById('summary-onetime-disc');
     const summaryOneDV    = document.getElementById('summary-onetime-disc-val');
-    const btnSend         = document.getElementById('btn-send-plan');
     const btnSendEmail    = document.getElementById('btn-send-plan-email');
+    const btnFinalizar    = document.getElementById('btn-finalizar');
     const comboAlert      = document.getElementById('discount-combo-alert');
     const inlineActions   = document.getElementById('builder-inline-actions');
 
@@ -677,7 +676,7 @@
 
     if (items.length === 0) {
       summaryItems.innerHTML = '<p class="summary-empty">Selecione pelo menos um serviço</p>';
-      [summaryMon, summaryMonDisc, summaryOne, summaryOneDisc, btnSend, btnSendEmail].forEach(el => { if (el) el.style.display = 'none'; });
+      [summaryMon, summaryMonDisc, summaryOne, summaryOneDisc, btnSendEmail, btnFinalizar].forEach(el => { if (el) el.style.display = 'none'; });
       if (comboAlert) comboAlert.style.display = 'none';
       if (inlineActions) inlineActions.style.display = 'none';
       return;
@@ -706,8 +705,8 @@
       if (summaryOneDV && showDiscO) summaryOneDV.textContent = fmtBRL(onetimeDisc) + ' (-' + fmtPct(totalDiscPctO) + ')';
     } else if (summaryOne) { summaryOne.style.display = 'none'; if (summaryOneDisc) summaryOneDisc.style.display = 'none'; }
 
-    if (btnSend) btnSend.style.display = 'flex';
-    if (btnSendEmail) btnSendEmail.style.display = 'flex';
+    if (btnSendEmail) btnSendEmail.style.display = 'block';
+    if (btnFinalizar) btnFinalizar.style.display = 'block';
     if (inlineActions) inlineActions.style.display = 'block';
 
     if (comboAlert) {
@@ -883,52 +882,56 @@
     init();
   }
 
-  // ── Builder-summary: fixed ao rolar ───────────────────────
+  // ── Abrir página de finalização ────────────────────────────────────
+  window.abrirFinalizacao = function() {
+    const token = window.PROPOSAL_TOKEN;
+    if (!token) { alert('Token não encontrado.'); return; }
+    // Salvar seleções do builder na sessão antes de navegar
+    const items       = window._builderItems || [];
+    const monthly     = window._builderMonthlyDisc || window._builderMonthly || 0;
+    const onetime     = window._builderOnetimeDisc || window._builderOnetime || 0;
+    const discPctM    = window._builderDiscPctM || 0;
+    const discPctO    = window._builderDiscPctO || 0;
+    const rawMonthly  = window._builderMonthly || 0;
+    const rawOnetime  = window._builderOnetime || 0;
+    // Encode selections in sessionStorage so finalize page can read them
+    try {
+      sessionStorage.setItem('builderSelections', JSON.stringify({
+        items, monthly, onetime, discPctM, discPctO, rawMonthly, rawOnetime
+      }));
+    } catch(e) {}
+    window.location.href = '/proposta/' + token + '/finalizar';
+  };
+
+  // ── Builder-summary: sempre fixed, posicionado pelo anchor ───────
   // Chamado DEPOIS que renderBuilder() cria o DOM
   function initSummaryFixed() {
     const bs     = document.getElementById('builder-summary');
     const anchor = document.getElementById('builder-summary-anchor');
     if (!bs || !anchor) return;
-
-    // evita duplicar listeners se chamado mais de uma vez
     if (anchor._fixedInit) return;
     anchor._fixedInit = true;
 
-    const headerH = parseInt(getComputedStyle(document.documentElement)
-      .getPropertyValue('--header-h')) || 70;
-    const TOP = headerH + 12;
-    let wasFixed = false;
-
-    function syncFixed() {
-      // em mobile não aplica
+    function positionSummary() {
       if (window.innerWidth <= 768) {
-        if (wasFixed) {
-          bs.classList.remove('bs-fixed', 'float-bounce');
-          bs.style.left = bs.style.width = '';
-          wasFixed = false;
-        }
+        // mobile: reseta para flow normal via CSS
+        bs.style.left = bs.style.width = '';
         return;
       }
       const ar = anchor.getBoundingClientRect();
-      const shouldFix = ar.top < TOP;
-      if (shouldFix === wasFixed) return;
-      wasFixed = shouldFix;
-      if (shouldFix) {
-        bs.style.left  = ar.left + 'px';
-        bs.style.width = ar.width + 'px';
-        bs.classList.add('bs-fixed');
-        bs.classList.remove('float-bounce');
-        void bs.offsetWidth;
-        bs.classList.add('float-bounce');
-      } else {
-        bs.classList.remove('bs-fixed', 'float-bounce');
-        bs.style.left = bs.style.width = '';
-      }
+      bs.style.left  = (ar.left + window.scrollX) + 'px';
+      bs.style.width = ar.width + 'px';
     }
 
-    window.addEventListener('scroll', syncFixed, { passive: true });
-    window.addEventListener('resize', syncFixed, { passive: true });
-    syncFixed(); // checa estado inicial
+    // Bounce de entrada
+    bs.classList.remove('float-bounce');
+    void bs.offsetWidth;
+    bs.classList.add('float-bounce');
+
+    positionSummary();
+    window.addEventListener('resize',  positionSummary, { passive: true });
+    // scroll horizontal raro, mas garante
+    window.addEventListener('scroll',  positionSummary, { passive: true });
   }
 
 })();

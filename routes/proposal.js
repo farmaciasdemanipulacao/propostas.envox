@@ -370,6 +370,110 @@ router.post('/send-plan-email', async (req, res) => {
   }
 });
 
+// ── GET: Página de finalização ────────────────────────────────────────────────
+router.get('/:token/finalizar', (req, res) => {
+  const { token } = req.params;
+
+  // Verificar autenticação
+  if (!req.session || !req.session.authenticatedTokens ||
+      !req.session.authenticatedTokens.includes(token)) {
+    return res.redirect(`/proposta/${token}`);
+  }
+
+  const proposal = db.getProposalByTokenWithLeads(token);
+  if (!proposal) return res.redirect(`/proposta/${token}`);
+
+  const viewerLead = getViewerLead(req, proposal);
+  if (!viewerLead) return res.redirect(`/proposta/${token}`);
+
+  const proposalItems = db.getProposalItems(proposal.id);
+
+  res.render('proposal/finalize', {
+    proposal: { ...proposal, proposal_items: proposalItems.length > 0 ? proposalItems : null },
+    lead: viewerLead,
+    token,
+    whatsappUrl: 'https://wa.me/554133000404'
+  });
+});
+
+// ── POST: Aceitar proposta com dados cadastrais ───────────────────────────────
+router.post('/finalizar-aceitar', async (req, res) => {
+  const { token, lead_id, tipo_pessoa, ...formData } = req.body;
+
+  if (!token || !tipo_pessoa) {
+    return res.status(400).json({ error: 'Campos obrigatórios ausentes' });
+  }
+
+  const proposal = db.getProposalByToken(token);
+  if (!proposal) return res.status(404).json({ error: 'Proposta não encontrada' });
+
+  const resolvedLeadId = parseInt(lead_id) || null;
+  const leadData = resolvedLeadId ? db.getLeadById(resolvedLeadId) : null;
+  const leadName  = leadData ? leadData.name : 'Lead';
+  const company   = leadData ? (leadData.company_name || '') : (formData.razao_social || '');
+
+  try {
+    // Salvar ação de aceite
+    const actionId = db.saveProposalAction(
+      proposal.id,
+      resolvedLeadId,
+      'accept',
+      `Aceite formal via formulário (${tipo_pessoa.toUpperCase()})`,
+      null
+    );
+
+    if (resolvedLeadId) {
+      db.logEvent(resolvedLeadId, null, 'proposal_action', {
+        action_type: 'accept',
+        tipo_pessoa,
+        form_data: JSON.stringify(formData).substring(0, 500)
+      }, proposal.id);
+    }
+
+    // Montar corpo do email admin com todos os dados
+    let bodyLines = [];
+    bodyLines.push(`${leadName}${company ? ' — ' + company : ''} ACEITOU a proposta!`);
+    bodyLines.push('');
+    bodyLines.push(`Tipo: ${tipo_pessoa === 'pf' ? 'Pessoa Física (CPF)' : 'Pessoa Jurídica (CNPJ)'}`);
+    bodyLines.push('');
+    bodyLines.push('─── DADOS CADASTRAIS ───');
+
+    if (tipo_pessoa === 'pf') {
+      bodyLines.push(`Nome completo: ${formData.nome_completo || ''}`);
+      bodyLines.push(`CPF: ${formData.cpf || ''}`);
+      bodyLines.push(`RG: ${formData.rg || ''}`);
+      bodyLines.push(`Data de Nascimento: ${formData.data_nascimento || ''}`);
+      bodyLines.push(`Endereço residencial: ${formData.endereco_residencial || ''}`);
+      bodyLines.push(`Email assinatura: ${formData.email_assinatura || ''}`);
+      bodyLines.push(`Email financeiro: ${formData.email_financeiro || ''}`);
+    } else {
+      bodyLines.push(`CNPJ: ${formData.cnpj || ''}`);
+      bodyLines.push(`Razão Social: ${formData.razao_social || ''}`);
+      bodyLines.push(`Endereço da sede: ${formData.endereco_sede || ''}`);
+      bodyLines.push(`Sócio representante legal: ${formData.nome_socio || ''}`);
+      bodyLines.push(`CPF: ${formData.cpf_socio || ''}`);
+      bodyLines.push(`RG: ${formData.rg_socio || ''}`);
+      bodyLines.push(`Data de Nascimento: ${formData.data_nascimento_socio || ''}`);
+      bodyLines.push(`Endereço residencial: ${formData.endereco_residencial_socio || ''}`);
+      bodyLines.push(`Email assinatura: ${formData.email_assinatura || ''}`);
+      bodyLines.push(`Email financeiro: ${formData.email_financeiro || ''}`);
+    }
+
+    bodyLines.push('');
+    bodyLines.push('Acesse o painel para dar andamento.');
+
+    await emailService.sendAdminNotification({
+      subject: `✅ Proposta ACEITA (formal) — ${leadName}${company ? ' · ' + company : ''}`,
+      body: bodyLines.join('\n')
+    });
+
+    return res.json({ success: true, actionId });
+  } catch (err) {
+    console.error('[FinalizarAceitar] Error:', err);
+    return res.status(500).json({ error: 'Erro ao processar aceite' });
+  }
+});
+
 // ── API: Share Proposal (encaminhar para novo lead) ───────────────────────────
 router.post('/share', async (req, res) => {
   const { token, lead_id, name, whatsapp, email, cargo } = req.body;

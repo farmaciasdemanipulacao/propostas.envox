@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finalizar Proposta<% if (lead.company_name) { %> — <%= lead.company_name %><% } %></title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --pink: #E91E63;
+      --pink-dark: #c2185b;
+      --green: #10b981;
+      --green-dark: #059669;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --red-dark: #dc2626;
+      --blue: #3b82f6;
+      --blue-dark: #2563eb;
+      --wa: #25d366;
+      --wa-dark: #1da851;
+      --gray-50: #f8fafc;
+      --gray-100: #f1f5f9;
+      --gray-200: #e2e8f0;
+      --gray-400: #94a3b8;
+      --gray-600: #475569;
+      --gray-800: #1e293b;
+      --radius: 14px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.08);
+      --shadow-lg: 0 8px 40px rgba(0,0,0,0.13);
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-800);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .fin-header {
+      background: #fff;
+      border-bottom: 1px solid var(--gray-200);
+      padding: 0 2rem;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.05);
+    }
+    .fin-brand { font-weight: 800; font-size: 1.25rem; letter-spacing: -0.5px; }
+    .fin-brand .env { color: var(--gray-800); }
+    .fin-brand .ox  { color: var(--pink); }
+    .fin-back {
+      font-size: 0.78rem;
+      color: var(--gray-600);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: color 0.2s;
+    }
+    .fin-back:hover { color: var(--pink); }
+
+    /* ── Main wrapper ── */
+    .fin-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 4rem;
+    }
+
+    /* ── Hero ── */
+    .fin-hero {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .fin-hero-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+    .fin-hero h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--gray-800);
+      margin-bottom: 0.5rem;
+    }
+    .fin-hero h1 span { color: var(--pink); }
+    .fin-hero p {
+      font-size: 0.92rem;
+      color: var(--gray-600);
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ── Resumo dos serviços ── */
+    .fin-summary-box {
+      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow);
+    }
+    .fin-summary-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--gray-400);
+      margin-bottom: 1rem;
+    }
+    .fin-summary-empty {
+      color: var(--gray-400);
+      font-size: 0.85rem;
+      font-style: italic;
+    }
+    .fin-items-list { list-style: none; }
+    .fin-items-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.55rem 0;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 0.88rem;
+    }
+    .fin-items-list li:last-child { border-bottom: none; }
+    .fin-item-name { color: var(--gray-800); font-weight: 500; }
+    .fin-item-price { color: var(--pink); font-weight: 600; font-size: 0.85rem; }
+    .fin-totals {
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .fin-total-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.88rem;
+      color: var(--gray-600);
+    }
+    .fin-total-row.main {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--gray-800);
+      padding-top: 0.5rem;
+      border-top: 2px solid var(--gray-200);
+    }
+    .fin-total-row.main .fin-total-val { color: var(--pink); }
+    .fin-total-row.disc .fin-total-val { color: var(--green); }
+
+    /* ── Section label ── */
+    .fin-section-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--gray-400);
+      margin-bottom: 1rem;
+    }
+
+    /* ── Action cards grid ── */
+    .fin-cards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 600px) {
+      .fin-cards-grid { grid-template-columns: 1fr; }
+    }
+
+    .fin-card {
+      background: #fff;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 1.4rem 1.3rem 1.2rem;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      text-align: left;
+      box-shadow: var(--shadow);
+    }
+    .fin-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+    .fin-card.selected {
+      border-color: currentColor;
+    }
+    .fin-card-icon { font-size: 1.8rem; }
+    .fin-card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+    .fin-card-desc {
+      font-size: 0.78rem;
+      color: var(--gray-600);
+      line-height: 1.5;
+    }
+    .fin-card-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.76rem;
+      font-weight: 600;
+      margin-top: auto;
+      padding-top: 0.5rem;
+    }
+
+    /* Card color variants */
+    .fin-card-accept  { --card-color: var(--green); }
+    .fin-card-counter { --card-color: var(--yellow); }
+    .fin-card-reject  { --card-color: var(--red); }
+    .fin-card-talk    { --card-color: var(--wa); }
+
+    .fin-card-accept:hover  { border-color: var(--green); }
+    .fin-card-counter:hover { border-color: var(--yellow); }
+    .fin-card-reject:hover  { border-color: var(--red); }
+    .fin-card-talk:hover    { border-color: var(--wa); }
+
+    .fin-card-accept  .fin-card-cta { color: var(--green); }
+    .fin-card-counter .fin-card-cta { color: var(--yellow); }
+    .fin-card-reject  .fin-card-cta { color: var(--red); }
+    .fin-card-talk    .fin-card-cta { color: var(--wa); }
+
+    /* ── Step panels ── */
+    .fin-panel {
+      display: none;
+      background: #fff;
+      border-radius: var(--radius);
+      border: 1px solid var(--gray-200);
+      box-shadow: var(--shadow);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      animation: panelIn 0.22s ease;
+    }
+    .fin-panel.visible { display: block; }
+    @keyframes panelIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fin-panel-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .fin-panel-icon { font-size: 1.7rem; }
+    .fin-panel-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    /* ── Accept form: PF/CNPJ toggle ── */
+    .tipo-toggle {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .tipo-btn {
+      flex: 1;
+      padding: 0.65rem;
+      border: 2px solid var(--gray-200);
+      border-radius: 10px;
+      background: var(--gray-50);
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s;
+      color: var(--gray-600);
+    }
+    .tipo-btn.active {
+      background: var(--green);
+      border-color: var(--green);
+      color: #fff;
+    }
+
+    .form-section { display: none; }
+    .form-section.visible { display: block; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 560px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--gray-600);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .form-group input {
+      padding: 0.65rem 0.85rem;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.88rem;
+      color: var(--gray-800);
+      background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      outline: none;
+    }
+    .form-group input:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
+    }
+    .form-group input::placeholder { color: var(--gray-400); }
+    .form-separator {
+      margin: 1.25rem 0 1rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--gray-200);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--gray-400);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Counter panel ── */
+    .fin-counter-note {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+      font-size: 0.84rem;
+      color: #92400e;
+      line-height: 1.55;
+      margin-bottom: 1.25rem;
+    }
+    .fin-counter-note strong { color: #78350f; }
+    .fin-counter-textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 0.75rem 0.9rem;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.88rem;
+      color: var(--gray-800);
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .fin-counter-textarea:focus {
+      border-color: var(--yellow);
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.12);
+    }
+    .fin-counter-hint {
+      font-size: 0.76rem;
+      color: var(--gray-400);
+      margin-top: 0.4rem;
+    }
+
+    /* ── Reject panel ── */
+    .fin-reject-note {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+      font-size: 0.84rem;
+      color: #7f1d1d;
+      line-height: 1.55;
+      margin-bottom: 1.25rem;
+    }
+    .fin-reject-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem 0.9rem;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.88rem;
+      color: var(--gray-800);
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .fin-reject-textarea:focus {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.12);
+    }
+
+    /* ── Buttons ── */
+    .btn-fin {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.75rem;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s;
+      text-decoration: none;
+    }
+    .btn-fin:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-fin-green  { background: var(--green); color: #fff; }
+    .btn-fin-green:hover:not(:disabled)  { background: var(--green-dark); transform: translateY(-1px); }
+    .btn-fin-red    { background: var(--red); color: #fff; }
+    .btn-fin-red:hover:not(:disabled)    { background: var(--red-dark); transform: translateY(-1px); }
+    .btn-fin-yellow { background: var(--yellow); color: #fff; }
+    .btn-fin-yellow:hover:not(:disabled) { background: #d97706; transform: translateY(-1px); }
+    .btn-fin-wa     { background: var(--wa); color: #fff; }
+    .btn-fin-wa:hover                    { background: var(--wa-dark); transform: translateY(-1px); }
+    .btn-fin-ghost  { background: transparent; color: var(--gray-600); border: 1.5px solid var(--gray-200); }
+    .btn-fin-ghost:hover { border-color: var(--gray-400); color: var(--gray-800); }
+
+    .btn-row {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* ── Success / feedback ── */
+    .fin-success {
+      display: none;
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      background: #fff;
+      border: 1px solid #bbf7d0;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 2rem;
+    }
+    .fin-success.visible { display: block; animation: panelIn 0.3s ease; }
+    .fin-success-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+    .fin-success h2 { font-size: 1.3rem; font-weight: 700; color: var(--green); margin-bottom: 0.5rem; }
+    .fin-success p  { font-size: 0.88rem; color: var(--gray-600); max-width: 420px; margin: 0 auto; line-height: 1.6; }
+
+    .fin-error-msg {
+      display: none;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: #b91c1c;
+      font-size: 0.83rem;
+      margin-top: 0.75rem;
+    }
+    .fin-error-msg.visible { display: block; }
+  </style>
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header class="fin-header">
+    <div class="fin-brand"><span class="env">env</span><span class="ox">ox</span></div>
+    <a href="/proposta/<%= token %>/view" class="fin-back">← Voltar à proposta</a>
+  </header>
+
+  <!-- ── Main ── -->
+  <div class="fin-wrap">
+
+    <!-- Hero -->
+    <div class="fin-hero">
+      <div class="fin-hero-icon">📋</div>
+      <h1>Próximos <span>Passos</span></h1>
+      <p>Revise o resumo do seu plano e escolha como deseja prosseguir com a proposta.</p>
+    </div>
+
+    <!-- Resumo dos serviços -->
+    <div class="fin-summary-box" id="fin-summary-box">
+      <div class="fin-summary-title">📦 Resumo do Plano Selecionado</div>
+      <div id="fin-summary-content">
+        <p class="fin-summary-empty">Carregando...</p>
+      </div>
+    </div>
+
+    <!-- Action cards -->
+    <div class="fin-section-label">O que você deseja fazer?</div>
+    <div class="fin-cards-grid">
+
+      <!-- Aceitar -->
+      <button class="fin-card fin-card-accept" onclick="showPanel('accept')" type="button">
+        <div class="fin-card-icon">✅</div>
+        <div class="fin-card-title">Aceitar Proposta</div>
+        <div class="fin-card-desc">Ao aceitar, nossa equipe analisará sua proposta e entrará em contato para formalizar contrato, fatura e definir próximos passos.</div>
+        <div class="fin-card-cta">Preencher dados → </div>
+      </button>
+
+      <!-- Contraproposta -->
+      <button class="fin-card fin-card-counter" onclick="showPanel('counter')" type="button">
+        <div class="fin-card-icon">🔄</div>
+        <div class="fin-card-title">Contraproposta</div>
+        <div class="fin-card-desc">Não garante que será aceita, mas caso nossa equipe aprove, você receberá um e-mail com as instruções para a formalização da contratação.</div>
+        <div class="fin-card-cta">Enviar proposta →</div>
+      </button>
+
+      <!-- Rejeitar -->
+      <button class="fin-card fin-card-reject" onclick="showPanel('reject')" type="button">
+        <div class="fin-card-icon">❌</div>
+        <div class="fin-card-title">Rejeitar</div>
+        <div class="fin-card-desc">A proposta será fechada. Você pode nos informar o motivo para que possamos melhorar.</div>
+        <div class="fin-card-cta">Fechar proposta →</div>
+      </button>
+
+      <!-- Falar -->
+      <a class="fin-card fin-card-talk"
+         href="<%= whatsappUrl %>?text=<%= encodeURIComponent('Olá! Tenho dúvidas sobre minha proposta' + (lead.company_name ? ' da ' + lead.company_name : '') + ' e gostaria de conversar com um especialista.') %>"
+         target="_blank">
+        <div class="fin-card-icon">💬</div>
+        <div class="fin-card-title">Falar sobre esta Proposta</div>
+        <div class="fin-card-desc">Você será encaminhado para nosso time de especialistas para tirar qualquer dúvida que tiver antes de tomar sua decisão.</div>
+        <div class="fin-card-cta">Abrir WhatsApp ↗</div>
+      </a>
+
+    </div><!-- /fin-cards-grid -->
+
+    <!-- ══ PANEL: Aceitar ══ -->
+    <div class="fin-panel" id="panel-accept">
+      <div class="fin-panel-header">
+        <div class="fin-panel-icon">✅</div>
+        <div class="fin-panel-title">Aceitar Proposta — Dados Cadastrais</div>
+      </div>
+      <p style="font-size:0.85rem;color:#475569;margin-bottom:1.25rem;line-height:1.6">
+        Ao aceitar essa proposta ela será enviada para nosso time analisar e em seguida o time entrará em contato contigo para formalizar contrato, fatura e definir os detalhes e próximos passos.
+        <br><br>Precisamos de alguns dados para iniciar o processo. Selecione o tipo de contratação:
+      </p>
+
+      <!-- PF / CNPJ toggle -->
+      <div class="tipo-toggle">
+        <button class="tipo-btn active" id="btn-pf" onclick="switchTipo('pf')" type="button">🧑 Pessoa Física (CPF)</button>
+        <button class="tipo-btn" id="btn-cnpj" onclick="switchTipo('cnpj')" type="button">🏢 Pessoa Jurídica (CNPJ)</button>
+      </div>
+
+      <form id="form-accept" onsubmit="submitAceite(event)">
+        <input type="hidden" name="tipo_pessoa" id="input-tipo" value="pf">
+
+        <!-- PF fields -->
+        <div class="form-section visible" id="section-pf">
+          <div class="form-grid">
+            <div class="form-group full">
+              <label>Nome completo *</label>
+              <input type="text" name="nome_completo" placeholder="Seu nome completo" required>
+            </div>
+            <div class="form-group">
+              <label>CPF *</label>
+              <input type="text" name="cpf" placeholder="000.000.000-00" required>
+            </div>
+            <div class="form-group">
+              <label>RG *</label>
+              <input type="text" name="rg" placeholder="00.000.000-0" required>
+            </div>
+            <div class="form-group">
+              <label>Data de Nascimento *</label>
+              <input type="date" name="data_nascimento" required>
+            </div>
+            <div class="form-group full">
+              <label>Endereço Residencial *</label>
+              <input type="text" name="endereco_residencial" placeholder="Rua, número, bairro, cidade — Estado" required>
+            </div>
+            <div class="form-separator full">Contatos</div>
+            <div class="form-group">
+              <label>E-mail responsável pela assinatura *</label>
+              <input type="email" name="email_assinatura" placeholder="assinatura@empresa.com" required>
+            </div>
+            <div class="form-group">
+              <label>E-mail responsável financeiro *</label>
+              <input type="email" name="email_financeiro" placeholder="financeiro@empresa.com" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- CNPJ fields -->
+        <div class="form-section" id="section-cnpj">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>CNPJ *</label>
+              <input type="text" name="cnpj" placeholder="00.000.000/0000-00">
+            </div>
+            <div class="form-group">
+              <label>Razão Social *</label>
+              <input type="text" name="razao_social" placeholder="Nome empresarial">
+            </div>
+            <div class="form-group full">
+              <label>Endereço da Sede *</label>
+              <input type="text" name="endereco_sede" placeholder="Rua, número, bairro, cidade — Estado">
+            </div>
+            <div class="form-separator full">Sócio Representante Legal</div>
+            <div class="form-group full">
+              <label>Nome completo do sócio representante legal *</label>
+              <input type="text" name="nome_socio" placeholder="Nome completo">
+            </div>
+            <div class="form-group">
+              <label>CPF *</label>
+              <input type="text" name="cpf_socio" placeholder="000.000.000-00">
+            </div>
+            <div class="form-group">
+              <label>RG *</label>
+              <input type="text" name="rg_socio" placeholder="00.000.000-0">
+            </div>
+            <div class="form-group">
+              <label>Data de Nascimento *</label>
+              <input type="date" name="data_nascimento_socio">
+            </div>
+            <div class="form-group full">
+              <label>Endereço Residencial do Sócio *</label>
+              <input type="text" name="endereco_residencial_socio" placeholder="Rua, número, bairro, cidade — Estado">
+            </div>
+            <div class="form-separator full">Contatos</div>
+            <div class="form-group">
+              <label>E-mail responsável pela assinatura *</label>
+              <input type="email" name="email_assinatura" placeholder="assinatura@empresa.com">
+            </div>
+            <div class="form-group">
+              <label>E-mail responsável financeiro *</label>
+              <input type="email" name="email_financeiro" placeholder="financeiro@empresa.com">
+            </div>
+          </div>
+        </div>
+
+        <div class="fin-error-msg" id="accept-error"></div>
+        <div class="btn-row">
+          <button type="submit" class="btn-fin btn-fin-green" id="btn-submit-aceite">
+            ✅ Confirmar Aceite
+          </button>
+          <button type="button" class="btn-fin btn-fin-ghost" onclick="closePanel()">Cancelar</button>
+        </div>
+      </form>
+    </div><!-- /panel-accept -->
+
+    <!-- ══ PANEL: Contraproposta ══ -->
+    <div class="fin-panel" id="panel-counter">
+      <div class="fin-panel-header">
+        <div class="fin-panel-icon">🔄</div>
+        <div class="fin-panel-title">Enviar Contraproposta</div>
+      </div>
+      <div class="fin-counter-note">
+        <strong>⚠️ Importante:</strong> A contraproposta <strong>não garante</strong> que será aceita. Caso nossa equipe aprove, você receberá um e-mail com as instruções para formalização da contratação.
+      </div>
+      <textarea class="fin-counter-textarea" id="counter-text" placeholder="Descreva sua contraproposta: ajustes de valor, escopo, prazo ou qualquer condição diferente..." rows="5"></textarea>
+      <p class="fin-counter-hint">Seja específico para agilizar a análise da nossa equipe.</p>
+      <div class="fin-error-msg" id="counter-error"></div>
+      <div class="btn-row">
+        <button type="button" class="btn-fin btn-fin-yellow" onclick="submitContraproposta()">🔄 Enviar Contraproposta</button>
+        <button type="button" class="btn-fin btn-fin-ghost" onclick="closePanel()">Cancelar</button>
+      </div>
+    </div><!-- /panel-counter -->
+
+    <!-- ══ PANEL: Rejeitar ══ -->
+    <div class="fin-panel" id="panel-reject">
+      <div class="fin-panel-header">
+        <div class="fin-panel-icon">❌</div>
+        <div class="fin-panel-title">Rejeitar Proposta</div>
+      </div>
+      <div class="fin-reject-note">
+        Ao confirmar, a proposta será <strong>fechada</strong>. Se desejar uma nova proposta no futuro, entre em contato com nossa equipe.
+      </div>
+      <textarea class="fin-reject-textarea" id="reject-text" placeholder="(Opcional) Nos conte o motivo da rejeição para que possamos melhorar..." rows="4"></textarea>
+      <div class="fin-error-msg" id="reject-error"></div>
+      <div class="btn-row">
+        <button type="button" class="btn-fin btn-fin-red" onclick="submitRejeitar()">❌ Confirmar Rejeição</button>
+        <button type="button" class="btn-fin btn-fin-ghost" onclick="closePanel()">Cancelar</button>
+      </div>
+    </div><!-- /panel-reject -->
+
+    <!-- ══ Success messages ══ -->
+    <div class="fin-success" id="success-accept">
+      <div class="fin-success-icon">🎉</div>
+      <h2>Proposta Aceita!</h2>
+      <p>Ótimo! Sua proposta foi enviada ao nosso time. Em breve entraremos em contato para formalizar o contrato, fatura e definir os próximos passos.</p>
+    </div>
+
+    <div class="fin-success" id="success-counter">
+      <div class="fin-success-icon">📨</div>
+      <h2>Contraproposta Enviada!</h2>
+      <p>Recebemos sua contraproposta. Nossa equipe irá analisá-la e, caso aprovada, você receberá um e-mail com as instruções para a formalização.</p>
+    </div>
+
+    <div class="fin-success" id="success-reject" style="border-color:#fecaca">
+      <div class="fin-success-icon">👋</div>
+      <h2 style="color:var(--red)">Proposta Encerrada</h2>
+      <p>Recebemos sua decisão. Se mudar de ideia ou precisar de uma nova proposta, fique à vontade para entrar em contato conosco.</p>
+    </div>
+
+  </div><!-- /fin-wrap -->
+
+  <!-- ── JS Globals ── -->
+  <script>
+    window.PROPOSAL_TOKEN   = '<%= token %>';
+    window.PROPOSAL_LEAD_ID = <%= lead.id %>;
+    window.COMPANY_NAME     = <%- JSON.stringify(lead.company_name || '') %>;
+    window.LEAD_NAME        = <%- JSON.stringify(lead.name || '') %>;
+
+    <% if (proposal.proposal_items && proposal.proposal_items.length > 0) { %>
+    window.PROPOSAL_ITEMS = <%- JSON.stringify(proposal.proposal_items) %>;
+    <% } else { %>
+    window.PROPOSAL_ITEMS = [];
+    <% } %>
+  </script>
+
+  <script>
+    // ── Render summary ──────────────────────────────────────────────
+    function fmtBRL(v) {
+      return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+
+    function renderSummary() {
+      const box = document.getElementById('fin-summary-content');
+      if (!box) return;
+
+      // Try sessionStorage first (from builder)
+      let sel = null;
+      try { sel = JSON.parse(sessionStorage.getItem('builderSelections')); } catch(e) {}
+
+      // Fallback: proposal items
+      const propItems = window.PROPOSAL_ITEMS || [];
+
+      if (sel && sel.items && sel.items.length > 0) {
+        const items = sel.items;
+        let html = '<ul class="fin-items-list">';
+        items.forEach(i => {
+          html += `<li><span class="fin-item-name">${i.name}</span><span class="fin-item-price">${fmtBRL(i.price)}${i.isMonthly ? '/mês' : ' (único)'}</span></li>`;
+        });
+        html += '</ul>';
+
+        html += '<div class="fin-totals">';
+        if (sel.rawMonthly > 0) {
+          if (sel.discPctM > 0 && sel.monthly < sel.rawMonthly) {
+            html += `<div class="fin-total-row"><span>Mensal original</span><span>${fmtBRL(sel.rawMonthly)}/mês</span></div>`;
+            html += `<div class="fin-total-row disc"><span>Com desconto (${sel.discPctM}%)</span><span class="fin-total-val">${fmtBRL(sel.monthly)}/mês</span></div>`;
+          } else {
+            html += `<div class="fin-total-row main"><span>Total mensal</span><span class="fin-total-val">${fmtBRL(sel.monthly)}/mês</span></div>`;
+          }
+        }
+        if (sel.rawOnetime > 0) {
+          if (sel.discPctO > 0 && sel.onetime < sel.rawOnetime) {
+            html += `<div class="fin-total-row"><span>Único original</span><span>${fmtBRL(sel.rawOnetime)}</span></div>`;
+            html += `<div class="fin-total-row disc"><span>Com desconto (${sel.discPctO}%)</span><span class="fin-total-val">${fmtBRL(sel.onetime)}</span></div>`;
+          } else {
+            html += `<div class="fin-total-row main"><span>Total único</span><span class="fin-total-val">${fmtBRL(sel.onetime)}</span></div>`;
+          }
+        }
+        html += '</div>';
+        box.innerHTML = html;
+
+      } else if (propItems.length > 0) {
+        // Show proposal items
+        const monthly = propItems.filter(i => i.category !== 'onetime');
+        const onetime = propItems.filter(i => i.category === 'onetime');
+        const monthlyTotal = monthly.reduce((s,i) => s + i.price * (i.qty||1), 0);
+        const onetimeTotal = onetime.reduce((s,i) => s + i.price * (i.qty||1), 0);
+
+        let html = '<ul class="fin-items-list">';
+        propItems.forEach(i => {
+          const qty = i.qty || 1;
+          const total = i.price * qty;
+          const unit = i.category === 'onetime' ? ' (único)' : '/mês';
+          html += `<li><span class="fin-item-name">${i.name}${qty > 1 ? ' × ' + qty : ''}</span><span class="fin-item-price">${fmtBRL(total)}${unit}</span></li>`;
+        });
+        html += '</ul><div class="fin-totals">';
+        if (monthlyTotal > 0) html += `<div class="fin-total-row main"><span>Total mensal</span><span class="fin-total-val">${fmtBRL(monthlyTotal)}/mês</span></div>`;
+        if (onetimeTotal > 0) html += `<div class="fin-total-row main" style="margin-top:0.25rem"><span>Total único</span><span class="fin-total-val">${fmtBRL(onetimeTotal)}</span></div>`;
+        html += '</div>';
+        box.innerHTML = html;
+
+      } else {
+        box.innerHTML = '<p class="fin-summary-empty">Nenhum serviço selecionado ainda. <a href="/proposta/' + window.PROPOSAL_TOKEN + '/view" style="color:var(--pink)">Volte à proposta</a> para montar seu plano.</p>';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', renderSummary);
+
+    // ── Panel control ───────────────────────────────────────────────
+    function showPanel(type) {
+      ['accept','counter','reject'].forEach(t => {
+        document.getElementById('panel-' + t).classList.remove('visible');
+      });
+      const panel = document.getElementById('panel-' + type);
+      if (panel) {
+        panel.classList.add('visible');
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    function closePanel() {
+      ['accept','counter','reject'].forEach(t => {
+        document.getElementById('panel-' + t).classList.remove('visible');
+      });
+    }
+
+    // ── PF / CNPJ toggle ───────────────────────────────────────────
+    function switchTipo(tipo) {
+      document.getElementById('input-tipo').value = tipo;
+      document.getElementById('btn-pf').classList.toggle('active', tipo === 'pf');
+      document.getElementById('btn-cnpj').classList.toggle('active', tipo === 'cnpj');
+      document.getElementById('section-pf').classList.toggle('visible', tipo === 'pf');
+      document.getElementById('section-cnpj').classList.toggle('visible', tipo === 'cnpj');
+
+      // Required attrs: only active section fields required
+      document.querySelectorAll('#section-pf input').forEach(el => {
+        el.required = (tipo === 'pf');
+      });
+      document.querySelectorAll('#section-cnpj input').forEach(el => {
+        el.required = (tipo === 'cnpj');
+      });
+    }
+
+    // ── Submit: Aceite ──────────────────────────────────────────────
+    function submitAceite(e) {
+      e.preventDefault();
+      const form  = document.getElementById('form-accept');
+      const btn   = document.getElementById('btn-submit-aceite');
+      const errEl = document.getElementById('accept-error');
+      errEl.classList.remove('visible');
+
+      const data = Object.fromEntries(new FormData(form).entries());
+      data.token   = window.PROPOSAL_TOKEN;
+      data.lead_id = window.PROPOSAL_LEAD_ID;
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Enviando...';
+
+      fetch('/proposta/finalizar-aceitar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success) {
+          document.getElementById('panel-accept').classList.remove('visible');
+          document.querySelector('.fin-cards-grid').style.display = 'none';
+          document.querySelector('.fin-section-label').style.display = 'none';
+          document.getElementById('success-accept').classList.add('visible');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          errEl.textContent = res.error || 'Erro ao processar. Tente novamente.';
+          errEl.classList.add('visible');
+          btn.disabled = false;
+          btn.textContent = '✅ Confirmar Aceite';
+        }
+      })
+      .catch(() => {
+        errEl.textContent = 'Erro de conexão. Verifique sua internet e tente novamente.';
+        errEl.classList.add('visible');
+        btn.disabled = false;
+        btn.textContent = '✅ Confirmar Aceite';
+      });
+    }
+
+    // ── Submit: Contraproposta ──────────────────────────────────────
+    function submitContraproposta() {
+      const text  = (document.getElementById('counter-text').value || '').trim();
+      const errEl = document.getElementById('counter-error');
+      errEl.classList.remove('visible');
+
+      if (!text) {
+        errEl.textContent = 'Descreva sua contraproposta antes de enviar.';
+        errEl.classList.add('visible');
+        return;
+      }
+
+      fetch('/proposta/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: window.PROPOSAL_TOKEN,
+          lead_id: window.PROPOSAL_LEAD_ID,
+          action_type: 'counter',
+          comment: text
+        })
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success) {
+          document.getElementById('panel-counter').classList.remove('visible');
+          document.querySelector('.fin-cards-grid').style.display = 'none';
+          document.querySelector('.fin-section-label').style.display = 'none';
+          document.getElementById('success-counter').classList.add('visible');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          errEl.textContent = res.error || 'Erro ao enviar. Tente novamente.';
+          errEl.classList.add('visible');
+        }
+      })
+      .catch(() => {
+        errEl.textContent = 'Erro de conexão. Tente novamente.';
+        errEl.classList.add('visible');
+      });
+    }
+
+    // ── Submit: Rejeitar ────────────────────────────────────────────
+    function submitRejeitar() {
+      const motivo = (document.getElementById('reject-text').value || '').trim();
+      const errEl  = document.getElementById('reject-error');
+      errEl.classList.remove('visible');
+
+      fetch('/proposta/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: window.PROPOSAL_TOKEN,
+          lead_id: window.PROPOSAL_LEAD_ID,
+          action_type: 'reject',
+          comment: motivo || ''
+        })
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success) {
+          document.getElementById('panel-reject').classList.remove('visible');
+          document.querySelector('.fin-cards-grid').style.display = 'none';
+          document.querySelector('.fin-section-label').style.display = 'none';
+          document.getElementById('success-reject').classList.add('visible');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          errEl.textContent = res.error || 'Erro ao processar. Tente novamente.';
+          errEl.classList.add('visible');
+        }
+      })
+      .catch(() => {
+        errEl.textContent = 'Erro de conexão. Tente novamente.';
+        errEl.classList.add('visible');
+      });
+    }
+  </script>
+
+</body>
+</html>
