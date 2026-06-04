@@ -886,7 +886,7 @@
       if (!bs) return;
       const rect = bs.getBoundingClientRect();
       // é considerado "flutuando" quando já colou no topo (top ≤ 20px) e a página rolou
-      const isFloating = rect.top <= 20 && window.scrollY > 40;
+      const isFloating = rect.top <= 18 && window.scrollY > 60;
       if (isFloating !== wasFloating) {
         bs.classList.toggle('is-floating', isFloating);
         if (isFloating) {

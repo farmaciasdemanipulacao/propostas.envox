@@ -32,7 +32,6 @@ body.proposal-body {
   color: var(--dark);
   margin: 0; padding: 0;
   overflow-y: scroll;
-  overflow-x: hidden;
   scroll-behavior: smooth;
 }
 
@@ -154,6 +153,7 @@ body.proposal-body {
 .pages-container {
   margin-top: calc(var(--header-h) + var(--progress-h));
   padding: 0;
+  overflow-x: hidden;
   /* right padding for step-nav */
 }
 
@@ -166,7 +166,7 @@ body.proposal-body {
   position: relative;
   /* Scroll snap for section-by-section feel */
   scroll-snap-align: start;
-  overflow: hidden;
+  overflow: clip; /* clip não quebra position:sticky como hidden faz */
 }
 
 /* ── PREV/NEXT FLOATING BUTTONS ── */
