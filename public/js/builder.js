@@ -491,6 +491,7 @@
           <div id="discount-combo-alert" class="discount-combo-alert" style="display:none"></div>
         </div>
 
+        <div class="builder-summary-anchor" id="builder-summary-anchor">
         <div class="builder-summary" id="builder-summary">
           <div class="summary-title">✦ Seu Plano${company ? '<br><small style="font-size:0.7rem;font-weight:400;color:#E91E63">' + company + '</small>' : ''}</div>
           <div id="summary-items" class="summary-items">
@@ -522,7 +523,8 @@
               💬 Fale com a gente
             </a>
           </div>
-        </div>
+        </div><!-- /builder-summary -->
+        </div><!-- /anchor -->
       </div>
 
       <!-- Inline actions for custom builder -->
@@ -878,40 +880,41 @@
     init();
   }
 
-  // ── Builder-summary float scroll effect ───────────────────────
+  // ── Builder-summary: fixed ao rolar ───────────────────────
   (function() {
-    let wasFloating = false;
-    function checkFloat() {
-      const bs = document.getElementById('builder-summary');
-      if (!bs) return;
-      const rect = bs.getBoundingClientRect();
-      // é considerado "flutuando" quando já colou no topo (top ≤ 20px) e a página rolou
-      const isFloating = rect.top <= 18 && window.scrollY > 60;
-      if (isFloating !== wasFloating) {
-        bs.classList.toggle('is-floating', isFloating);
-        if (isFloating) {
-          bs.classList.remove('float-bounce');
-          void bs.offsetWidth;
-          bs.classList.add('float-bounce');
-        }
-        wasFloating = isFloating;
+    const bs     = document.getElementById('builder-summary');
+    const anchor = document.getElementById('builder-summary-anchor');
+    if (!bs || !anchor) return;
+
+    const headerH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 70;
+    const GAP = 12;
+    const TOP = headerH + GAP;
+
+    let wasFixed = false;
+
+    function syncFixed() {
+      const ar = anchor.getBoundingClientRect();
+      const shouldFix = ar.top < TOP;
+
+      if (shouldFix === wasFixed) return;
+      wasFixed = shouldFix;
+
+      if (shouldFix) {
+        bs.style.left  = ar.left + 'px';
+        bs.style.width = ar.width + 'px';
+        bs.classList.add('bs-fixed');
+        bs.classList.remove('float-bounce');
+        void bs.offsetWidth;
+        bs.classList.add('float-bounce');
+      } else {
+        bs.classList.remove('bs-fixed', 'float-bounce');
+        bs.style.left  = '';
+        bs.style.width = '';
       }
     }
-    // observa o slide de orçamento para ativar quando ele entrar na tela
-    const builderSection = document.querySelector('[data-slide="7"]');
-    if (builderSection) {
-      const io = new IntersectionObserver(entries => {
-        if (entries[0].isIntersecting) {
-          window.addEventListener('scroll', checkFloat, { passive: true });
-        } else {
-          window.removeEventListener('scroll', checkFloat);
-          const bs = document.getElementById('builder-summary');
-          if (bs) { bs.classList.remove('is-floating','float-bounce'); }
-          wasFloating = false;
-        }
-      }, { threshold: 0.05 });
-      io.observe(builderSection);
-    }
+
+    window.addEventListener('scroll', syncFixed, { passive: true });
+    window.addEventListener('resize', syncFixed, { passive: true });
   })();
 
 })();

@@ -33,9 +33,19 @@
     .svc-price-field:focus,.svc-qty-field:focus{border-color:#E91E63;}
     .svc-qty-field{width:46px;text-align:center;}
     .svc-price-field:disabled,.svc-qty-field:disabled{background:#f5f5f5;color:#bbb;cursor:not-allowed;}
-    .budget-preview{background:#fff;border-radius:12px;border:1px solid #eee;position:sticky;top:80px;transition:box-shadow 0.3s,transform 0.3s;}
-    .budget-preview.is-floating{box-shadow:0 8px 32px rgba(233,30,99,0.18);transform:translateY(2px);border-color:rgba(233,30,99,0.25);}
-    @keyframes floatPulse{0%{transform:translateY(0)}40%{transform:translateY(-5px)}70%{transform:translateY(2px)}100%{transform:translateY(0)}}
+    .budget-preview-anchor { align-self: start; } /* ancora no grid */
+    .budget-preview{
+      background:#fff;border-radius:12px;border:1px solid #eee;
+      transition:box-shadow 0.3s,border-color 0.3s;
+      width:300px;
+    }
+    .budget-preview.bp-fixed{
+      position:fixed;top:24px;
+      box-shadow:0 8px 32px rgba(233,30,99,0.18);
+      border-color:rgba(233,30,99,0.3);
+      z-index:100;
+    }
+    @keyframes floatPulse{0%{transform:translateY(0)}40%{transform:translateY(-6px)}70%{transform:translateY(3px)}100%{transform:translateY(0)}}
     .budget-preview.float-bounce{animation:floatPulse 0.45s ease;}
     .budget-preview-header{padding:0.9rem 1.1rem;background:#1a1a2e;color:#fff;border-radius:12px 12px 0 0;font-size:0.82rem;font-weight:700;}
     .budget-preview-body{padding:0.75rem 1rem;min-height:100px;}
@@ -301,15 +311,16 @@
             </div>
           </div>
 
-          <div>
-            <div class="budget-preview">
+          <div class="budget-preview-anchor" id="budgetAnchor">
+            <div class="budget-preview" id="budgetPreview">
               <div class="budget-preview-header">📊 Resumo do Orçamento</div>
               <div class="budget-preview-body" id="budgetPreviewBody">
                 <p class="preview-empty">Selecione serviços para ver resumo</p>
               </div>
             </div>
             <div id="hiddenItemsContainer"></div>
-          </div>
+            </div><!-- /budget-preview -->
+          </div><!-- /anchor -->
         </div>
 
         <div class="form-actions-sticky">
@@ -745,24 +756,41 @@
     // Init
     updatePreview();
 
-    // ── Sticky float effect ───────────────────────────────────────────
+    // ── Budget preview: fixed ao rolar ─────────────────────────
     (function() {
-      const bp = document.querySelector('.budget-preview');
-      if (!bp) return;
-      let wasFloating = false;
-      window.addEventListener('scroll', function() {
-        const rect = bp.getBoundingClientRect();
-        const isFloating = rect.top <= 82 && window.scrollY > 80;
-        if (isFloating !== wasFloating) {
-          bp.classList.toggle('is-floating', isFloating);
-          if (isFloating) {
-            bp.classList.remove('float-bounce');
-            void bp.offsetWidth; // reflow para reiniciar animação
-            bp.classList.add('float-bounce');
-          }
-          wasFloating = isFloating;
+      const bp     = document.getElementById('budgetPreview');
+      const anchor = document.getElementById('budgetAnchor');
+      if (!bp || !anchor) return;
+
+      let wasFixed = false;
+
+      function syncFixed() {
+        const ar = anchor.getBoundingClientRect();
+        const shouldFix = ar.top < 24;
+
+        if (shouldFix === wasFixed) return;
+        wasFixed = shouldFix;
+
+        if (shouldFix) {
+          // fixa: posiciona exatamente onde o anchor está horizontalmente
+          const left = ar.left;
+          bp.style.left  = left + 'px';
+          bp.style.width = ar.width + 'px';
+          bp.classList.add('bp-fixed');
+          // bounce ao entrar no fixed
+          bp.classList.remove('float-bounce');
+          void bp.offsetWidth;
+          bp.classList.add('float-bounce');
+        } else {
+          bp.classList.remove('bp-fixed', 'float-bounce');
+          bp.style.left  = '';
+          bp.style.width = '';
         }
-      }, { passive: true });
+      }
+
+      window.addEventListener('scroll',  syncFixed, { passive: true });
+      window.addEventListener('resize',  syncFixed, { passive: true });
+      syncFixed();
     })();
   </script>
 </body>
