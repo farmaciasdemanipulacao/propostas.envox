@@ -169,14 +169,14 @@ router.get('/leads/:id/edit', requireAdmin, (req, res) => {
 });
 
 router.post('/leads/:id/edit', requireAdmin, (req, res) => {
-  const { name, whatsapp, email } = req.body;
+  const { name, whatsapp, email, company_name, cargo } = req.body;
   if (!name || !whatsapp || !email) {
     const lead = db.getLeadById(req.params.id);
     const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
     return res.render('admin/leads/edit', { lead, baseUrl, error: 'Todos os campos são obrigatórios.', success: null });
   }
   try {
-    db.updateLead(parseInt(req.params.id), name, whatsapp, email);
+    db.updateLead(parseInt(req.params.id), name, whatsapp, email, company_name, cargo);
     return res.redirect(`/admin/leads/${req.params.id}/edit?success=Lead+atualizado!`);
   } catch (err) {
     const lead = db.getLeadById(req.params.id);

@@ -346,9 +346,9 @@ function getLeadByEmail(email) {
   return getDb().prepare('SELECT * FROM leads WHERE LOWER(email) = LOWER(?)').get(email);
 }
 
-function updateLead(id, name, whatsapp, email) {
-  getDb().prepare(`UPDATE leads SET name=?, whatsapp=?, email=? WHERE id=?`)
-    .run(name, whatsapp.replace(/\D/g, ''), email.trim().toLowerCase(), id);
+function updateLead(id, name, whatsapp, email, companyName, cargo) {
+  getDb().prepare(`UPDATE leads SET name=?, whatsapp=?, email=?, company_name=?, cargo=? WHERE id=?`)
+    .run(name, whatsapp.replace(/\D/g, ''), email.trim().toLowerCase(), companyName || '', cargo || '', id);
 }
 
 function updateLeadCompany(id, companyName, cargo) {
