@@ -673,6 +673,62 @@ router.get('/painel/:token', (req, res) => {
   });
 });
 
+// ── GET: Detalhe de proposta no painel do cliente — /proposta/painel/:token/proposta/:pid ──
+router.get('/painel/:token/proposta/:pid', (req, res) => {
+  const { token, pid } = req.params;
+
+  // Auth via session
+  const proposal = db.getProposalByToken(token);
+  if (!proposal) return res.redirect('/');
+
+  const authed = req.session && req.session.authenticatedTokens &&
+                 req.session.authenticatedTokens.includes(token);
+  if (!authed) return res.redirect(`/proposta/${token}`);
+
+  const viewerLead = getViewerLead(req, db.getProposalByTokenWithLeads(token));
+  if (!viewerLead) return res.redirect(`/proposta/${token}`);
+
+  // Carregar a proposta específica
+  const targetProposal = db.getProposalByTokenWithLeads(
+    // buscar pelo id — precisamos do token da proposta alvo
+    (() => {
+      const allProposals = db.getProposalsByLead(viewerLead.id);
+      const found = allProposals.find(p => p.id === parseInt(pid));
+      return found ? found.token : null;
+    })()
+  );
+
+  if (!targetProposal) return res.redirect(`/proposta/painel/${token}`);
+
+  // Verificar que a proposta pertence ao lead
+  const allLeadProposals = db.getProposalsByLead(viewerLead.id);
+  const belongs = allLeadProposals.some(p => p.id === parseInt(pid));
+  if (!belongs) return res.redirect(`/proposta/painel/${token}`);
+
+  const items = db.getProposalItems(parseInt(pid));
+  const actions = db.getProposalActionsByProposal ? db.getProposalActionsByProposal(parseInt(pid)) : [];
+
+  // Calcular totais
+  let rawM = 0, rawO = 0;
+  items.forEach(it => {
+    const t = (parseFloat(it.price) || 0) * (parseInt(it.qty) || 1);
+    if (it.category === 'onetime') rawO += t; else rawM += t;
+  });
+  const discM = parseFloat(targetProposal.admin_discount_monthly || 0);
+  const discO = parseFloat(targetProposal.admin_discount_onetime || 0);
+  const finM  = rawM * (1 - discM / 100);
+  const finO  = rawO * (1 - discO / 100);
+
+  res.render('client/proposal-detail', {
+    lead: viewerLead,
+    proposal: { ...targetProposal, items },
+    actions,
+    currentToken: token,
+    panelUrl: `/proposta/painel/${token}`,
+    totals: { rawM, rawO, discM, discO, finM, finO }
+  });
+});
+
 // ── API: Solicitar Nova Proposta (pelo painel do cliente) ─────────────────────
 router.post('/solicitar-nova', async (req, res) => {
   const { lead_id, servicos, contexto, budget } = req.body;

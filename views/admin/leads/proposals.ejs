@@ -191,6 +191,7 @@
               <div class="prc-footer-left">
                 <a href="/admin/proposals/<%= p.id %>/edit" class="btn-sm btn-outline">✏️ Editar</a>
                 <a href="/admin/proposals/<%= p.id %>/heat" class="btn-sm btn-heat">🌡️ Calor</a>
+                <a href="/proposta/<%= p.token %>/view-admin" class="btn-sm" style="background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;border-radius:6px;padding:4px 10px;font-size:0.75rem;text-decoration:none" target="_blank">👁️ Ver Proposta</a>
                 <button class="btn-sm btn-copy" onclick="copyLink('<%= p.token %>', this)">🔗 Copiar link</button>
                 <% if (p.created_by_client && !p.client_locked) { %>
                   <button class="btn-sm" style="background:rgba(124,58,237,0.1);color:#7c3aed;border:1px solid rgba(124,58,237,0.3);border-radius:6px;padding:4px 10px;font-size:0.75rem;cursor:pointer"
@@ -218,7 +219,7 @@
   </div>
 
   <!-- ── Modal: Ajustar Valores / Descontos ────────────────────────── -->
-  <div id="discount-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center" onclick="closeDiscountModal(event)">
+  <div id="discount-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.45);align-items:center;justify-content:center" onclick="closeDiscountModal(event)">
     <div style="background:#fff;border-radius:16px;padding:2rem;width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,0.2)" onclick="event.stopPropagation()">
       <h3 style="font-size:1.1rem;font-weight:700;color:#1a1a2e;margin-bottom:0.25rem">💰 Ajustar Valores</h3>
       <p style="font-size:0.8rem;color:#888;margin-bottom:1.5rem">Aplique descontos percentuais e deixe uma mensagem para o cliente.</p>

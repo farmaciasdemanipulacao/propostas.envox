@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proposta<% if (lead.company_name) { %> — <%= lead.company_name %><% } %> — Envox</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --pink:       #E91E63;
+      --pink-dark:  #c2185b;
+      --green:      #10b981;
+      --green-dark: #059669;
+      --amber:      #f59e0b;
+      --amber-dark: #d97706;
+      --red:        #ef4444;
+      --red-dark:   #dc2626;
+      --blue:       #3b82f6;
+      --wa:         #25d366;
+      --wa-dark:    #1da851;
+      --dark:       #1a1a2e;
+      --gray-50:    #f8fafc;
+      --gray-100:   #f1f5f9;
+      --gray-200:   #e2e8f0;
+      --gray-400:   #94a3b8;
+      --gray-600:   #475569;
+      --shadow:     0 4px 24px rgba(0,0,0,0.08);
+      --shadow-lg:  0 8px 40px rgba(0,0,0,0.13);
+      --radius:     14px;
+    }
+
+    body { font-family: 'Poppins', sans-serif; background: var(--gray-50); color: var(--dark); min-height: 100vh; }
+
+    /* ── Topbar ── */
+    .topbar {
+      background: var(--dark); height: 56px; padding: 0 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 200;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+    }
+    .logo { font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: -1px; text-decoration: none; }
+    .logo span { color: var(--pink); }
+    .topbar-back {
+      display: flex; align-items: center; gap: 0.4rem;
+      color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.82rem;
+      transition: color 0.2s;
+    }
+    .topbar-back:hover { color: #fff; }
+
+    /* ── Wrapper ── */
+    .wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
+
+    /* ── Hero ── */
+    .hero { text-align: center; margin-bottom: 2.25rem; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: rgba(233,30,99,0.08); color: var(--pink);
+      border: 1px solid rgba(233,30,99,0.2); border-radius: 20px;
+      padding: 4px 14px; font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem;
+    }
+    .hero h1 { font-size: 1.7rem; font-weight: 800; color: var(--dark); margin-bottom: 0.4rem; }
+    .hero h1 span { color: var(--pink); }
+    .hero-sub { font-size: 0.88rem; color: var(--gray-400); line-height: 1.6; }
+
+    /* ── Status bar ── */
+    .status-bar {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;
+      background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius);
+      padding: 0.9rem 1.25rem; margin-bottom: 1.75rem; box-shadow: var(--shadow);
+    }
+    .status-left { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700;
+    }
+    .pill-active   { background: rgba(16,185,129,0.1);  color: var(--green-dark); }
+    .pill-awaiting { background: rgba(245,158,11,0.12); color: var(--amber-dark); }
+    .pill-accepted { background: rgba(16,185,129,0.12); color: var(--green-dark); }
+    .pill-counter  { background: rgba(59,130,246,0.1);  color: var(--blue); }
+    .pill-rejected { background: rgba(239,68,68,0.1);   color: var(--red-dark); }
+    .pill-archived { background: #f5f5f5; color: #999; }
+    .pill-locked   { background: rgba(124,58,237,0.1);  color: #7c3aed; }
+    .pill-client   { background: rgba(233,30,99,0.08);  color: var(--pink); }
+    .pill-envox    { background: rgba(100,116,139,0.08);color: #64748b; }
+    .date-txt { font-size: 0.75rem; color: var(--gray-400); }
+
+    /* ── Summary box ── */
+    .summary-box {
+      background: #fff; border: 1px solid var(--gray-200);
+      border-radius: var(--radius); padding: 1.5rem;
+      margin-bottom: 1.75rem; box-shadow: var(--shadow);
+    }
+    .box-title {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--gray-400); margin-bottom: 1.1rem;
+    }
+
+    /* Items list */
+    .items-list { list-style: none; margin-bottom: 1.1rem; }
+    .items-list li {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.55rem 0; border-bottom: 1px solid var(--gray-100); font-size: 0.88rem;
+    }
+    .items-list li:last-child { border-bottom: none; }
+    .item-name { color: var(--dark); font-weight: 500; display: flex; align-items: center; gap: 0.4rem; }
+    .item-cat  { font-size: 0.65rem; padding: 2px 6px; border-radius: 5px; font-weight: 700; }
+    .cat-m { background: #eff6ff; color: #1e40af; }
+    .cat-o { background: #f7fee7; color: #3f6212; }
+    .item-price { color: var(--pink); font-weight: 700; font-size: 0.88rem; }
+
+    /* Totals */
+    .totals-grid {
+      display: flex; flex-wrap: wrap; gap: 1.25rem;
+      background: var(--gray-50); border-radius: 10px;
+      padding: 0.9rem 1.1rem; margin-top: 0.5rem;
+    }
+    .total-blk { display: flex; flex-direction: column; gap: 0.1rem; }
+    .total-lbl { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-400); }
+    .total-val { font-size: 1rem; font-weight: 800; color: var(--dark); }
+    .total-val.green { color: var(--green); }
+    .total-val.strike { text-decoration: line-through; font-size: 0.8rem; color: var(--gray-400); font-weight: 400; }
+    .disc-badge { font-size: 0.65rem; background: rgba(16,185,129,0.12); color: var(--green-dark); border-radius: 5px; padding: 1px 5px; font-weight: 700; margin-left: 0.3rem; }
+
+    /* Admin note */
+    .admin-note {
+      background: rgba(233,30,99,0.04); border: 1px solid rgba(233,30,99,0.15);
+      border-radius: 10px; padding: 0.85rem 1.1rem; margin-top: 1.1rem;
+      font-size: 0.84rem; line-height: 1.55; color: #3d0a1c;
+    }
+    .admin-note strong { display: block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--pink); margin-bottom: 0.3rem; }
+
+    /* Action history */
+    .history-box {
+      background: #fff; border: 1px solid var(--gray-200);
+      border-radius: var(--radius); padding: 1.25rem 1.5rem;
+      margin-bottom: 1.75rem; box-shadow: var(--shadow);
+    }
+    .history-list { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.85rem; }
+    .history-item {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      padding: 0.65rem 0.85rem; border-radius: 9px;
+      background: var(--gray-50); border: 1px solid var(--gray-100);
+    }
+    .h-icon { font-size: 1rem; flex-shrink: 0; margin-top: 2px; }
+    .h-body { flex: 1; min-width: 0; }
+    .h-type { font-size: 0.78rem; font-weight: 700; color: var(--dark); }
+    .h-date { font-size: 0.68rem; color: var(--gray-400); margin-top: 0.1rem; }
+    .h-comment { font-size: 0.78rem; color: var(--gray-600); font-style: italic; margin-top: 0.2rem; line-height: 1.5; }
+
+    /* ── Section label ── */
+    .section-lbl {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--gray-400); margin-bottom: 1rem;
+    }
+
+    /* ── Action cards (4 cards) ── */
+    .action-cards {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.75rem;
+    }
+    @media (max-width: 560px) { .action-cards { grid-template-columns: 1fr; } }
+
+    .acard {
+      background: #fff; border: 2px solid var(--gray-200); border-radius: var(--radius);
+      padding: 1.35rem 1.25rem; cursor: pointer;
+      transition: border-color 0.18s, box-shadow 0.18s, transform 0.15s;
+      display: flex; flex-direction: column; gap: 0.45rem; text-align: left;
+      font-family: 'Poppins', sans-serif; width: 100%; box-shadow: var(--shadow);
+    }
+    .acard:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+    .acard-icon  { font-size: 1.8rem; }
+    .acard-title { font-size: 0.95rem; font-weight: 700; color: var(--dark); }
+    .acard-desc  { font-size: 0.78rem; color: var(--gray-600); line-height: 1.5; }
+    .acard-cta   { font-size: 0.76rem; font-weight: 600; margin-top: auto; padding-top: 0.5rem; }
+    .acard-accept:hover  { border-color: var(--green); }   .acard-accept  .acard-cta { color: var(--green); }
+    .acard-counter:hover { border-color: var(--amber); }   .acard-counter .acard-cta { color: var(--amber-dark); }
+    .acard-reject:hover  { border-color: var(--red); }     .acard-reject  .acard-cta { color: var(--red-dark); }
+    .acard-talk:hover    { border-color: var(--wa); }      .acard-talk    .acard-cta { color: var(--wa-dark); }
+    .acard-talk { text-decoration: none; color: inherit; }
+
+    /* ── Action panels ── */
+    .action-panel {
+      display: none; background: #fff; border: 1px solid var(--gray-200);
+      border-radius: var(--radius); padding: 2rem; margin-bottom: 1.75rem;
+      box-shadow: var(--shadow); animation: panelIn 0.22s ease;
+    }
+    .action-panel.open { display: block; }
+    @keyframes panelIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .panel-head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1.25rem; }
+    .panel-icon { font-size: 1.6rem; }
+    .panel-title { font-size: 1.05rem; font-weight: 700; }
+
+    /* Note boxes */
+    .note-amber { background: #fffbeb; border: 1px solid #fde68a; border-radius: 9px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.82rem; line-height: 1.55; color: #92400e; }
+    .note-red   { background: #fef2f2; border: 1px solid #fecaca; border-radius: 9px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.82rem; line-height: 1.55; color: #7f1d1d; }
+
+    /* Form */
+    .tipo-toggle { display: flex; gap: 0.6rem; margin-bottom: 1.25rem; }
+    .tipo-btn {
+      flex: 1; padding: 0.6rem; border: 1.5px solid var(--gray-200);
+      border-radius: 9px; background: var(--gray-50);
+      font-family: 'Poppins', sans-serif; font-size: 0.8rem; font-weight: 600;
+      cursor: pointer; transition: all 0.18s; color: var(--gray-600);
+    }
+    .tipo-btn.active { background: var(--green); border-color: var(--green); color: #fff; }
+
+    .form-section { display: none; }
+    .form-section.visible { display: block; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+    @media (max-width: 560px) { .form-grid { grid-template-columns: 1fr; } }
+    .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label { font-size: 0.7rem; font-weight: 700; color: var(--gray-600); text-transform: uppercase; letter-spacing: 0.04em; }
+    .form-group input {
+      padding: 0.6rem 0.8rem; border: 1.5px solid var(--gray-200); border-radius: 8px;
+      font-family: 'Poppins', sans-serif; font-size: 0.85rem; color: var(--dark);
+      outline: none; transition: border-color 0.15s;
+    }
+    .form-group input:focus { border-color: var(--green); }
+    .form-sep { grid-column: 1 / -1; padding-top: 0.85rem; margin-top: 0.25rem; border-top: 1px solid var(--gray-200); font-size: 0.7rem; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; }
+
+    textarea.fin-ta {
+      width: 100%; min-height: 100px; resize: vertical;
+      border: 1.5px solid var(--gray-200); border-radius: 9px; padding: 0.7rem 0.9rem;
+      font-family: 'Poppins', sans-serif; font-size: 0.85rem; color: var(--dark);
+      outline: none; transition: border-color 0.15s;
+    }
+    textarea.fin-ta:focus { border-color: var(--amber); }
+    textarea.fin-ta.red:focus { border-color: var(--red); }
+
+    .hint-txt { font-size: 0.72rem; color: var(--gray-400); margin-top: 0.4rem; }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: 0.65rem; margin-top: 1.25rem; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+      padding: 0.65rem 1.4rem; border: none; border-radius: 9px;
+      font-family: 'Poppins', sans-serif; font-size: 0.84rem; font-weight: 700;
+      cursor: pointer; transition: all 0.18s; text-decoration: none;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-green  { background: var(--green);  color: #fff; }
+    .btn-green:hover:not(:disabled)  { background: var(--green-dark);  transform: translateY(-1px); }
+    .btn-amber  { background: var(--amber);  color: #fff; }
+    .btn-amber:hover:not(:disabled)  { background: var(--amber-dark);  transform: translateY(-1px); }
+    .btn-red    { background: var(--red);    color: #fff; }
+    .btn-red:hover:not(:disabled)    { background: var(--red-dark);    transform: translateY(-1px); }
+    .btn-ghost  { background: transparent;   color: var(--gray-600); border: 1.5px solid var(--gray-200); }
+    .btn-ghost:hover { border-color: var(--gray-400); color: var(--dark); }
+
+    .error-msg {
+      display: none; background: #fef2f2; border: 1px solid #fecaca;
+      border-radius: 8px; padding: 0.65rem 0.85rem;
+      color: #b91c1c; font-size: 0.8rem; margin-top: 0.75rem;
+    }
+    .error-msg.show { display: block; }
+
+    /* ── Success states ── */
+    .success-state {
+      display: none; text-align: center; padding: 3rem 2rem;
+      background: #fff; border: 1px solid var(--gray-200);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      margin-bottom: 1.75rem; animation: panelIn 0.28s ease;
+    }
+    .success-state.show { display: block; }
+    .success-state .sicon { font-size: 3rem; margin-bottom: 0.85rem; }
+    .success-state h2 { font-size: 1.35rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .success-state p  { font-size: 0.88rem; color: var(--gray-600); line-height: 1.65; max-width: 480px; margin: 0 auto 1.5rem; }
+    .suc-accept h2 { color: var(--green-dark); }
+    .suc-counter h2 { color: var(--amber-dark); }
+    .suc-reject  h2 { color: var(--red-dark); }
+
+    /* Closed state banner */
+    .closed-banner {
+      padding: 1.5rem; border-radius: var(--radius); text-align: center;
+      margin-bottom: 1.75rem; box-shadow: var(--shadow);
+    }
+    .closed-banner h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.35rem; }
+    .closed-banner p  { font-size: 0.84rem; line-height: 1.55; }
+    .closed-accept  { background: rgba(16,185,129,0.07); border: 1px solid rgba(16,185,129,0.25); color: var(--green-dark); }
+    .closed-reject  { background: rgba(239,68,68,0.06);  border: 1px solid rgba(239,68,68,0.2);  color: var(--red-dark); }
+    .closed-awaiting{ background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.25); color: var(--amber-dark); }
+
+    @media (max-width: 600px) {
+      .topbar { padding: 0 1rem; }
+      .wrap { padding: 1.25rem 0.85rem 4rem; }
+      .hero h1 { font-size: 1.35rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <a href="#" class="logo">env<span>ox</span></a>
+    <a href="<%= panelUrl %>" class="topbar-back">← Voltar ao painel</a>
+  </header>
+
+  <!-- JS Globals -->
+  <script>
+    window._TOKEN   = '<%= proposal.token %>';
+    window._LEAD_ID = <%= lead.id %>;
+    window._PID     = <%= proposal.id %>;
+    window._PANEL   = '<%= panelUrl %>';
+    window._WA      = 'https://wa.me/554133000404';
+    window._COMPANY = <%- JSON.stringify(lead.company_name || '') %>;
+    window._LEAD_NAME = <%- JSON.stringify(lead.name || '') %>;
+  </script>
+
+  <div class="wrap">
+
+    <%
+      const items = proposal.items || [];
+      let rawM = totals.rawM, rawO = totals.rawO;
+      const discM = totals.discM, discO = totals.discO;
+      const finM  = totals.finM,  finO  = totals.finO;
+
+      const hasAccept  = proposal.latest_action === 'accept';
+      const hasReject  = proposal.proposal_status === 'rejected' || proposal.latest_action === 'reject';
+      const hasCounter = proposal.latest_action === 'counter';
+      const isAwaiting = proposal.proposal_status === 'awaiting';
+      const isClosed   = hasAccept || hasReject || proposal.proposal_status === 'archived';
+      const canAct     = !isClosed;
+
+      let pillCls, pillTxt;
+      if (hasAccept)  { pillCls = 'pill-accepted'; pillTxt = '🎉 Aceita'; }
+      else if (hasReject) { pillCls = 'pill-rejected'; pillTxt = '❌ Recusada'; }
+      else if (isAwaiting) { pillCls = 'pill-awaiting'; pillTxt = '⏳ Em análise'; }
+      else { pillCls = 'pill-active'; pillTxt = '✅ Ativa'; }
+
+      const dateStr = new Date(proposal.created_at).toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+    %>
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-badge">📋 Proposta Personalizada</div>
+      <h1>Próximos Passos<% if (lead.company_name) { %><br><span><%= lead.company_name %></span><% } %></h1>
+      <p class="hero-sub">Revise os detalhes da sua proposta e escolha como deseja prosseguir.</p>
+    </div>
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <div class="status-left">
+        <span class="pill <%= pillCls %>"><%= pillTxt %></span>
+        <% if (proposal.client_locked) { %><span class="pill pill-locked">🔒 Em análise</span><% } %>
+        <% if (proposal.created_by_client) { %>
+          <span class="pill pill-client">👤 Montada por você</span>
+        <% } else { %>
+          <span class="pill pill-envox">🏢 Montada pela Envox</span>
+        <% } %>
+        <span class="date-txt">📅 <%= dateStr %></span>
+      </div>
+    </div>
+
+    <!-- ── Resumo dos serviços ── -->
+    <div class="summary-box">
+      <div class="box-title">📦 Resumo do Plano</div>
+
+      <% if (items.length > 0) { %>
+        <ul class="items-list">
+          <% items.forEach(it => {
+            const qty   = parseInt(it.qty) || 1;
+            const total = (parseFloat(it.price) || 0) * qty;
+            const isMonthly = it.category !== 'onetime';
+          %>
+          <li>
+            <span class="item-name">
+              <%= it.name %><% if (qty > 1) { %> × <%= qty %><% } %>
+              <span class="item-cat <%= isMonthly ? 'cat-m' : 'cat-o' %>">
+                <%= isMonthly ? 'Mensal' : 'Único' %>
+              </span>
+            </span>
+            <span class="item-price">
+              R$ <%= total.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) %><%= isMonthly ? '/mês' : '' %>
+            </span>
+          </li>
+          <% }); %>
+        </ul>
+
+        <div class="totals-grid">
+          <% if (rawM > 0) { %>
+            <div class="total-blk">
+              <span class="total-lbl">Mensal</span>
+              <% if (discM > 0) { %>
+                <span class="total-val strike">R$ <%= rawM.toLocaleString('pt-BR',{minimumFractionDigits:0}) %>/mês</span>
+                <span class="total-val green">
+                  R$ <%= finM.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) %>/mês
+                  <span class="disc-badge">-<%= discM %>%</span>
+                </span>
+              <% } else { %>
+                <span class="total-val green">R$ <%= finM.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) %>/mês</span>
+              <% } %>
+            </div>
+          <% } %>
+          <% if (rawO > 0) { %>
+            <div class="total-blk">
+              <span class="total-lbl">Implantação</span>
+              <% if (discO > 0) { %>
+                <span class="total-val strike">R$ <%= rawO.toLocaleString('pt-BR',{minimumFractionDigits:0}) %></span>
+                <span class="total-val">
+                  R$ <%= finO.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) %>
+                  <span class="disc-badge">-<%= discO %>%</span>
+                </span>
+              <% } else { %>
+                <span class="total-val">R$ <%= finO.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) %></span>
+              <% } %>
+            </div>
+          <% } %>
+        </div>
+      <% } else { %>
+        <p style="color:var(--gray-400);font-size:0.85rem;font-style:italic">Nenhum serviço listado nesta proposta.</p>
+      <% } %>
+
+      <% if (proposal.admin_notes && proposal.admin_notes.trim()) { %>
+        <div class="admin-note">
+          <strong>💬 Mensagem da Envox</strong>
+          <%= proposal.admin_notes %>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- ── Histórico de decisões ── -->
+    <% if (actions && actions.length > 0) { %>
+    <div class="history-box">
+      <div class="box-title">📜 Histórico</div>
+      <div class="history-list">
+        <% const aIcons = { accept:'✅', counter:'🔄', reject:'❌', email_sent:'📧', default:'📌' };
+           const aLabels = { accept:'Proposta aceita', counter:'Contraproposta enviada', reject:'Proposta recusada', email_sent:'E-mail enviado' };
+        %>
+        <% actions.forEach(ac => { %>
+          <div class="history-item">
+            <span class="h-icon"><%= aIcons[ac.action_type] || aIcons.default %></span>
+            <div class="h-body">
+              <div class="h-type"><%= aLabels[ac.action_type] || ac.action_type %></div>
+              <div class="h-date"><%= new Date(ac.created_at).toLocaleDateString('pt-BR', {day:'2-digit',month:'short',year:'numeric'}) %> às <%= new Date(ac.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) %></div>
+              <% if (ac.comment) { %><div class="h-comment">"<%= ac.comment %>"</div><% } %>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+    <% } %>
+
+    <!-- ── Closed state banners ── -->
+    <% if (hasAccept) { %>
+      <div class="closed-banner closed-accept">
+        <h3>🎉 Proposta Aceita!</h3>
+        <p>Nossa equipe entrará em contato em breve para formalizar o contrato e definir os próximos passos.</p>
+      </div>
+    <% } else if (hasReject) { %>
+      <div class="closed-banner closed-reject">
+        <h3>❌ Proposta Encerrada</h3>
+        <p>Recebemos sua decisão. Se precisar de uma nova proposta, entre em contato com nossa equipe.</p>
+      </div>
+    <% } else if (isAwaiting) { %>
+      <div class="closed-banner closed-awaiting">
+        <h3>⏳ Em análise</h3>
+        <p>Nossa equipe está analisando sua solicitação. Em breve retornaremos com uma resposta.</p>
+      </div>
+    <% } %>
+
+    <% if (canAct) { %>
+
+    <!-- ── Action cards ── -->
+    <div id="action-cards-section">
+      <div class="section-lbl">O que você deseja fazer?</div>
+      <div class="action-cards">
+
+        <button class="acard acard-accept" onclick="openPanel('accept')" type="button">
+          <span class="acard-icon">✅</span>
+          <span class="acard-title">Aceitar Proposta</span>
+          <span class="acard-desc">Nossa equipe analisará e entrará em contato para formalizar contrato e definir os próximos passos.</span>
+          <span class="acard-cta">Preencher dados →</span>
+        </button>
+
+        <button class="acard acard-counter" onclick="openPanel('counter')" type="button">
+          <span class="acard-icon">🔄</span>
+          <span class="acard-title">Contraproposta</span>
+          <span class="acard-desc">Envie condições diferentes. Não garante aceitação, mas será analisada pelo nosso time.</span>
+          <span class="acard-cta">Enviar proposta →</span>
+        </button>
+
+        <button class="acard acard-reject" onclick="openPanel('reject')" type="button">
+          <span class="acard-icon">❌</span>
+          <span class="acard-title">Rejeitar</span>
+          <span class="acard-desc">A proposta será fechada. Você pode informar o motivo para nos ajudar a melhorar.</span>
+          <span class="acard-cta">Fechar proposta →</span>
+        </button>
+
+        <a class="acard acard-talk" id="wa-link" href="#" target="_blank">
+          <span class="acard-icon">💬</span>
+          <span class="acard-title">Falar sobre esta Proposta</span>
+          <span class="acard-desc">Converse com um especialista antes de tomar sua decisão.</span>
+          <span class="acard-cta">Abrir WhatsApp ↗</span>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- ── PANEL: Aceitar ── -->
+    <div class="action-panel" id="panel-accept">
+      <div class="panel-head">
+        <span class="panel-icon">✅</span>
+        <span class="panel-title">Aceitar Proposta — Dados Cadastrais</span>
+      </div>
+      <p style="font-size:0.84rem;color:#475569;margin-bottom:1.25rem;line-height:1.6">
+        Ao aceitar, nossa equipe entrará em contato para formalizar contrato, fatura e próximos passos. Selecione o tipo de contratação:
+      </p>
+      <div class="tipo-toggle">
+        <button class="tipo-btn active" id="btn-pf" onclick="switchTipo('pf')" type="button">🧑 Pessoa Física (CPF)</button>
+        <button class="tipo-btn" id="btn-cnpj" onclick="switchTipo('cnpj')" type="button">🏢 Pessoa Jurídica (CNPJ)</button>
+      </div>
+      <form id="form-accept" onsubmit="submitAceite(event)">
+        <input type="hidden" name="tipo_pessoa" id="input-tipo" value="pf">
+        <!-- PF -->
+        <div class="form-section visible" id="sec-pf">
+          <div class="form-grid">
+            <div class="form-group full"><label>Nome completo *</label><input type="text" name="nome_completo" placeholder="Seu nome completo" required></div>
+            <div class="form-group"><label>CPF *</label><input type="text" name="cpf" placeholder="000.000.000-00" required></div>
+            <div class="form-group"><label>RG *</label><input type="text" name="rg" placeholder="00.000.000-0" required></div>
+            <div class="form-group"><label>Data de Nascimento *</label><input type="date" name="data_nascimento" required></div>
+            <div class="form-group full"><label>Endereço Residencial *</label><input type="text" name="endereco_residencial" placeholder="Rua, número, bairro, cidade — Estado" required></div>
+            <div class="form-sep">Contatos</div>
+            <div class="form-group"><label>E-mail de assinatura *</label><input type="email" name="email_assinatura" placeholder="assinatura@empresa.com" required></div>
+            <div class="form-group"><label>E-mail financeiro *</label><input type="email" name="email_financeiro" placeholder="financeiro@empresa.com" required></div>
+          </div>
+        </div>
+        <!-- CNPJ -->
+        <div class="form-section" id="sec-cnpj">
+          <div class="form-grid">
+            <div class="form-group"><label>CNPJ *</label><input type="text" name="cnpj" placeholder="00.000.000/0000-00"></div>
+            <div class="form-group"><label>Razão Social *</label><input type="text" name="razao_social" placeholder="Nome empresarial"></div>
+            <div class="form-group full"><label>Endereço da Sede *</label><input type="text" name="endereco_sede" placeholder="Rua, número, bairro, cidade — Estado"></div>
+            <div class="form-sep">Sócio Representante Legal</div>
+            <div class="form-group full"><label>Nome completo *</label><input type="text" name="nome_socio" placeholder="Nome completo"></div>
+            <div class="form-group"><label>CPF *</label><input type="text" name="cpf_socio" placeholder="000.000.000-00"></div>
+            <div class="form-group"><label>RG *</label><input type="text" name="rg_socio" placeholder="00.000.000-0"></div>
+            <div class="form-group"><label>Data de Nascimento *</label><input type="date" name="data_nascimento_socio"></div>
+            <div class="form-group full"><label>Endereço Residencial do Sócio *</label><input type="text" name="endereco_residencial_socio" placeholder="Rua, número, bairro, cidade — Estado"></div>
+            <div class="form-sep">Contatos</div>
+            <div class="form-group"><label>E-mail de assinatura *</label><input type="email" name="email_assinatura" placeholder="assinatura@empresa.com"></div>
+            <div class="form-group"><label>E-mail financeiro *</label><input type="email" name="email_financeiro" placeholder="financeiro@empresa.com"></div>
+          </div>
+        </div>
+        <div class="error-msg" id="err-accept"></div>
+        <div class="btn-row">
+          <button type="submit" class="btn btn-green" id="btn-submit-accept">✅ Confirmar Aceite</button>
+          <button type="button" class="btn btn-ghost" onclick="closePanel()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ── PANEL: Contraproposta ── -->
+    <div class="action-panel" id="panel-counter">
+      <div class="panel-head">
+        <span class="panel-icon">🔄</span>
+        <span class="panel-title">Enviar Contraproposta</span>
+      </div>
+      <div class="note-amber">
+        <strong>⚠️ Importante:</strong> A contraproposta <strong>não garante</strong> que será aceita. Caso nossa equipe aprove, você receberá um e-mail com as instruções para formalização.
+      </div>
+      <textarea class="fin-ta" id="counter-text" placeholder="Descreva sua contraproposta: ajustes de valor, escopo, prazo ou qualquer condição diferente..." rows="5"></textarea>
+      <p class="hint-txt">Seja específico para agilizar a análise da nossa equipe.</p>
+      <div class="error-msg" id="err-counter"></div>
+      <div class="btn-row">
+        <button type="button" class="btn btn-amber" onclick="submitCounter()">🔄 Enviar Contraproposta</button>
+        <button type="button" class="btn btn-ghost" onclick="closePanel()">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- ── PANEL: Rejeitar ── -->
+    <div class="action-panel" id="panel-reject">
+      <div class="panel-head">
+        <span class="panel-icon">❌</span>
+        <span class="panel-title">Rejeitar Proposta</span>
+      </div>
+      <div class="note-red">
+        Ao confirmar, a proposta será <strong>fechada</strong>. Se desejar uma nova proposta no futuro, entre em contato com nossa equipe.
+      </div>
+      <textarea class="fin-ta red" id="reject-text" placeholder="(Opcional) Nos conte o motivo da rejeição..." rows="4"></textarea>
+      <div class="error-msg" id="err-reject"></div>
+      <div class="btn-row">
+        <button type="button" class="btn btn-red" onclick="submitRejeitar()">❌ Confirmar Rejeição</button>
+        <button type="button" class="btn btn-ghost" onclick="closePanel()">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- ── Success states ── -->
+    <div class="success-state suc-accept" id="suc-accept">
+      <div class="sicon">🎉</div>
+      <h2>Proposta Aceita!</h2>
+      <p>Ótimo! Nossa equipe entrará em contato em breve para formalizar o contrato e definir os próximos passos.</p>
+      <a href="<%= panelUrl %>" class="btn btn-ghost">← Voltar ao painel</a>
+    </div>
+    <div class="success-state suc-counter" id="suc-counter">
+      <div class="sicon">📨</div>
+      <h2>Contraproposta Enviada!</h2>
+      <p>Recebemos sua contraproposta. Nossa equipe irá analisá-la e, caso aprovada, você receberá um e-mail.</p>
+      <a href="<%= panelUrl %>" class="btn btn-ghost">← Voltar ao painel</a>
+    </div>
+    <div class="success-state suc-reject" id="suc-reject">
+      <div class="sicon">👋</div>
+      <h2>Proposta Encerrada</h2>
+      <p>Recebemos sua decisão. Se precisar de uma nova proposta, entre em contato com nossa equipe.</p>
+      <a href="<%= panelUrl %>" class="btn btn-ghost">← Voltar ao painel</a>
+    </div>
+
+    <% } /* /canAct */ %>
+
+  </div><!-- /wrap -->
+
+  <script>
+    // ── Setup WhatsApp link ────────────────────────────────────────────────────
+    (function() {
+      const company = window._COMPANY || window._LEAD_NAME || '';
+      const msg = encodeURIComponent('Olá! Tenho dúvidas sobre minha proposta' + (company ? ' da ' + company : '') + ' e gostaria de conversar.');
+      const el = document.getElementById('wa-link');
+      if (el) el.href = window._WA + '?text=' + msg;
+    })();
+
+    // ── Panel control ──────────────────────────────────────────────────────────
+    function openPanel(type) {
+      ['accept','counter','reject'].forEach(t => {
+        document.getElementById('panel-' + t).classList.remove('open');
+      });
+      const p = document.getElementById('panel-' + type);
+      if (p) {
+        p.classList.add('open');
+        setTimeout(() => p.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+      }
+    }
+
+    function closePanel() {
+      ['accept','counter','reject'].forEach(t => {
+        const p = document.getElementById('panel-' + t);
+        if (p) p.classList.remove('open');
+      });
+    }
+
+    function hideCardsShowSuccess(type) {
+      const cards = document.getElementById('action-cards-section');
+      if (cards) cards.style.display = 'none';
+      closePanel();
+      const suc = document.getElementById('suc-' + type);
+      if (suc) { suc.classList.add('show'); suc.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+    }
+
+    // ── PF / CNPJ toggle ──────────────────────────────────────────────────────
+    function switchTipo(tipo) {
+      document.getElementById('input-tipo').value = tipo;
+      document.getElementById('btn-pf').classList.toggle('active', tipo === 'pf');
+      document.getElementById('btn-cnpj').classList.toggle('active', tipo === 'cnpj');
+      document.getElementById('sec-pf').classList.toggle('visible', tipo === 'pf');
+      document.getElementById('sec-cnpj').classList.toggle('visible', tipo === 'cnpj');
+      document.querySelectorAll('#sec-pf input').forEach(el => { el.required = (tipo === 'pf'); });
+      document.querySelectorAll('#sec-cnpj input').forEach(el => { el.required = (tipo === 'cnpj'); });
+    }
+
+    // ── Submit: Aceite ─────────────────────────────────────────────────────────
+    function submitAceite(e) {
+      e.preventDefault();
+      const form  = document.getElementById('form-accept');
+      const btn   = document.getElementById('btn-submit-accept');
+      const errEl = document.getElementById('err-accept');
+      errEl.classList.remove('show');
+      const data = Object.fromEntries(new FormData(form).entries());
+      data.token   = window._TOKEN;
+      data.lead_id = window._LEAD_ID;
+      btn.disabled = true; btn.textContent = '⏳ Enviando...';
+      fetch('/proposta/finalizar-aceitar', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(r => r.json()).then(res => {
+        if (res.success) {
+          hideCardsShowSuccess('accept');
+        } else {
+          errEl.textContent = res.error || 'Erro ao processar.';
+          errEl.classList.add('show');
+          btn.disabled = false; btn.textContent = '✅ Confirmar Aceite';
+        }
+      }).catch(() => {
+        errEl.textContent = 'Erro de conexão.';
+        errEl.classList.add('show');
+        btn.disabled = false; btn.textContent = '✅ Confirmar Aceite';
+      });
+    }
+
+    // ── Submit: Contraproposta ─────────────────────────────────────────────────
+    function submitCounter() {
+      const text  = (document.getElementById('counter-text').value || '').trim();
+      const errEl = document.getElementById('err-counter');
+      errEl.classList.remove('show');
+      if (!text) { errEl.textContent = 'Descreva sua contraproposta.'; errEl.classList.add('show'); return; }
+      const btn = document.querySelector('#panel-counter .btn-amber');
+      btn.disabled = true; btn.textContent = '⏳ Enviando...';
+      fetch('/proposta/action', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: window._TOKEN, lead_id: window._LEAD_ID, action_type: 'counter', comment: text })
+      }).then(r => r.json()).then(res => {
+        if (res.success) {
+          hideCardsShowSuccess('counter');
+        } else { errEl.textContent = res.error || 'Erro.'; errEl.classList.add('show'); btn.disabled = false; btn.textContent = '🔄 Enviar Contraproposta'; }
+      }).catch(() => { errEl.textContent = 'Erro de conexão.'; errEl.classList.add('show'); btn.disabled = false; btn.textContent = '🔄 Enviar Contraproposta'; });
+    }
+
+    // ── Submit: Rejeitar ───────────────────────────────────────────────────────
+    function submitRejeitar() {
+      const motivo = (document.getElementById('reject-text').value || '').trim();
+      const errEl  = document.getElementById('err-reject');
+      errEl.classList.remove('show');
+      const btn = document.querySelector('#panel-reject .btn-red');
+      btn.disabled = true; btn.textContent = '⏳ Confirmando...';
+      fetch('/proposta/action', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: window._TOKEN, lead_id: window._LEAD_ID, action_type: 'reject', comment: motivo })
+      }).then(r => r.json()).then(res => {
+        if (res.success) {
+          hideCardsShowSuccess('reject');
+        } else { errEl.textContent = res.error || 'Erro.'; errEl.classList.add('show'); btn.disabled = false; btn.textContent = '❌ Confirmar Rejeição'; }
+      }).catch(() => { errEl.textContent = 'Erro de conexão.'; errEl.classList.add('show'); btn.disabled = false; btn.textContent = '❌ Confirmar Rejeição'; });
+    }
+  </script>
+
+</body>
+</html>

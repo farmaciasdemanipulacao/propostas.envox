@@ -894,12 +894,12 @@
             Aguardando decisão
           <% } %>
         </div>
-        <!-- "Ver Proposta" opens detail modal -->
-        <button type="button" class="btn-fin"
-                style="background:var(--dark);color:#fff;font-size:0.78rem;padding:0.5rem 1rem"
-                onclick="openDetailModal(<%= p.id %>)">
+        <!-- "Ver Proposta" → detail page -->
+        <a href="/proposta/painel/<%= currentToken %>/proposta/<%= p.id %>"
+           class="btn-fin"
+           style="background:var(--dark);color:#fff;font-size:0.78rem;padding:0.5rem 1rem;text-decoration:none">
           📋 Ver Proposta
-        </button>
+        </a>
       </div>
 
     </article>
