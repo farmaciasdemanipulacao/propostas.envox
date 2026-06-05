@@ -673,4 +673,47 @@ router.get('/painel/:token', (req, res) => {
   });
 });
 
+// ── API: Solicitar Nova Proposta (pelo painel do cliente) ─────────────────────
+router.post('/solicitar-nova', async (req, res) => {
+  const { lead_id, servicos, contexto, budget } = req.body;
+
+  if (!lead_id || !servicos || !servicos.trim()) {
+    return res.status(400).json({ error: 'Informe os serviços de interesse.' });
+  }
+
+  const lead = db.getLeadById(parseInt(lead_id));
+  if (!lead) return res.status(404).json({ error: 'Lead não encontrado.' });
+
+  const msg = [
+    `Serviços de interesse: ${servicos.trim()}`,
+    contexto && contexto.trim() ? `Objetivo/Contexto: ${contexto.trim()}` : null,
+    budget   && budget.trim()   ? `Orçamento estimado: ${budget.trim()}` : null,
+  ].filter(Boolean).join('\n');
+
+  try {
+    // Notify admin
+    await emailService.sendAdminNotification({
+      subject: `[Nova Solicitação] ${lead.name}${lead.company_name ? ' — ' + lead.company_name : ''}`,
+      html: `
+        <h2>Nova Solicitação de Proposta</h2>
+        <p><strong>Lead:</strong> ${lead.name} (${lead.email || 'sem e-mail'})</p>
+        ${lead.company_name ? `<p><strong>Empresa:</strong> ${lead.company_name}</p>` : ''}
+        <hr>
+        <pre style="background:#f8f9fa;padding:1rem;border-radius:6px;white-space:pre-wrap">${msg}</pre>
+        <p style="margin-top:1rem">
+          <a href="${process.env.BASE_URL || 'http://localhost:3000'}/admin/leads/${lead.id}/proposals"
+             style="background:#E91E63;color:#fff;padding:0.6rem 1.2rem;border-radius:6px;text-decoration:none;font-weight:700">
+            Ver Lead no Admin
+          </a>
+        </p>
+      `
+    });
+  } catch (e) {
+    console.error('[solicitar-nova] email error:', e.message);
+    // non-fatal — still return success
+  }
+
+  return res.json({ success: true });
+});
+
 module.exports = router;

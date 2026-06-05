@@ -503,6 +503,39 @@
       .container { padding: 1rem 0.75rem 3rem; }
       .card-head { flex-direction: column; }
     }
+
+    /* ── Floating Action Button ── */
+    .fab-btn {
+      position: fixed;
+      bottom: 1.75rem;
+      right: 1.75rem;
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--pink);
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      padding: 0.75rem 1.35rem;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 24px rgba(233,30,99,0.35);
+      transition: all 0.2s;
+    }
+    .fab-btn:hover {
+      background: var(--pink-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(233,30,99,0.45);
+    }
+    .fab-btn:active { transform: translateY(0); }
+    .fab-icon { font-size: 1.1rem; }
+    @media (max-width: 480px) {
+      .fab-btn { bottom: 1.25rem; right: 1.25rem; padding: 0.7rem 1.1rem; font-size: 0.8rem; }
+    }
+
   </style>
 </head>
 <body>
@@ -523,6 +556,27 @@
       <% (proposals || []).forEach(function(p, i) { %>'<%= p.id %>': '<%= p.token %>'<%= i < (proposals.length - 1) ? ',' : '' %>
       <% }); %>
     };
+    // Proposal data for modal (items + discount info) — avoids unsafe inline JSON in onclick
+    window._proposalData = {};
+    <% (proposals || []).forEach(function(p) {
+      const items = p.items || [];
+      let rawM = 0, rawO = 0;
+      items.forEach(function(it) {
+        const t = (parseFloat(it.price)||0) * (parseInt(it.qty)||1);
+        if (it.category === 'onetime') rawO += t; else rawM += t;
+      });
+      const discM = parseFloat(p.admin_discount_monthly || 0);
+      const discO = parseFloat(p.admin_discount_onetime || 0);
+      const finM  = rawM * (1 - discM / 100);
+      const finO  = rawO * (1 - discO / 100);
+    %>
+    window._proposalData[<%= p.id %>] = <%- JSON.stringify({
+      token: p.token,
+      adminNotes: p.admin_notes || '',
+      items: items,
+      discInfo: { discM: discM, discO: discO, rawM: rawM, rawO: rawO, finM: finM, finO: finO }
+    }).replace(/<\/script>/gi, '<\/scr\ipt>') %>;
+    <% }); %>
   </script>
 
   <div class="container">
@@ -570,9 +624,6 @@
 
       const dateStr = new Date(p.created_at).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' });
 
-      /* ── Items JSON for modal ── */
-      const itemsJson = JSON.stringify(items).replace(/</g,'\\u003c').replace(/>/g,'\\u003e');
-      const discInfo = JSON.stringify({ discM, discO, rawM, rawO, finM, finO }).replace(/</g,'\\u003c');
     %>
 
     <article class="proposal-card" id="card-<%= p.id %>">
@@ -583,7 +634,7 @@
         <div class="card-head-left">
           <div class="card-meta">
             <span>📅 <%= dateStr %></span>
-            <% if (p.created_by_client) { %><span class="badge badge-client">👤 Montada por você</span><% } %>
+            <% if (p.created_by_client) { %><span class="badge badge-client">👤 Montada por você</span><% } else { %><span class="badge" style="background:rgba(100,116,139,0.08);color:#64748b">🏢 Montada pela Envox</span><% } %>
             <% if (isLocked) { %><span class="badge badge-locked">🔒 Em análise</span><% } %>
           </div>
           <div class="card-title">
@@ -846,7 +897,7 @@
         <!-- "Ver Proposta" opens detail modal -->
         <button type="button" class="btn-fin"
                 style="background:var(--dark);color:#fff;font-size:0.78rem;padding:0.5rem 1rem"
-                onclick="openDetailModal(<%= p.id %>, <%- itemsJson %>, <%- discInfo %>, '<%= p.token %>')">
+                onclick="openDetailModal(<%= p.id %>)">
           📋 Ver Proposta
         </button>
       </div>
@@ -856,6 +907,59 @@
     <% }); /* /proposals.forEach */ %>
     <% } /* /proposals.length */ %>
   </div><!-- /container -->
+
+
+  <!-- ── Floating Action Button ── -->
+  <button class="fab-btn" onclick="openNovaPropostaModal()" title="Solicitar Nova Proposta">
+    <span class="fab-icon">✨</span>
+    <span class="fab-label">Nova Proposta</span>
+  </button>
+
+  <!-- ── Nova Proposta Modal ── -->
+  <div class="detail-modal-overlay" id="nova-proposta-overlay" onclick="maybeCloseNovaModal(event)">
+    <div class="detail-modal" id="nova-proposta-modal">
+      <div class="modal-header">
+        <div class="modal-brand">env<span>ox</span></div>
+        <button class="modal-close" onclick="closeNovaPropostaModal()">✕ Fechar</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-hero">
+          <div class="modal-hero-icon">✨</div>
+          <h2>Solicitar Nova Proposta</h2>
+          <p>Conte-nos o que você precisa e nossa equipe preparará uma proposta personalizada.</p>
+        </div>
+        <div id="nova-proposta-form">
+          <div style="margin-bottom:0.85rem">
+            <label style="display:block;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#475569;margin-bottom:0.35rem">Serviços de interesse *</label>
+            <textarea class="fin-textarea" id="np-servicos" rows="3"
+              placeholder="Ex: Gestão de tráfego pago, criação de site, automação de marketing..."></textarea>
+          </div>
+          <div style="margin-bottom:0.85rem">
+            <label style="display:block;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#475569;margin-bottom:0.35rem">Objetivo / Contexto</label>
+            <textarea class="fin-textarea" id="np-contexto" rows="3"
+              placeholder="Ex: Quero aumentar vendas online, lançar novo produto, melhorar presença digital..."></textarea>
+          </div>
+          <div style="margin-bottom:0.85rem">
+            <label style="display:block;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#475569;margin-bottom:0.35rem">Orçamento estimado (opcional)</label>
+            <input type="text" id="np-budget"
+              placeholder="Ex: R$ 2.000/mês"
+              style="width:100%;padding:0.55rem 0.75rem;border:1.5px solid #e2e8f0;border-radius:7px;font-family:Poppins,sans-serif;font-size:0.84rem;outline:none;color:#1a1a2e">
+          </div>
+          <div class="error-msg" id="np-err"></div>
+          <div class="btn-row">
+            <button type="button" class="btn-fin btn-green" onclick="submitNovaProposta()">✨ Enviar Solicitação</button>
+            <button type="button" class="btn-fin btn-ghost" onclick="closeNovaPropostaModal()">Cancelar</button>
+          </div>
+        </div>
+        <div id="nova-proposta-success" style="display:none;text-align:center;padding:2rem 1rem">
+          <div style="font-size:2.5rem;margin-bottom:0.75rem">🎉</div>
+          <h3 style="color:#059669;font-size:1.15rem;font-weight:700;margin-bottom:0.4rem">Solicitação Enviada!</h3>
+          <p style="color:#475569;font-size:0.84rem;line-height:1.6">Nossa equipe recebeu sua solicitação e entrará em contato em breve para preparar sua proposta personalizada.</p>
+          <button type="button" class="btn-fin btn-ghost" style="margin-top:1.25rem" onclick="closeNovaPropostaModal()">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ══════════════════════════════════════════════════════════════
        DETAIL MODAL — full proposal view (style of /finalizar)
@@ -1165,10 +1269,27 @@
     let _currentModalPid     = null;
     // _cardTokenMap is pre-initialized from EJS globals above
 
-    function openDetailModal(pid, items, discInfo, token) {
+    function openDetailModal(pid) {
+      const pd = window._proposalData && window._proposalData[pid];
+      const items    = pd ? pd.items    : [];
+      const discInfo = pd ? pd.discInfo : null;
+      const token    = pd ? pd.token    : (_getTokenForCard(pid) || '');
+      const adminNotes = pd ? pd.adminNotes : '';
       _currentModalToken = token;
       _currentModalPid   = pid;
       window._cardTokenMap[pid] = token;
+
+      // Show/hide admin note
+      const noteEl = document.getElementById('modal-admin-note');
+      const noteTxt = document.getElementById('modal-admin-note-text');
+      if (noteEl && noteTxt) {
+        if (adminNotes && adminNotes.trim()) {
+          noteTxt.textContent = adminNotes;
+          noteEl.style.display = '';
+        } else {
+          noteEl.style.display = 'none';
+        }
+      }
 
       // Reset modal state
       ['accept','counter','reject'].forEach(t => {
@@ -1355,9 +1476,66 @@
       }).catch(() => { errEl.textContent = 'Erro de conexão.'; errEl.classList.add('visible'); });
     }
 
+
+    // ── Nova Proposta Modal ────────────────────────────────────────────────────
+
+    function openNovaPropostaModal() {
+      document.getElementById('nova-proposta-form').style.display = '';
+      document.getElementById('nova-proposta-success').style.display = 'none';
+      document.getElementById('np-servicos').value = '';
+      document.getElementById('np-contexto').value = '';
+      document.getElementById('np-budget').value = '';
+      const err = document.getElementById('np-err');
+      if (err) err.classList.remove('visible');
+      document.getElementById('nova-proposta-overlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeNovaPropostaModal() {
+      document.getElementById('nova-proposta-overlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function maybeCloseNovaModal(e) {
+      if (e.target === document.getElementById('nova-proposta-overlay')) closeNovaPropostaModal();
+    }
+
+    function submitNovaProposta() {
+      const servicos = (document.getElementById('np-servicos').value || '').trim();
+      const contexto = (document.getElementById('np-contexto').value || '').trim();
+      const budget   = (document.getElementById('np-budget').value || '').trim();
+      const errEl    = document.getElementById('np-err');
+      errEl.classList.remove('visible');
+      if (!servicos) {
+        errEl.textContent = 'Descreva os serviços de interesse.';
+        errEl.classList.add('visible');
+        return;
+      }
+      const btn = document.querySelector('#nova-proposta-form .btn-green');
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Enviando...'; }
+      fetch('/proposta/solicitar-nova', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lead_id: window._LEAD_ID, servicos, contexto, budget })
+      }).then(r => r.json()).then(res => {
+        if (res.success) {
+          document.getElementById('nova-proposta-form').style.display = 'none';
+          document.getElementById('nova-proposta-success').style.display = '';
+        } else {
+          errEl.textContent = res.error || 'Erro ao enviar. Tente novamente.';
+          errEl.classList.add('visible');
+          if (btn) { btn.disabled = false; btn.textContent = '✨ Enviar Solicitação'; }
+        }
+      }).catch(() => {
+        errEl.textContent = 'Erro de conexão.';
+        errEl.classList.add('visible');
+        if (btn) { btn.disabled = false; btn.textContent = '✨ Enviar Solicitação'; }
+      });
+    }
+
     // ── ESC to close modal ──────────────────────────────────────────────────
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') closeDetailModal();
+      if (e.key === 'Escape') { closeDetailModal(); closeNovaPropostaModal(); }
     });
   </script>
 
