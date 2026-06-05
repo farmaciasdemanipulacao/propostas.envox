@@ -230,6 +230,77 @@ async function sendTestEmail(toEmail) {
   });
 }
 
+// ── Email: Proposta pronta — link para Próximos Passos ────────────
+async function sendFinalizeEmail({ to, leadName, companyName, finalizeLink, whatsapp }) {
+  const displayName = companyName || leadName || 'você';
+  const subject = `📋 Sua proposta Envox está pronta${companyName ? ' — ' + companyName : ''}, ${leadName || ''}`.trim();
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e8e8e8">
+      <!-- Header -->
+      <div style="background:#1a1a2e;padding:28px 36px;text-align:center">
+        <span style="font-size:2rem;font-weight:900;color:#fff;letter-spacing:-1px">env<span style="color:#E91E63">ox</span></span>
+      </div>
+
+      <!-- Body -->
+      <div style="padding:36px 36px 24px">
+        <h1 style="font-size:1.4rem;color:#1a1a2e;margin:0 0 12px;font-family:Arial,sans-serif;line-height:1.3">
+          Olá${leadName ? ', <strong>' + leadName + '</strong>' : ''}! Sua proposta está pronta 🎉
+        </h1>
+        <p style="color:#555;font-size:0.95rem;line-height:1.7;margin:0 0 28px">
+          Preparamos uma proposta personalizada para
+          <strong>${displayName}</strong>. Revise os serviços selecionados e
+          escolha como deseja prosseguir — tudo em uma única tela.
+        </p>
+
+        <!-- CTA principal -->
+        <div style="text-align:center;margin:32px 0">
+          <a href="${finalizeLink}"
+             style="display:inline-block;padding:16px 44px;background:#10b981;color:#ffffff;
+                    text-decoration:none;border-radius:10px;font-weight:800;font-size:1.05rem;
+                    font-family:Arial,sans-serif;letter-spacing:0.01em">
+            ✅ Ver minha Proposta
+          </a>
+        </div>
+
+        <!-- O que você vai encontrar -->
+        <div style="background:#f8fafc;border-radius:10px;padding:20px 24px;margin:24px 0">
+          <p style="margin:0 0 12px;font-size:0.82rem;font-weight:700;color:#1a1a2e;text-transform:uppercase;letter-spacing:0.05em">
+            O que você encontrará na página:
+          </p>
+          <table style="width:100%;border-collapse:collapse">
+            <tr><td style="padding:5px 0;font-size:0.88rem;color:#444">✅ &nbsp;Aceitar a proposta</td></tr>
+            <tr><td style="padding:5px 0;font-size:0.88rem;color:#444">🔄 &nbsp;Enviar uma contraproposta</td></tr>
+            <tr><td style="padding:5px 0;font-size:0.88rem;color:#444">💬 &nbsp;Falar com um especialista</td></tr>
+            <tr><td style="padding:5px 0;font-size:0.88rem;color:#444">❌ &nbsp;Recusar a proposta</td></tr>
+          </table>
+        </div>
+
+        <!-- Credenciais -->
+        <div style="border:1px solid #e2e8f0;border-radius:8px;padding:16px 20px;margin-top:8px">
+          <p style="margin:0 0 8px;font-size:0.8rem;font-weight:700;color:#1a1a2e">Seus dados de acesso:</p>
+          <p style="margin:0;font-size:0.85rem;color:#555;line-height:1.8">
+            📱 &nbsp;WhatsApp: <strong>${whatsapp || 'não cadastrado'}</strong><br>
+            📧 &nbsp;E-mail: <strong>${to}</strong>
+          </p>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div style="padding:18px 36px;background:#f8fafc;border-top:1px solid #e8e8e8;text-align:center;font-size:0.75rem;color:#aaa">
+        © ${new Date().getFullYear()} Envox Agência Digital · Curitiba, PR<br>
+        Dúvidas? Acesse: <a href="${finalizeLink}" style="color:#E91E63">${finalizeLink}</a>
+      </div>
+    </div>`;
+
+  return sendMail({
+    to,
+    subject,
+    html,
+    text: `Olá ${leadName || ''}!\n\nSua proposta Envox está pronta.\nAcesse: ${finalizeLink}\n\nDados de acesso:\n- WhatsApp: ${whatsapp || ''}\n- E-mail: ${to}\n\n— Envox Agência Digital`,
+  });
+}
+
 // ── Notificação para o administrador ──────────────────────────────
 async function sendAdminNotification({ subject, body }) {
   const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
@@ -270,5 +341,6 @@ module.exports = {
   sendSharedProposalEmail,
   sendAdminNotification,
   sendPlanEmail,
+  sendFinalizeEmail,
   sendTestEmail,
 };

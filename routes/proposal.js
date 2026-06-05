@@ -342,31 +342,78 @@ router.post('/request-new', async (req, res) => {
   }
 });
 
-// ── API: Enviar plano por email ───────────────────────────────────────────────
+// ── API: Enviar proposta por email (link para /finalizar) ─────────────────────
 router.post('/send-plan-email', async (req, res) => {
-  const { token, lead_id, email, plan_html } = req.body;
-  if (!email) return res.status(400).json({ error: 'Email obrigatório' });
-  const proposal = token ? db.getProposalByToken(token) : null;
-  const resolvedLeadId = parseInt(lead_id) || null;
-  const leadData = resolvedLeadId ? db.getLeadById(resolvedLeadId) : null;
+  const { token, lead_id } = req.body;
+
+  if (!token) return res.status(400).json({ error: 'Token obrigatório' });
+
+  const proposal = db.getProposalByToken(token);
+  if (!proposal) return res.status(404).json({ error: 'Proposta não encontrada' });
+
+  let resolvedLeadId = parseInt(lead_id) || null;
+  let leadData = resolvedLeadId ? db.getLeadById(resolvedLeadId) : null;
+
+  // Fallback: se lead_id não foi passado (modo proposta pronta / admin),
+  // buscar o lead primário vinculado à proposta
+  if (!leadData) {
+    try {
+      const proposalWithLeads = db.getProposalByTokenWithLeads(token);
+      if (proposalWithLeads && proposalWithLeads.leads && proposalWithLeads.leads.length > 0) {
+        // Preferir lead primário; se não houver flag, pegar o primeiro
+        leadData = proposalWithLeads.leads.find(l => l.is_primary) || proposalWithLeads.leads[0];
+        resolvedLeadId = leadData ? leadData.id : null;
+      }
+    } catch(e) { /* ignora erro de busca */ }
+  }
+
+  // Email do lead — obrigatório
+  const toEmail = leadData ? leadData.email : null;
+  if (!toEmail) return res.status(400).json({ error: 'Lead sem email cadastrado. Atualize o cadastro do lead no painel admin.' });
+
+  const baseUrl = (process.env.BASE_URL || 'https://envox.com.br').replace(/\/$/, '');
+  const finalizeLink = `${baseUrl}/proposta/${token}/finalizar`;
+
   try {
-    await emailService.sendPlanEmail({
-      to: email,
-      leadName: leadData ? leadData.name : '',
-      companyName: leadData ? (leadData.company_name || '') : '',
-      planHtml: plan_html || ''
+    // 1. Enviar email com link para /finalizar
+    const result = await emailService.sendFinalizeEmail({
+      to:          toEmail,
+      leadName:    leadData.name || '',
+      companyName: leadData.company_name || '',
+      finalizeLink,
+      whatsapp:    leadData.whatsapp || ''
     });
-    if (resolvedLeadId) {
-      db.logEvent(resolvedLeadId, null, 'plan_email_sent', { to: email }, proposal ? proposal.id : null);
+
+    if (!result.ok && !result.skipped) {
+      console.error('[SendPlanEmail] Falha SMTP:', result.error);
+      return res.status(500).json({ error: 'Erro ao enviar email: ' + (result.error || 'tente novamente') });
     }
+
+    // 2. Registrar ação de interesse (sinal quente)
+    try {
+      db.saveProposalAction(proposal.id, resolvedLeadId, 'email_sent', 'Lead solicitou envio da proposta por email', null);
+    } catch(e) { /* não bloquear se falhar */ }
+
+    // 3. Log de evento detalhado
+    if (resolvedLeadId) {
+      db.logEvent(resolvedLeadId, null, 'plan_email_sent', {
+        to: toEmail,
+        finalize_link: finalizeLink,
+        skipped: result.skipped || false
+      }, proposal.id);
+    }
+
+    // 4. Notificar admin (não bloqueante)
+    const leadLabel = leadData.name + (leadData.company_name ? ` — ${leadData.company_name}` : '');
     emailService.sendAdminNotification({
-      subject: `📧 Cliente enviou plano por email — ${leadData ? leadData.name : email}`,
-      body: `O lead ${leadData ? leadData.name : email} enviou seu plano personalizado para ${email}.`
+      subject: `🔥 Lead aquecido: proposta enviada por email — ${leadLabel}`,
+      body: `${leadLabel} solicitou o envio da proposta para o email ${toEmail}.\n\nIsso indica alto interesse! Acesse o painel para acompanhar.\n\nLink de finalização: ${finalizeLink}`
     }).catch(() => {});
-    return res.json({ success: true });
+
+    return res.json({ success: true, skipped: result.skipped || false });
   } catch(err) {
     console.error('[SendPlanEmail] Error:', err);
-    return res.status(500).json({ error: 'Erro ao enviar email' });
+    return res.status(500).json({ error: 'Erro interno ao enviar email' });
   }
 });
 
@@ -383,8 +430,25 @@ router.get('/:token/finalizar', (req, res) => {
   const proposal = db.getProposalByTokenWithLeads(token);
   if (!proposal) return res.redirect(`/proposta/${token}`);
 
+  // Proposta já rejeitada não pode ser finalizada
+  if (proposal.proposal_status === 'rejected') {
+    return res.redirect(`/proposta/${token}/view`);
+  }
+
   const viewerLead = getViewerLead(req, proposal);
   if (!viewerLead) return res.redirect(`/proposta/${token}`);
+
+  // Marcar proposta como "awaiting" (aguardando decisão) se ainda ativa
+  if (proposal.proposal_status === 'active') {
+    try { db.setProposalStatus(proposal.id, 'awaiting'); } catch(e) {}
+  }
+
+  // Registrar evento de alta intenção
+  try {
+    db.logEvent(viewerLead.id, null, 'finalize_page_opened', {
+      proposal_status_before: proposal.proposal_status
+    }, proposal.id);
+  } catch(e) {}
 
   const proposalItems = db.getProposalItems(proposal.id);
 

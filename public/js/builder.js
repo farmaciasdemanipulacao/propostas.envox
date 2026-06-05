@@ -338,7 +338,7 @@
     fetch('/proposta/send-plan-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token })
+      body: JSON.stringify({ token, lead_id: window.PROPOSAL_LEAD_ID })
     })
     .then(r => r.json())
     .then(data => {
@@ -785,33 +785,25 @@
     window.open(waUrl(msg), '_blank');
   };
 
-  // ── Enviar plano por email (builder) ───────────────────────────────
+  // ── Enviar proposta por email (link para /finalizar) ──────────────
   window.sendBuilderPlanEmail = function() {
-    const token   = window.PROPOSAL_TOKEN;
-    const items   = window._builderItems || [];
-    const monthly = window._builderMonthlyDisc || window._builderMonthly || 0;
-    const onetime = window._builderOnetimeDisc || window._builderOnetime || 0;
-    if (!token || items.length === 0) return;
+    const token  = window.PROPOSAL_TOKEN;
+    const leadId = window.PROPOSAL_LEAD_ID;
+    if (!token) return;
 
     const btn    = document.getElementById('btn-send-plan-email');
     const sentEl = document.getElementById('builder-email-sent');
     if (btn) { btn.disabled = true; btn.textContent = '📨 Enviando...'; }
 
-    // Build simple plan HTML
-    const listHTML = items.map(i => `<li>${i.name} — ${fmtBRL(i.price)}</li>`).join('');
-    let planHtml = `<ul style="padding-left:1.5rem;line-height:1.8">${listHTML}</ul>`;
-    if (monthly > 0) planHtml += `<p style="margin-top:1rem"><strong>Total mensal: ${fmtBRL(monthly)}/mês</strong></p>`;
-    if (onetime > 0) planHtml += `<p><strong>Total único: ${fmtBRL(onetime)}</strong></p>`;
-
     fetch('/proposta/send-plan-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, planHtml, source: 'builder' })
+      body: JSON.stringify({ token, lead_id: leadId })
     })
     .then(r => r.json())
     .then(data => {
       if (data.success) {
-        if (sentEl) { sentEl.style.display = 'block'; }
+        if (sentEl) { sentEl.style.display = 'block'; sentEl.textContent = '✅ E-mail enviado! Verifique sua caixa de entrada.'; }
         if (btn) btn.style.display = 'none';
       } else {
         alert('Erro ao enviar: ' + (data.error || 'tente novamente.'));

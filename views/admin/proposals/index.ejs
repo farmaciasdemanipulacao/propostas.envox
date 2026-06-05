@@ -85,8 +85,8 @@
               </td>
               <td>
                 <% if (proposal.latest_action) { %>
-                  <% const actionColors = { accept: '#16a34a', counter: '#1565c0', reject: '#dc2626' }; %>
-                  <% const actionLabels = { accept: '✅ Aceita', counter: '🔄 Contra-proposta', reject: '❌ Rejeitada' }; %>
+                  <% const actionColors = { accept: '#16a34a', counter: '#1565c0', reject: '#dc2626', email_sent: '#d97706' }; %>
+                  <% const actionLabels = { accept: '✅ Aceita', counter: '🔄 Contra-proposta', reject: '❌ Rejeitada', email_sent: '🔥 Email enviado' }; %>
                   <span style="font-size:0.78rem;font-weight:600;color:<%= actionColors[proposal.latest_action] || '#666' %>">
                     <%= actionLabels[proposal.latest_action] || proposal.latest_action %>
                   </span>
@@ -97,6 +97,10 @@
               <td>
                 <% if (proposal.proposal_status === 'archived') { %>
                   <span class="badge" style="background:#f5f5f5;color:#999">Arquivada</span>
+                <% } else if (proposal.proposal_status === 'awaiting') { %>
+                  <span class="badge" style="background:rgba(217,119,6,0.12);color:#d97706;font-weight:700">⏳ Aguardando</span>
+                <% } else if (proposal.proposal_status === 'rejected') { %>
+                  <span class="badge" style="background:rgba(220,38,38,0.1);color:#dc2626;font-weight:700">❌ Rejeitada</span>
                 <% } else { %>
                   <span class="badge badge-success">Ativa</span>
                 <% } %>
