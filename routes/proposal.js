@@ -177,6 +177,11 @@ router.get('/:token/view', (req, res) => {
     });
   }
 
+  // Se proposta está bloqueada (lead enviou email ou foi para /finalizar), redirecionar para painel
+  if (proposal.client_locked) {
+    return res.redirect(`/proposta/painel/${token}`);
+  }
+
   // Montar itens e enriquecer proposta para o viewer
   const proposalItems = db.getProposalItems(proposal.id);
   const enrichedProposal = {
@@ -403,7 +408,13 @@ router.post('/send-plan-email', async (req, res) => {
       }, proposal.id);
     }
 
-    // 4. Notificar admin (não bloqueante)
+    // 4. Bloquear slide para o lead (proposta travada após envio do email)
+    try { db.setClientLocked(proposal.id, true); } catch(e) {}
+
+    // 5. Marcar como criada pelo cliente (builder) + modo 'ready'
+    try { db.markCreatedByClient(proposal.id); } catch(e) {}
+
+    // 6. Notificar admin (não bloqueante)
     const leadLabel = leadData.name + (leadData.company_name ? ` — ${leadData.company_name}` : '');
     emailService.sendAdminNotification({
       subject: `🔥 Lead aquecido: proposta enviada por email — ${leadLabel}`,
@@ -442,6 +453,10 @@ router.get('/:token/finalizar', (req, res) => {
   if (proposal.proposal_status === 'active') {
     try { db.setProposalStatus(proposal.id, 'awaiting'); } catch(e) {}
   }
+
+  // Bloquear slide e marcar como criada pelo cliente ao abrir /finalizar
+  try { db.setClientLocked(proposal.id, true); } catch(e) {}
+  try { db.markCreatedByClient(proposal.id); } catch(e) {}
 
   // Registrar evento de alta intenção
   try {
@@ -622,6 +637,40 @@ router.post('/share', async (req, res) => {
     console.error('[Share] Error:', err);
     return res.status(500).json({ error: 'Failed to share proposal' });
   }
+});
+
+// ── GET: Painel do cliente — /proposta/painel/:leadToken ──────────────────────
+// O lead acessa via link autenticado com seu token de proposta.
+// Mostra todas as propostas vinculadas a ele.
+router.get('/painel/:token', (req, res) => {
+  const { token } = req.params;
+
+  // Verificar autenticação pelo token de qualquer proposta desse lead
+  const proposal = db.getProposalByToken(token);
+  if (!proposal) return res.redirect('/');
+
+  // Verificar sessão autenticada
+  const authed = req.session && req.session.authenticatedTokens &&
+                 req.session.authenticatedTokens.includes(token);
+  if (!authed) return res.redirect(`/proposta/${token}`);
+
+  const viewerLead = getViewerLead(req, db.getProposalByTokenWithLeads(token));
+  if (!viewerLead) return res.redirect(`/proposta/${token}`);
+
+  // Buscar todas as propostas do lead
+  const rawProposals = db.getProposalsByLead(viewerLead.id);
+
+  // Enriquecer com itens
+  const proposals = rawProposals.map(p => ({
+    ...p,
+    items: db.getProposalItems(p.id)
+  }));
+
+  res.render('client/dashboard', {
+    lead: viewerLead,
+    proposals,
+    currentToken: token
+  });
 });
 
 module.exports = router;

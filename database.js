@@ -46,9 +46,27 @@ function initDatabase() {
       proposal_mode TEXT DEFAULT 'both',
       proposal_status TEXT DEFAULT 'active',
       proposal_sent_at DATETIME,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      created_by_client INTEGER DEFAULT 0,
+      client_locked INTEGER DEFAULT 0,
+      admin_discount_monthly REAL DEFAULT 0,
+      admin_discount_onetime REAL DEFAULT 0,
+      admin_notes TEXT DEFAULT ''
     )
   `);
+
+  // ── Migrations: adiciona colunas se não existirem (banco legado) ──────────────
+  const existingCols = db.pragma('table_info(proposals)').map(c => c.name);
+  if (!existingCols.includes('created_by_client'))
+    db.exec('ALTER TABLE proposals ADD COLUMN created_by_client INTEGER DEFAULT 0');
+  if (!existingCols.includes('client_locked'))
+    db.exec('ALTER TABLE proposals ADD COLUMN client_locked INTEGER DEFAULT 0');
+  if (!existingCols.includes('admin_discount_monthly'))
+    db.exec('ALTER TABLE proposals ADD COLUMN admin_discount_monthly REAL DEFAULT 0');
+  if (!existingCols.includes('admin_discount_onetime'))
+    db.exec('ALTER TABLE proposals ADD COLUMN admin_discount_onetime REAL DEFAULT 0');
+  if (!existingCols.includes('admin_notes'))
+    db.exec("ALTER TABLE proposals ADD COLUMN admin_notes TEXT DEFAULT ''");
 
   // ══════════════════════════════════════════════════════════════════════
   // PROPOSAL_LEADS — junction N:N
@@ -478,6 +496,21 @@ function setProposalStatus(proposalId, status) {
     .run(status, proposalId);
 }
 
+function setClientLocked(proposalId, locked) {
+  getDb().prepare(`UPDATE proposals SET client_locked = ? WHERE id = ?`)
+    .run(locked ? 1 : 0, proposalId);
+}
+
+function markCreatedByClient(proposalId) {
+  getDb().prepare(`UPDATE proposals SET created_by_client = 1, proposal_mode = 'ready', proposal_status = 'active' WHERE id = ?`)
+    .run(proposalId);
+}
+
+function updateAdminDiscounts(proposalId, discountMonthly, discountOnetime, notes) {
+  getDb().prepare(`UPDATE proposals SET admin_discount_monthly = ?, admin_discount_onetime = ?, admin_notes = ? WHERE id = ?`)
+    .run(parseFloat(discountMonthly) || 0, parseFloat(discountOnetime) || 0, notes || '', proposalId);
+}
+
 function deleteProposal(proposalId) {
   // ON DELETE CASCADE cuida de proposal_leads, proposal_items, proposal_actions, proposal_shared_leads
   getDb().prepare(`DELETE FROM proposals WHERE id = ?`).run(proposalId);
@@ -572,11 +605,15 @@ function getProposalsByLead(leadId) {
   return getDb().prepare(`
     SELECT p.*, pl.is_primary, pl.linked_at,
       (SELECT COUNT(*) FROM proposal_leads pl2 WHERE pl2.proposal_id = p.id) as leads_count,
-      (SELECT COUNT(*) FROM proposal_items pi WHERE pi.proposal_id = p.id) as items_count
+      (SELECT COUNT(*) FROM proposal_items pi WHERE pi.proposal_id = p.id) as items_count,
+      (SELECT pa.action_type FROM proposal_actions pa WHERE pa.proposal_id = p.id ORDER BY pa.created_at DESC LIMIT 1) as latest_action,
+      (SELECT pa.created_at FROM proposal_actions pa WHERE pa.proposal_id = p.id ORDER BY pa.created_at DESC LIMIT 1) as latest_action_at,
+      (SELECT pa.comment FROM proposal_actions pa WHERE pa.proposal_id = p.id AND pa.action_type = 'counter' ORDER BY pa.created_at DESC LIMIT 1) as latest_counter_comment,
+      (SELECT pa.comment FROM proposal_actions pa WHERE pa.proposal_id = p.id AND pa.action_type = 'accept' ORDER BY pa.created_at DESC LIMIT 1) as accept_comment
     FROM proposals p
     JOIN proposal_leads pl ON pl.proposal_id = p.id
     WHERE pl.lead_id = ?
-    ORDER BY pl.linked_at DESC
+    ORDER BY p.created_at DESC
   `).all(leadId);
 }
 
@@ -1105,7 +1142,8 @@ module.exports = {
   createProposal, getProposalById, getProposalByToken, getProposalByTokenWithLeads,
   getProposalWithLeads, getAllProposals,
   updateProposalContent, updateProposalMode, markProposalSent,
-  setProposalStatus, deleteProposal, archiveProposal,
+  setProposalStatus, setClientLocked, markCreatedByClient,
+  updateAdminDiscounts, deleteProposal, archiveProposal,
   // Junction
   linkLeadToProposal, unlinkLeadFromProposal, getLeadsByProposal, getProposalsByLead,
   // Proposal Items

@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meu Painel — Envox</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --pink: #E91E63;
+      --pink-dark: #c2185b;
+      --dark: #1a1a2e;
+      --green: #10b981;
+      --amber: #d97706;
+      --blue: #1565c0;
+      --red: #dc2626;
+      --gray: #f4f6fb;
+      --border: #e5e7eb;
+      --text: #333;
+      --muted: #888;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--gray);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Top Bar ── */
+    .topbar {
+      background: var(--dark);
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+    }
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -1px;
+      text-decoration: none;
+    }
+    .logo span { color: var(--pink); }
+    .topbar-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .topbar-name {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.7);
+      font-weight: 500;
+    }
+    .topbar-name strong { color: #fff; }
+
+    /* ── Container ── */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    .page-hero {
+      margin-bottom: 2rem;
+    }
+    .page-hero h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 0.3rem;
+    }
+    .page-hero p {
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    /* ── Empty ── */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+    .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .empty-state h3 { color: var(--dark); margin-bottom: 0.5rem; }
+    .empty-state p { color: var(--muted); font-size: 0.88rem; }
+
+    /* ── Proposal Cards ── */
+    .proposals-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .proposal-card {
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+    .proposal-card:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+
+    .card-header {
+      padding: 1.2rem 1.5rem;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-header-left { flex: 1; min-width: 0; }
+    .card-date {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--dark);
+      line-height: 1.3;
+    }
+    .card-subtitle {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .badge-active     { background: rgba(46,125,50,0.1);    color: #2e7d32; }
+    .badge-awaiting   { background: rgba(217,119,6,0.12);   color: var(--amber); }
+    .badge-accepted   { background: rgba(16,185,129,0.12);  color: #059669; }
+    .badge-counter    { background: rgba(21,101,192,0.1);   color: var(--blue); }
+    .badge-rejected   { background: rgba(220,38,38,0.1);    color: var(--red); }
+    .badge-archived   { background: #f5f5f5;                color: #999; }
+    .badge-locked     { background: rgba(124,58,237,0.1);   color: #7c3aed; }
+    .badge-client     { background: rgba(233,30,99,0.09);   color: var(--pink); }
+
+    /* Card body */
+    .card-body {
+      padding: 1rem 1.5rem;
+    }
+
+    /* Items grid */
+    .items-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .item-chip {
+      background: var(--gray);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #555;
+    }
+    .item-chip.monthly { border-color: #bfdbfe; background: #eff6ff; color: #1e40af; }
+    .item-chip.onetime { border-color: #d9f99d; background: #f7fee7; color: #3f6212; }
+
+    /* Totals */
+    .card-totals {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      padding: 0.75rem 1rem;
+      background: var(--gray);
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+    .total-item { display: flex; flex-direction: column; }
+    .total-label { font-size: 0.68rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .total-value { font-size: 1rem; font-weight: 700; color: var(--dark); }
+    .total-value.green { color: var(--green); }
+
+    /* Discount badge */
+    .discount-tag {
+      font-size: 0.7rem;
+      background: rgba(16,185,129,0.12);
+      color: #059669;
+      border-radius: 6px;
+      padding: 1px 6px;
+      font-weight: 700;
+      margin-left: 0.3rem;
+    }
+
+    /* Action section */
+    .card-action-row {
+      padding: 0.75rem 1.5rem;
+      background: #fafafa;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .action-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+    }
+    .action-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-accept  { background: var(--green); }
+    .dot-counter { background: var(--blue); }
+    .dot-reject  { background: var(--red); }
+    .dot-email   { background: var(--amber); }
+    .dot-active  { background: #94a3b8; }
+
+    .card-btns {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 7px 16px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      font-family: 'Poppins', sans-serif;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+    }
+    .btn-primary {
+      background: var(--pink);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--pink-dark); }
+    .btn-green {
+      background: var(--green);
+      color: #fff;
+    }
+    .btn-green:hover { background: #059669; }
+    .btn-outline {
+      background: #fff;
+      color: var(--dark);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { background: var(--gray); }
+    .btn-disabled {
+      background: #e5e7eb;
+      color: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    /* Counter response block */
+    .counter-response {
+      background: rgba(21,101,192,0.05);
+      border: 1px solid rgba(21,101,192,0.2);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.82rem;
+      color: #1e3a5f;
+    }
+    .counter-response strong { display: block; margin-bottom: 0.3rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--blue); }
+
+    /* Admin notes block */
+    .admin-notes {
+      background: rgba(233,30,99,0.04);
+      border: 1px solid rgba(233,30,99,0.15);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.82rem;
+      color: #3d0a1c;
+    }
+    .admin-notes strong { display: block; margin-bottom: 0.3rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--pink); }
+
+    /* Locked notice */
+    .locked-notice {
+      background: rgba(124,58,237,0.06);
+      border: 1px solid rgba(124,58,237,0.18);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.82rem;
+      color: #4c1d95;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Section divider */
+    .section-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    @media (max-width: 600px) {
+      .container { padding: 1rem 0.75rem 3rem; }
+      .topbar { padding: 0 1rem; }
+      .card-header { flex-direction: column; gap: 0.5rem; }
+      .card-totals { gap: 1rem; }
+      .card-action-row { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <a href="#" class="logo">env<span>ox</span></a>
+    <div class="topbar-info">
+      <span class="topbar-name">Olá, <strong><%= lead.name %></strong></span>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="page-hero">
+      <h1>📋 Minhas Propostas</h1>
+      <p>Acompanhe o status de todas as suas propostas, contrapropostas e histórico.</p>
+    </div>
+
+    <% if (!proposals || proposals.length === 0) { %>
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h3>Nenhuma proposta encontrada</h3>
+        <p>Quando a Envox preparar uma proposta para você, ela aparecerá aqui.</p>
+      </div>
+    <% } else { %>
+
+      <div class="section-title">
+        <%= proposals.length %> proposta<%= proposals.length > 1 ? 's' : '' %> encontrada<%= proposals.length > 1 ? 's' : '' %>
+      </div>
+
+      <div class="proposals-list">
+        <% proposals.forEach((p, idx) => {
+
+          // ── Calcular totais ────────────────────────────────────────────
+          const items = p.items || [];
+          let rawMonthly = 0, rawOnetime = 0;
+          items.forEach(it => {
+            const total = (parseFloat(it.price) || 0) * (parseInt(it.qty) || 1);
+            if (it.category === 'onetime') rawOnetime += total;
+            else rawMonthly += total;
+          });
+
+          // Desconto admin
+          const discM  = parseFloat(p.admin_discount_monthly || 0);
+          const discO  = parseFloat(p.admin_discount_onetime || 0);
+          const finalMonthly = rawMonthly * (1 - discM / 100);
+          const finalOnetime = rawOnetime * (1 - discO / 100);
+
+          // ── Status label ───────────────────────────────────────────────
+          const statusMap = {
+            active:   { cls: 'badge-active',   label: '✅ Ativa' },
+            awaiting: { cls: 'badge-awaiting',  label: '⏳ Em análise' },
+            rejected: { cls: 'badge-rejected',  label: '❌ Recusada' },
+            archived: { cls: 'badge-archived',  label: '🗃️ Arquivada' },
+          };
+          const acceptAction = p.latest_action === 'accept';
+          const st = acceptAction ? { cls: 'badge-accepted', label: '🎉 Aceita' }
+                                  : (statusMap[p.proposal_status] || statusMap.active);
+
+          // ── Action label ───────────────────────────────────────────────
+          const actionMap = {
+            accept:     { cls: 'dot-accept',  text: 'Proposta aceita' },
+            counter:    { cls: 'dot-counter', text: 'Contraproposta enviada' },
+            reject:     { cls: 'dot-reject',  text: 'Proposta recusada' },
+            email_sent: { cls: 'dot-email',   text: 'Email da proposta enviado' },
+          };
+          const actionInfo = p.latest_action ? (actionMap[p.latest_action] || null) : null;
+
+          // ── Data formatada ─────────────────────────────────────────────
+          const dateStr = new Date(p.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+
+          // ── Locked ────────────────────────────────────────────────────
+          const isLocked = p.client_locked === 1;
+
+          // ── Pode acessar o slide? ──────────────────────────────────────
+          const canView = !isLocked && p.proposal_status === 'active';
+        %>
+
+        <article class="proposal-card">
+
+          <!-- Header -->
+          <div class="card-header">
+            <div class="card-header-left">
+              <div class="card-date">
+                <span>📅</span>
+                Criada em <%= dateStr %>
+                <% if (p.created_by_client) { %>
+                  &nbsp;<span class="badge badge-client">👤 Montada por você</span>
+                <% } %>
+              </div>
+              <div class="card-title">
+                Proposta Envox
+                <% if (p.company_name) { %> — <%= p.company_name %><% } %>
+              </div>
+              <% if (p.proposal_description) { %>
+                <div class="card-subtitle"><%= p.proposal_description.substring(0, 120) %><%= p.proposal_description.length > 120 ? '…' : '' %></div>
+              <% } %>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem">
+              <span class="badge <%= st.cls %>"><%= st.label %></span>
+              <% if (isLocked) { %>
+                <span class="badge badge-locked">🔒 Bloqueada</span>
+              <% } %>
+            </div>
+          </div>
+
+          <!-- Body -->
+          <div class="card-body">
+
+            <!-- Serviços -->
+            <% if (items.length > 0) { %>
+              <div class="items-grid">
+                <% items.forEach(it => { %>
+                  <span class="item-chip <%= it.category === 'onetime' ? 'onetime' : 'monthly' %>">
+                    <%= it.name %><% if (parseInt(it.qty) > 1) { %> ×<%= it.qty %><% } %>
+                  </span>
+                <% }); %>
+              </div>
+            <% } else { %>
+              <p style="font-size:0.82rem;color:#bbb;margin-bottom:0.75rem">Nenhum serviço listado.</p>
+            <% } %>
+
+            <!-- Totais -->
+            <% if (rawMonthly > 0 || rawOnetime > 0) { %>
+              <div class="card-totals">
+                <% if (rawMonthly > 0) { %>
+                  <div class="total-item">
+                    <span class="total-label">Mensal</span>
+                    <span class="total-value green">
+                      R$ <%= finalMonthly.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) %>
+                      <% if (discM > 0) { %><span class="discount-tag">-<%= discM %>%</span><% } %>
+                    </span>
+                  </div>
+                <% } %>
+                <% if (rawOnetime > 0) { %>
+                  <div class="total-item">
+                    <span class="total-label">Implantação</span>
+                    <span class="total-value">
+                      R$ <%= finalOnetime.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) %>
+                      <% if (discO > 0) { %><span class="discount-tag">-<%= discO %>%</span><% } %>
+                    </span>
+                  </div>
+                <% } %>
+              </div>
+            <% } %>
+
+            <!-- Nota do admin -->
+            <% if (p.admin_notes && p.admin_notes.trim()) { %>
+              <div class="admin-notes">
+                <strong>💬 Mensagem da Envox</strong>
+                <%= p.admin_notes %>
+              </div>
+            <% } %>
+
+            <!-- Contraproposta enviada por você -->
+            <% if (p.latest_action === 'counter' && p.latest_counter_comment) { %>
+              <div class="counter-response">
+                <strong>🔄 Sua contraproposta</strong>
+                "<%= p.latest_counter_comment %>"
+              </div>
+            <% } %>
+
+            <!-- Aceite -->
+            <% if (p.latest_action === 'accept') { %>
+              <div style="background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:0.75rem 1rem;margin-bottom:0.75rem;font-size:0.82rem;color:#065f46;">
+                <strong style="display:block;margin-bottom:0.3rem;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--green)">✅ Proposta Aceita</strong>
+                Em breve nossa equipe entrará em contato para iniciar os próximos passos.
+              </div>
+            <% } %>
+
+            <!-- Aviso de bloqueio -->
+            <% if (isLocked) { %>
+              <div class="locked-notice">
+                🔒 <span>Proposta em análise — aguarde o retorno da nossa equipe.</span>
+              </div>
+            <% } %>
+
+          </div>
+
+          <!-- Footer com botões -->
+          <div class="card-action-row">
+            <div class="action-info">
+              <% if (actionInfo) { %>
+                <span class="action-dot <%= actionInfo.cls %>"></span>
+                <span style="color:#555"><%= actionInfo.text %></span>
+                <% if (p.latest_action_at) { %>
+                  <span style="color:#bbb;font-size:0.72rem">
+                    — <%= new Date(p.latest_action_at).toLocaleDateString('pt-BR') %>
+                  </span>
+                <% } %>
+              <% } else { %>
+                <span class="action-dot dot-active"></span>
+                <span style="color:#888">Aguardando sua decisão</span>
+              <% } %>
+            </div>
+
+            <div class="card-btns">
+              <% if (p.proposal_status === 'awaiting' || p.latest_action === 'accept') { %>
+                <!-- Já tomou ação — apenas visualizar resumo -->
+                <a href="/proposta/<%= p.token %>/finalizar" class="btn btn-outline">
+                  📋 Ver Resumo
+                </a>
+              <% } else if (isLocked || p.proposal_status === 'archived') { %>
+                <span class="btn btn-disabled">🔒 Acesso bloqueado</span>
+              <% } else if (p.proposal_status === 'rejected') { %>
+                <span class="btn btn-disabled">❌ Proposta encerrada</span>
+              <% } else { %>
+                <!-- Ativa e não bloqueada -->
+                <a href="/proposta/<%= p.token %>" class="btn btn-primary">
+                  👁️ Ver Proposta
+                </a>
+                <a href="/proposta/<%= p.token %>/finalizar" class="btn btn-green">
+                  ✅ Finalizar
+                </a>
+              <% } %>
+            </div>
+          </div>
+
+        </article>
+
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+
+</body>
+</html>

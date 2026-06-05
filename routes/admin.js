@@ -208,6 +208,27 @@ router.get('/leads', requireAdmin, (req, res) => {
   });
 });
 
+// ── GET /admin/leads/:id/proposals — propostas do lead ─────────────────────────
+router.get('/leads/:id/proposals', requireAdmin, (req, res) => {
+  const leadId = parseInt(req.params.id);
+  const lead = db.getLeadById(leadId);
+  if (!lead) return res.redirect('/admin/leads?error=Lead+não+encontrado');
+
+  const rawProposals = db.getProposalsByLead(leadId);
+  const proposals = rawProposals.map(p => ({
+    ...p,
+    items: db.getProposalItems(p.id),
+    actions: db.getProposalActionsByProposal(p.id)
+  }));
+
+  res.render('admin/leads/proposals', {
+    lead,
+    proposals,
+    success: req.query.success || null,
+    error: req.query.error || null
+  });
+});
+
 // ══ REENVIAR ALERTA WHATSAPP ═══════════════════════════════
 router.post('/leads/:id/resend-alert', requireAdmin, async (req, res) => {
   const stats = db.getLeadStats(req.params.id);
@@ -635,6 +656,44 @@ router.post('/proposals/:proposalId/archive', requireAdmin, (req, res) => {
     return res.redirect(`/admin/proposals?success=${msg}`);
   } catch (err) {
     return res.redirect(`/admin/proposals?error=Erro+ao+arquivar`);
+  }
+});
+
+// ── GET /admin/proposals/:id/lead-proposals — redireciona para propostas do lead primário ──
+router.get('/proposals/:proposalId/lead-proposals', requireAdmin, (req, res) => {
+  const proposalId = parseInt(req.params.proposalId);
+  const leads = db.getLeadsByProposal(proposalId);
+  if (!leads || leads.length === 0) {
+    return res.redirect(`/admin/proposals/${proposalId}/view`);
+  }
+  const primaryLead = leads.find(l => l.is_primary) || leads[0];
+  return res.redirect(`/admin/leads/${primaryLead.id}/proposals`);
+});
+
+// ── POST /admin/proposals/:id/toggle-lock — bloquear/desbloquear acesso do cliente ──
+router.post('/proposals/:proposalId/toggle-lock', requireAdmin, (req, res) => {
+  const proposalId = parseInt(req.params.proposalId);
+  const locked = req.body.locked === 1 || req.body.locked === true || req.body.locked === '1' || req.body.locked === 'true';
+  try {
+    db.setClientLocked(proposalId, locked);
+    return res.json({ success: true, locked });
+  } catch(err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /admin/proposals/:id/discounts — aplicar descontos + nota admin ──
+router.post('/proposals/:proposalId/discounts', requireAdmin, (req, res) => {
+  const proposalId = parseInt(req.params.proposalId);
+  const { discount_monthly, discount_onetime, admin_notes } = req.body;
+  try {
+    db.updateAdminDiscounts(proposalId, discount_monthly, discount_onetime, admin_notes);
+    // Ao aplicar desconto, desbloquear o lead para ele ver a proposta atualizada
+    db.setClientLocked(proposalId, false);
+    db.setProposalStatus(proposalId, 'active');
+    return res.json({ success: true });
+  } catch(err) {
+    return res.status(500).json({ error: err.message });
   }
 });
 

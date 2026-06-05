@@ -108,7 +108,18 @@
               <td>
                 <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
                   <a href="/admin/proposals/<%= proposal.id %>/edit" class="btn-sm btn-outline" title="Editar proposta">✏️ Editar</a>
-                  <a href="/admin/proposals/<%= proposal.id %>/view" class="btn-sm btn-outline" title="Ver proposta no painel">👁️ Ver</a>
+                  <% if (proposal.leads_count > 0) { %>
+                    <%
+                      // Pegar ID do lead primário via token — renderizado via query no servidor
+                      // Usamos data-attribute para JS redirecionar
+                    %>
+                    <a href="/admin/proposals/<%= proposal.id %>/lead-proposals" class="btn-sm btn-outline" title="Ver histórico de propostas do lead">👁️ Ver</a>
+                  <% } else { %>
+                    <a href="/admin/proposals/<%= proposal.id %>/view" class="btn-sm btn-outline" title="Ver proposta">👁️ Ver</a>
+                  <% } %>
+                  <% if (proposal.created_by_client) { %>
+                    <span class="badge" style="background:rgba(233,30,99,0.09);color:#E91E63;font-size:0.65rem">👤 Cliente</span>
+                  <% } %>
                   <button class="btn-sm btn-copy" title="Copiar link da proposta" onclick="copyProposalLink('<%= proposal.token %>', this)">🔗 Copiar</button>
                   <a href="/admin/proposals/<%= proposal.id %>/heat" class="btn-sm btn-heat" title="Relatório de engajamento">🌡️ Calor</a>
                   <form action="/admin/proposals/<%= proposal.id %>/archive" method="POST" style="display:inline" onsubmit="return confirm('<%= proposal.proposal_status === 'archived' ? 'Reativar' : 'Arquivar' %> esta proposta?')">
