@@ -193,7 +193,8 @@ router.get('/:token/view', (req, res) => {
     proposal: enrichedProposal,
     lead: viewerLead,
     slides,
-    token
+    token,
+    isAdminPreview: false
   });
 });
 
