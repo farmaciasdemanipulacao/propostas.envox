@@ -711,4 +711,62 @@ router.post('/proposal-requests/:id/status', requireAdmin, (req, res) => {
   return res.redirect('/admin/proposal-requests?success=Status+atualizado');
 });
 
+// ══ SOLICITAÇÕES DE ACESSO (home pública) ══════════════════
+router.get('/solicitacoes', requireAdmin, (req, res) => {
+  const requests = db.getAllAccessRequests ? db.getAllAccessRequests() : [];
+  res.render('admin/solicitacoes', {
+    requests,
+    success: req.query.success || null,
+    error:   req.query.error   || null
+  });
+});
+
+// Aprovar: cria o lead automaticamente e marca como aprovado
+router.post('/solicitacoes/:id/aprovar', requireAdmin, async (req, res) => {
+  try {
+    const req_data = db.getAccessRequestById(parseInt(req.params.id));
+    if (!req_data) return res.redirect('/admin/solicitacoes?error=Solicitação+não+encontrada');
+
+    // Cria o lead no sistema
+    const leadId = db.createLead(
+      req_data.name,
+      req_data.whatsapp,
+      req_data.email,
+      req_data.company,
+      req_data.cargo || ''
+    );
+
+    // Marca como aprovado
+    db.updateAccessRequestStatus(req_data.id, 'approved', req.body.notes || null);
+
+    // Notifica o admin via WhatsApp (confirmação)
+    const { sendWhatsApp } = require('../services/whatsapp');
+    const waClean = (req_data.whatsapp || '').replace(/\D/g, '');
+    const msg =
+`✅ SOLICITAÇÃO APROVADA!
+
+👤 Lead criado: ${req_data.name}
+🏢 Empresa: ${req_data.company}
+📱 WhatsApp: ${req_data.whatsapp}
+📧 Email: ${req_data.email}
+
+👉 Agora crie a proposta em:
+${process.env.BASE_URL || 'https://proposta.envox.com.br'}/admin/proposals/new?lead_id=${leadId}
+
+📲 Falar com o lead: https://wa.me/${waClean}`;
+    sendWhatsApp(msg).catch(() => {});
+
+    return res.redirect(`/admin/solicitacoes?success=Solicitação+aprovada!+Lead+${encodeURIComponent(req_data.name)}+criado+com+sucesso.`);
+  } catch (err) {
+    console.error('[solicitacoes/aprovar]', err);
+    return res.redirect('/admin/solicitacoes?error=' + encodeURIComponent(err.message || 'Erro ao aprovar. Email já cadastrado?'));
+  }
+});
+
+// Rejeitar: apenas marca status
+router.post('/solicitacoes/:id/rejeitar', requireAdmin, (req, res) => {
+  db.updateAccessRequestStatus(parseInt(req.params.id), 'rejected', req.body.notes || null);
+  return res.redirect('/admin/solicitacoes?success=Solicitação+rejeitada.');
+});
+
 module.exports = router;

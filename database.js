@@ -228,6 +228,24 @@ function initDatabase() {
   `);
 
   // ══════════════════════════════════════════════════════════════════════
+  // ACCESS_REQUESTS — solicitações públicas de acesso (vindas da home)
+  // ══════════════════════════════════════════════════════════════════════
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS access_requests (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      name        TEXT NOT NULL,
+      whatsapp    TEXT NOT NULL,
+      email       TEXT NOT NULL,
+      company     TEXT NOT NULL,
+      cargo       TEXT,
+      status      TEXT DEFAULT 'pending',
+      admin_notes TEXT,
+      created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+      reviewed_at DATETIME
+    )
+  `);
+
+  // ══════════════════════════════════════════════════════════════════════
   // SERVICES & DISCOUNT RULES
   // ══════════════════════════════════════════════════════════════════════
   database.exec(`
@@ -1137,6 +1155,45 @@ function getPlanejamentoStats(planejamentoId) {
 }
 
 // ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+// ACCESS REQUESTS — solicitações públicas de acesso
+// ══════════════════════════════════════════════════════════
+
+function createAccessRequest(name, whatsapp, email, company, cargo) {
+  const r = getDb().prepare(`
+    INSERT INTO access_requests (name, whatsapp, email, company, cargo)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(name, whatsapp.replace(/\D/g, ''), email.trim().toLowerCase(), company.trim(), (cargo || '').trim());
+  return r.lastInsertRowid;
+}
+
+function getAllAccessRequests() {
+  return getDb().prepare(`
+    SELECT * FROM access_requests ORDER BY created_at DESC
+  `).all();
+}
+
+function getPendingAccessRequests() {
+  return getDb().prepare(`
+    SELECT * FROM access_requests WHERE status = 'pending' ORDER BY created_at DESC
+  `).all();
+}
+
+function getAccessRequestById(id) {
+  return getDb().prepare(`SELECT * FROM access_requests WHERE id = ?`).get(id);
+}
+
+function updateAccessRequestStatus(id, status, notes) {
+  getDb().prepare(`
+    UPDATE access_requests SET status=?, admin_notes=?, reviewed_at=CURRENT_TIMESTAMP WHERE id=?
+  `).run(status, notes || null, id);
+}
+
+function countPendingAccessRequests() {
+  const row = getDb().prepare(`SELECT COUNT(*) as cnt FROM access_requests WHERE status='pending'`).get();
+  return row ? row.cnt : 0;
+}
+
 // EXPORTS
 // ══════════════════════════════════════════════════════════
 
@@ -1174,6 +1231,9 @@ module.exports = {
   addSharedLead, getSharedLeadByToken,
   // Proposal Requests
   createProposalRequest, getAllProposalRequests, updateProposalRequestStatus,
+  // Access Requests (public home form)
+  createAccessRequest, getAllAccessRequests, getPendingAccessRequests,
+  getAccessRequestById, updateAccessRequestStatus, countPendingAccessRequests,
   // Services
   getAllServices, getServiceById, createService, updateService, deleteService,
   // Discount Rules

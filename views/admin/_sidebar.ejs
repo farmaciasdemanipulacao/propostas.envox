@@ -29,6 +29,24 @@
       <span class="nav-icon">📝</span> Novas Solicitações
     </a>
 
+    <!-- SOLICITAÇÕES DE ACESSO -->
+    <div class="nav-group-label">ACESSO PÚBLICO</div>
+    <%
+      let pendingCount = 0;
+      try { pendingCount = require('../../../database').countPendingAccessRequests(); } catch(e) {}
+    %>
+    <a href="/admin/solicitacoes" class="nav-item <%= (typeof active !== 'undefined' && active === 'solicitacoes') ? 'active' : '' %>"
+       style="position:relative">
+      <span class="nav-icon">🔔</span> Solicitações
+      <% if (pendingCount > 0) { %>
+        <span style="
+          position:absolute;right:12px;top:50%;transform:translateY(-50%);
+          background:#E91E63;color:#fff;font-size:0.65rem;font-weight:700;
+          padding:2px 7px;border-radius:20px;line-height:1.4
+        "><%= pendingCount %></span>
+      <% } %>
+    </a>
+
     <!-- OTHER -->
     <div class="nav-group-label">SISTEMA</div>
     <a href="/admin/planejamentos" class="nav-item <%= (typeof active !== 'undefined' && active === 'planejamentos') ? 'active' : '' %>">

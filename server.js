@@ -56,7 +56,7 @@ app.use('/api', apiRouter);
 
 // Rota raiz — página inicial para clientes
 app.get('/', (req, res) => {
-  res.render('home', { error: null, success: null });
+  res.render('home', { error: null, success: null, formError: null, formSuccess: null, activeTab: 'acessar' });
 });
 
 // Busca proposta pelo email + whatsapp do cliente
@@ -66,7 +66,7 @@ app.post('/buscar-proposta', async (req, res) => {
   if (!email || !whatsapp) {
     return res.render('home', {
       error: 'Preencha o e-mail e o WhatsApp para continuar.',
-      success: null
+      success: null, formError: null, formSuccess: null, activeTab: 'acessar'
     });
   }
 
@@ -80,7 +80,7 @@ app.post('/buscar-proposta', async (req, res) => {
     if (!lead) {
       return res.render('home', {
         error: 'Nenhuma proposta encontrada com esse e-mail. Verifique os dados ou solicite acesso.',
-        success: null
+        success: null, formError: null, formSuccess: null, activeTab: 'acessar'
       });
     }
 
@@ -89,7 +89,7 @@ app.post('/buscar-proposta', async (req, res) => {
     if (waClean !== storedWa) {
       return res.render('home', {
         error: 'E-mail e WhatsApp não conferem. Verifique os dados informados.',
-        success: null
+        success: null, formError: null, formSuccess: null, activeTab: 'acessar'
       });
     }
 
@@ -99,7 +99,7 @@ app.post('/buscar-proposta', async (req, res) => {
     if (!proposals || proposals.length === 0) {
       return res.render('home', {
         error: 'Nenhuma proposta disponível para este cadastro ainda. Em breve a equipe Envox entrará em contato.',
-        success: null
+        success: null, formError: null, formSuccess: null, activeTab: 'acessar'
       });
     }
 
@@ -123,7 +123,72 @@ app.post('/buscar-proposta', async (req, res) => {
     console.error('[buscar-proposta]', err);
     return res.render('home', {
       error: 'Ocorreu um erro ao buscar sua proposta. Tente novamente.',
-      success: null
+      success: null, formError: null, formSuccess: null, activeTab: 'acessar'
+    });
+  }
+});
+
+// Solicitação de acesso — formulário público da home
+app.post('/solicitar-acesso', async (req, res) => {
+  const { name, whatsapp, email, company, cargo } = req.body;
+
+  if (!name || !whatsapp || !email || !company) {
+    return res.render('home', {
+      error: null,
+      success: null,
+      formError: 'Preencha todos os campos obrigatórios: Nome, WhatsApp, E-mail e Empresa.',
+      activeTab: 'solicitar'
+    });
+  }
+
+  try {
+    // Verifica se já existe solicitação pendente com mesmo email
+    const existing = db.getAllAccessRequests().find(
+      r => r.email === email.trim().toLowerCase() && r.status === 'pending'
+    );
+    if (existing) {
+      return res.render('home', {
+        error: null,
+        success: null,
+        formError: 'Já existe uma solicitação pendente com esse e-mail. Em breve nossa equipe entrará em contato!',
+        activeTab: 'solicitar'
+      });
+    }
+
+    const id = db.createAccessRequest(name, whatsapp, email, company, cargo);
+
+    // Alerta WhatsApp para o admin
+    const { sendWhatsApp } = require('./services/whatsapp');
+    const waClean = (whatsapp || '').replace(/\D/g, '');
+    const msg =
+`🆕 NOVA SOLICITAÇÃO DE ACESSO!
+
+👤 Nome: ${name}
+🏢 Empresa: ${company}
+💼 Cargo: ${cargo || 'Não informado'}
+📱 WhatsApp: ${whatsapp}
+📧 Email: ${email}
+
+⚡ Acesse o painel para aprovar ou rejeitar:
+${process.env.BASE_URL || 'https://proposta.envox.com.br'}/admin/solicitacoes
+
+📲 Falar direto: https://wa.me/${waClean}`;
+
+    sendWhatsApp(msg).catch(err => console.error('[solicitar-acesso] WhatsApp error:', err));
+
+    return res.render('home', {
+      error: null,
+      success: null,
+      formSuccess: `Solicitação enviada com sucesso, ${name.split(' ')[0]}! Nossa equipe vai analisar e aprovar o acesso. Fique de olho no seu WhatsApp.`,
+      activeTab: 'solicitar'
+    });
+  } catch (err) {
+    console.error('[solicitar-acesso]', err);
+    return res.render('home', {
+      error: null,
+      success: null,
+      formError: 'Erro ao enviar solicitação. Tente novamente.',
+      activeTab: 'solicitar'
     });
   }
 });

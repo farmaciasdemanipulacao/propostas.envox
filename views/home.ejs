@@ -10,14 +10,14 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --pink:    #E91E63;
-      --pink-d:  #C2185B;
-      --dark:    #0F0F1A;
-      --card:    #1A1A2E;
-      --card2:   #16213E;
-      --border:  rgba(255,255,255,0.08);
-      --text:    #E8E8F0;
-      --muted:   #8888AA;
+      --pink:   #E91E63;
+      --pink-d: #C2185B;
+      --dark:   #0F0F1A;
+      --card:   #1A1A2E;
+      --card2:  #16213E;
+      --border: rgba(255,255,255,0.08);
+      --text:   #E8E8F0;
+      --muted:  #8888AA;
     }
 
     body {
@@ -29,323 +29,181 @@
       flex-direction: column;
     }
 
-    /* ── TOP BAR ── */
     .top-bar {
       height: 4px;
       background: linear-gradient(90deg, var(--pink), #FF6B9D, var(--pink));
     }
 
-    /* ── HEADER ── */
+    /* HEADER */
     header {
-      padding: 24px 32px;
+      padding: 22px 32px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       border-bottom: 1px solid var(--border);
     }
-    .logo {
-      font-size: 1.6rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-    }
+    .logo { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; }
     .logo .ox { color: var(--pink); }
-    .logo-sub {
-      font-size: 0.6rem;
-      font-weight: 500;
-      letter-spacing: 3px;
-      color: var(--muted);
-      display: block;
-      margin-top: -4px;
-    }
-    .admin-link {
-      font-size: 0.78rem;
-      color: var(--muted);
-      text-decoration: none;
-      transition: color .2s;
-    }
+    .logo-sub { font-size: 0.6rem; font-weight: 500; letter-spacing: 3px; color: var(--muted); display: block; margin-top: -4px; }
+    .admin-link { font-size: 0.78rem; color: var(--muted); text-decoration: none; transition: color .2s; }
     .admin-link:hover { color: var(--pink); }
 
-    /* ── HERO ── */
+    /* HERO */
     .hero {
       flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 48px 24px;
+      padding: 40px 24px;
     }
     .hero-inner {
       width: 100%;
-      max-width: 960px;
+      max-width: 980px;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 64px;
-      align-items: center;
+      gap: 56px;
+      align-items: start;
     }
 
-    /* ── LEFT SIDE ── */
-    .hero-left h1 {
-      font-size: 2.4rem;
-      font-weight: 800;
-      line-height: 1.2;
-      margin-bottom: 16px;
-    }
+    /* LEFT */
+    .hero-left h1 { font-size: 2.3rem; font-weight: 800; line-height: 1.2; margin-bottom: 14px; }
     .hero-left h1 span { color: var(--pink); }
-    .hero-left p {
-      font-size: 1rem;
-      color: var(--muted);
-      line-height: 1.7;
-      margin-bottom: 32px;
-    }
+    .hero-left > p { font-size: 0.95rem; color: var(--muted); line-height: 1.7; margin-bottom: 28px; }
 
-    .features {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .feature-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 0.88rem;
-      color: var(--muted);
-    }
+    .features { display: flex; flex-direction: column; gap: 12px; }
+    .feature-item { display: flex; align-items: center; gap: 12px; font-size: 0.87rem; color: var(--muted); }
     .feature-icon {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: rgba(233,30,99,0.12);
-      border: 1px solid rgba(233,30,99,0.25);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.9rem;
-      flex-shrink: 0;
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(233,30,99,0.1); border: 1px solid rgba(233,30,99,0.22);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; flex-shrink: 0;
     }
 
-    /* ── RIGHT SIDE — CARD ── */
+    /* CARD */
     .card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 20px;
-      padding: 40px 36px;
+      padding: 36px 32px;
       box-shadow: 0 24px 64px rgba(0,0,0,0.4);
     }
 
-    /* tabs */
-    .tabs {
-      display: flex;
-      background: var(--card2);
-      border-radius: 10px;
-      padding: 4px;
-      margin-bottom: 28px;
-      gap: 4px;
-    }
+    /* TABS */
+    .tabs { display: flex; background: var(--card2); border-radius: 10px; padding: 4px; margin-bottom: 26px; gap: 4px; }
     .tab-btn {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      font-family: 'Poppins', sans-serif;
-      font-size: 0.82rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all .25s;
-      background: transparent;
-      color: var(--muted);
+      flex: 1; padding: 10px 6px; border: none; border-radius: 8px;
+      font-family: 'Poppins', sans-serif; font-size: 0.8rem; font-weight: 600;
+      cursor: pointer; transition: all .25s; background: transparent; color: var(--muted);
     }
-    .tab-btn.active {
-      background: var(--pink);
-      color: #fff;
-      box-shadow: 0 4px 16px rgba(233,30,99,0.35);
-    }
+    .tab-btn.active { background: var(--pink); color: #fff; box-shadow: 0 4px 14px rgba(233,30,99,0.35); }
 
-    /* panels */
     .panel { display: none; }
     .panel.active { display: block; }
 
-    .card h2 {
-      font-size: 1.15rem;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-    .card .subtitle {
-      font-size: 0.82rem;
-      color: var(--muted);
-      margin-bottom: 24px;
-      line-height: 1.5;
-    }
+    .card h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 5px; }
+    .card .subtitle { font-size: 0.82rem; color: var(--muted); margin-bottom: 20px; line-height: 1.55; }
 
-    /* form */
-    .form-group {
-      margin-bottom: 16px;
-    }
+    /* FORM */
+    .form-group { margin-bottom: 13px; }
     .form-group label {
-      display: block;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--muted);
-      margin-bottom: 7px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      display: block; font-size: 0.75rem; font-weight: 600; color: var(--muted);
+      margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px;
     }
-    .form-group input {
-      width: 100%;
-      padding: 13px 16px;
-      background: var(--card2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text);
-      font-family: 'Poppins', sans-serif;
-      font-size: 0.92rem;
-      outline: none;
-      transition: border-color .2s, box-shadow .2s;
+    .form-group input, .form-group select {
+      width: 100%; padding: 12px 14px;
+      background: var(--card2); border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-family: 'Poppins', sans-serif; font-size: 0.9rem;
+      outline: none; transition: border-color .2s, box-shadow .2s; appearance: none;
     }
-    .form-group input:focus {
+    .form-group input:focus, .form-group select:focus {
       border-color: var(--pink);
-      box-shadow: 0 0 0 3px rgba(233,30,99,0.15);
+      box-shadow: 0 0 0 3px rgba(233,30,99,0.14);
     }
-    .form-group input::placeholder { color: #555570; }
+    .form-group input::placeholder { color: #55556a; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
     .btn-primary {
-      width: 100%;
-      padding: 14px;
-      background: var(--pink);
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-family: 'Poppins', sans-serif;
-      font-size: 0.95rem;
-      font-weight: 700;
-      cursor: pointer;
-      margin-top: 8px;
+      width: 100%; padding: 13px;
+      background: var(--pink); color: #fff; border: none; border-radius: 10px;
+      font-family: 'Poppins', sans-serif; font-size: 0.93rem; font-weight: 700;
+      cursor: pointer; margin-top: 6px;
       transition: background .2s, transform .15s, box-shadow .2s;
-      box-shadow: 0 4px 20px rgba(233,30,99,0.3);
+      box-shadow: 0 4px 18px rgba(233,30,99,0.3);
     }
-    .btn-primary:hover {
-      background: var(--pink-d);
-      transform: translateY(-1px);
-      box-shadow: 0 8px 28px rgba(233,30,99,0.4);
-    }
+    .btn-primary:hover { background: var(--pink-d); transform: translateY(-1px); box-shadow: 0 8px 26px rgba(233,30,99,0.4); }
     .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 
-    /* alert */
+    /* ALERTS */
     .alert {
-      padding: 13px 16px;
-      border-radius: 10px;
-      font-size: 0.85rem;
-      margin-bottom: 18px;
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      line-height: 1.5;
+      padding: 12px 14px; border-radius: 10px; font-size: 0.84rem;
+      margin-bottom: 16px; display: flex; align-items: flex-start; gap: 9px; line-height: 1.5;
     }
-    .alert-error {
-      background: rgba(233,30,99,0.12);
-      border: 1px solid rgba(233,30,99,0.3);
-      color: #FF6B9D;
-    }
-    .alert-success {
-      background: rgba(76,175,80,0.12);
-      border: 1px solid rgba(76,175,80,0.3);
-      color: #81C784;
-    }
+    .alert-error  { background: rgba(233,30,99,0.1); border: 1px solid rgba(233,30,99,0.28); color: #FF6B9D; }
+    .alert-success{ background: rgba(76,175,80,0.1); border: 1px solid rgba(76,175,80,0.28); color: #81C784; }
 
-    /* solicitar acesso */
-    .request-info {
+    /* COMO FUNCIONA */
+    .how-it-works {
       background: var(--card2);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 20px;
+      padding: 16px 18px;
+      margin-bottom: 18px;
     }
-    .request-info p {
-      font-size: 0.85rem;
-      color: var(--muted);
-      line-height: 1.65;
-    }
-    .request-info strong { color: var(--text); }
-
-    .contact-options {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 4px;
-    }
-    .contact-btn {
+    .how-it-works-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 14px 18px;
+      gap: 7px;
+    }
+    .how-steps { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .how-steps li {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 0.8rem; color: var(--muted); line-height: 1.5;
+    }
+    .step-num {
+      min-width: 20px; height: 20px; border-radius: 50%;
+      background: rgba(233,30,99,0.15); border: 1px solid rgba(233,30,99,0.3);
+      color: var(--pink); font-size: 0.68rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+
+    /* AVISO FINAL */
+    .whatsapp-notice {
+      margin-top: 18px;
+      padding: 12px 14px;
+      background: rgba(37,211,102,0.07);
+      border: 1px solid rgba(37,211,102,0.2);
       border-radius: 10px;
-      text-decoration: none;
-      font-size: 0.88rem;
-      font-weight: 600;
-      transition: all .2s;
-      border: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: #81C784;
+      line-height: 1.6;
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
     }
-    .contact-btn.whatsapp {
-      background: rgba(37,211,102,0.1);
-      border-color: rgba(37,211,102,0.25);
-      color: #4CAF50;
-    }
-    .contact-btn.whatsapp:hover {
-      background: rgba(37,211,102,0.18);
-      transform: translateY(-1px);
-    }
-    .contact-btn.email {
-      background: rgba(233,30,99,0.08);
-      border-color: rgba(233,30,99,0.2);
-      color: #FF6B9D;
-    }
-    .contact-btn.email:hover {
-      background: rgba(233,30,99,0.14);
-      transform: translateY(-1px);
-    }
-    .contact-btn-icon {
-      font-size: 1.2rem;
-    }
-    .contact-btn-text { text-align: left; }
-    .contact-btn-text small {
-      display: block;
-      font-weight: 400;
-      font-size: 0.74rem;
-      opacity: 0.7;
-      margin-top: 1px;
-    }
+    .whatsapp-notice a { color: #4CAF50; font-weight: 700; text-decoration: none; }
+    .whatsapp-notice a:hover { text-decoration: underline; }
 
-    /* footer */
-    footer {
-      text-align: center;
-      padding: 20px;
-      font-size: 0.75rem;
-      color: var(--muted);
-      border-top: 1px solid var(--border);
-    }
-
-    /* loading spinner */
-    .spinner {
-      display: none;
-      width: 18px;
-      height: 18px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin .7s linear infinite;
-      margin: 0 auto;
-    }
+    /* SPINNER */
+    .spinner { display:none;width:17px;height:17px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── RESPONSIVE ── */
+    /* FOOTER */
+    footer { text-align: center; padding: 18px; font-size: 0.74rem; color: var(--muted); border-top: 1px solid var(--border); }
+
+    /* RESPONSIVE */
     @media (max-width: 768px) {
-      .hero-inner {
-        grid-template-columns: 1fr;
-        gap: 36px;
-      }
-      .hero-left h1 { font-size: 1.8rem; }
+      .hero-inner { grid-template-columns: 1fr; gap: 28px; }
+      .hero-left h1 { font-size: 1.75rem; }
       .hero-left { text-align: center; }
       .features { align-items: center; }
-      header { padding: 18px 20px; }
-      .card { padding: 28px 22px; }
+      header { padding: 16px 18px; }
+      .card { padding: 26px 20px; }
+      .form-row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -373,78 +231,59 @@
         <div class="features">
           <div class="feature-item">
             <div class="feature-icon">📋</div>
-            <span>Propostas detalhadas com todos os serviços</span>
+            <span>10 slides com tudo sobre a Envox e o que fazemos</span>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">🛠️</div>
+            <span>Monte sua própria proposta com os serviços que quiser</span>
           </div>
           <div class="feature-item">
             <div class="feature-icon">✅</div>
-            <span>Aprove com um clique de forma segura</span>
-          </div>
-          <div class="feature-item">
-            <div class="feature-icon">📱</div>
-            <span>Receba notificações direto no WhatsApp</span>
+            <span>Aprove com um clique de forma simples e segura</span>
           </div>
           <div class="feature-item">
             <div class="feature-icon">🔒</div>
-            <span>Acesso exclusivo e protegido para você</span>
+            <span>Acesso exclusivo e protegido com seus dados</span>
           </div>
         </div>
       </div>
 
-      <!-- LADO DIREITO — CARD -->
+      <!-- CARD -->
       <div class="card">
 
         <!-- TABS -->
         <div class="tabs">
-          <button class="tab-btn active" onclick="switchTab('acessar')">
+          <button class="tab-btn <%= (typeof activeTab === 'undefined' || activeTab === 'acessar') ? 'active' : '' %>"
+                  onclick="switchTab('acessar')" id="tab-acessar">
             📄 Acessar Proposta
           </button>
-          <button class="tab-btn" onclick="switchTab('solicitar')">
+          <button class="tab-btn <%= (typeof activeTab !== 'undefined' && activeTab === 'solicitar') ? 'active' : '' %>"
+                  onclick="switchTab('solicitar')" id="tab-solicitar">
             ✉️ Solicitar Acesso
           </button>
         </div>
 
         <!-- PAINEL: ACESSAR PROPOSTA -->
-        <div id="panel-acessar" class="panel active">
+        <div id="panel-acessar" class="panel <%= (typeof activeTab === 'undefined' || activeTab === 'acessar') ? 'active' : '' %>">
           <h2>Já tem uma proposta?</h2>
           <p class="subtitle">
-            Digite o e-mail e WhatsApp cadastrados pela equipe Envox
-            para acessar seu painel de proposta.
+            Digite o e-mail e WhatsApp cadastrados para acessar seu painel.
           </p>
 
           <% if (typeof error !== 'undefined' && error) { %>
-            <div class="alert alert-error">
-              <span>⚠️</span> <%= error %>
-            </div>
-          <% } %>
-          <% if (typeof success !== 'undefined' && success) { %>
-            <div class="alert alert-success">
-              <span>✅</span> <%= success %>
-            </div>
+            <div class="alert alert-error"><span>⚠️</span> <%= error %></div>
           <% } %>
 
           <form id="form-acesso" action="/buscar-proposta" method="POST">
             <div class="form-group">
               <label for="email">E-mail</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                placeholder="seuemail@empresa.com"
-                required
-                autocomplete="email"
-              >
+              <input type="email" id="email" name="email"
+                     placeholder="seuemail@empresa.com" required autocomplete="email">
             </div>
             <div class="form-group">
               <label for="whatsapp">WhatsApp</label>
-              <input
-                type="tel"
-                id="whatsapp"
-                name="whatsapp"
-                placeholder="(41) 99999-9999"
-                required
-                autocomplete="tel"
-                maxlength="20"
-              >
+              <input type="tel" id="whatsapp" name="whatsapp"
+                     placeholder="(41) 99999-9999" required autocomplete="tel" maxlength="20">
             </div>
             <button type="submit" class="btn-primary" id="btn-buscar">
               <span id="btn-text">Acessar Minha Proposta →</span>
@@ -454,45 +293,85 @@
         </div>
 
         <!-- PAINEL: SOLICITAR ACESSO -->
-        <div id="panel-solicitar" class="panel">
-          <h2>Ainda não tem proposta?</h2>
+        <div id="panel-solicitar" class="panel <%= (typeof activeTab !== 'undefined' && activeTab === 'solicitar') ? 'active' : '' %>">
+          <h2>Ainda não tem acesso?</h2>
           <p class="subtitle">
-            Sem problema! Entre em contato com nossa equipe e um dos nossos
-            especialistas vai criar uma proposta exclusiva para o seu negócio.
+            É muito fácil — <strong style="color:var(--text)">você mesmo monta sua proposta em menos de 1 minuto</strong>,
+            sem burocracia e sem precisar falar com ninguém. Ou, se preferir, um de nossos especialistas
+            pode criar tudo pra você e tirar suas dúvidas.
           </p>
 
-          <div class="request-info">
-            <p>
-              <strong>Como funciona?</strong><br>
-              Você fala com a gente, apresenta seu negócio e objetivos,
-              e nossa equipe prepara uma proposta personalizada — sem compromisso.
-            </p>
-          </div>
+          <% if (typeof formError !== 'undefined' && formError) { %>
+            <div class="alert alert-error"><span>⚠️</span> <%= formError %></div>
+          <% } %>
+          <% if (typeof formSuccess !== 'undefined' && formSuccess) { %>
+            <div class="alert alert-success"><span>✅</span> <%= formSuccess %></div>
+          <% } %>
 
-          <div class="contact-options">
-            <a
-              href="https://wa.me/554133000404?text=Olá!%20Gostaria%20de%20solicitar%20uma%20proposta%20comercial%20da%20Envox."
-              target="_blank"
-              class="contact-btn whatsapp"
-            >
-              <span class="contact-btn-icon">💬</span>
-              <div class="contact-btn-text">
-                Falar pelo WhatsApp
-                <small>Resposta rápida em horário comercial</small>
+          <% if (!(typeof formSuccess !== 'undefined' && formSuccess)) { %>
+
+            <!-- Como funciona -->
+            <div class="how-it-works">
+              <div class="how-it-works-title">ℹ️ Como funciona?</div>
+              <ol class="how-steps">
+                <li><span class="step-num">1</span><span>Preencha o formulário abaixo com seus dados</span></li>
+                <li><span class="step-num">2</span><span>O sistema gera um link exclusivo e protegido pra você</span></li>
+                <li><span class="step-num">3</span><span>Você acessa este link e se autentica com o e-mail e WhatsApp cadastrados aqui</span></li>
+                <li><span class="step-num">4</span><span>Acesse 10 slides com tudo sobre a Envox — nossos serviços, diferenciais e cases</span></li>
+                <li><span class="step-num">5</span><span>Monte sua proposta do jeito que você quiser, escolhendo os serviços que fazem sentido pro seu negócio</span></li>
+              </ol>
+            </div>
+
+            <!-- Formulário de solicitação -->
+            <form id="form-solicitar" action="/solicitar-acesso" method="POST">
+              <div class="form-group">
+                <label for="s-name">Nome Completo *</label>
+                <input type="text" id="s-name" name="name"
+                       placeholder="Seu nome completo" required>
               </div>
-            </a>
-            <a
-              href="mailto:gustavo@envox.com.br?subject=Solicito uma proposta comercial&body=Olá, gostaria de receber uma proposta da Envox."
-              class="contact-btn email"
-            >
-              <span class="contact-btn-icon">✉️</span>
-              <div class="contact-btn-text">
-                Enviar por E-mail
-                <small>gustavo@envox.com.br</small>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="s-whatsapp">WhatsApp *</label>
+                  <input type="tel" id="s-whatsapp" name="whatsapp"
+                         placeholder="(41) 99999-9999" required maxlength="20">
+                </div>
+                <div class="form-group">
+                  <label for="s-email">E-mail *</label>
+                  <input type="email" id="s-email" name="email"
+                         placeholder="seu@email.com" required>
+                </div>
               </div>
-            </a>
-          </div>
-        </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="s-company">Nome da Empresa *</label>
+                  <input type="text" id="s-company" name="company"
+                         placeholder="Sua empresa" required>
+                </div>
+                <div class="form-group">
+                  <label for="s-cargo">Cargo</label>
+                  <input type="text" id="s-cargo" name="cargo"
+                         placeholder="Ex: Diretor, Sócio...">
+                </div>
+              </div>
+              <button type="submit" class="btn-primary" id="btn-solicitar">
+                <span id="btn-sol-text">Enviar Solicitação →</span>
+                <div class="spinner" id="spinner-sol"></div>
+              </button>
+            </form>
+
+            <!-- Aviso WhatsApp final -->
+            <div class="whatsapp-notice">
+              <span>💬</span>
+              <span>
+                Após enviar, nossa equipe vai analisar e liberar seu acesso.
+                Para agilizar, fale com a gente pelo
+                <a href="https://wa.me/554133000404?text=Olá!%20Enviei%20uma%20solicitação%20de%20acesso%20e%20gostaria%20de%20confirmar."
+                   target="_blank">WhatsApp</a> para aprovar sua solicitação e liberar o sistema de proposta.
+              </span>
+            </div>
+
+          <% } %>
+        </div><!-- /panel-solicitar -->
 
       </div><!-- /card -->
     </div><!-- /hero-inner -->
@@ -503,32 +382,39 @@
   </footer>
 
   <script>
-    // Troca de abas
     function switchTab(tab) {
-      document.querySelectorAll('.tab-btn').forEach((b, i) => {
-        b.classList.toggle('active', (i === 0 && tab === 'acessar') || (i === 1 && tab === 'solicitar'));
-      });
+      document.getElementById('tab-acessar').classList.toggle('active', tab === 'acessar');
+      document.getElementById('tab-solicitar').classList.toggle('active', tab === 'solicitar');
       document.getElementById('panel-acessar').classList.toggle('active', tab === 'acessar');
       document.getElementById('panel-solicitar').classList.toggle('active', tab === 'solicitar');
     }
 
-    // Máscara de WhatsApp
-    document.getElementById('whatsapp').addEventListener('input', function () {
-      let v = this.value.replace(/\D/g, '').slice(0, 11);
-      if (v.length > 6) v = `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
-      else if (v.length > 2) v = `(${v.slice(0,2)}) ${v.slice(2)}`;
-      else if (v.length > 0) v = `(${v}`;
-      this.value = v;
-    });
+    // Máscara WhatsApp
+    function maskPhone(input) {
+      input.addEventListener('input', function () {
+        let v = this.value.replace(/\D/g, '').slice(0, 11);
+        if (v.length > 6) v = `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
+        else if (v.length > 2) v = `(${v.slice(0,2)}) ${v.slice(2)}`;
+        else if (v.length > 0) v = `(${v}`;
+        this.value = v;
+      });
+    }
+    maskPhone(document.getElementById('whatsapp'));
+    maskPhone(document.getElementById('s-whatsapp'));
 
-    // Spinner no submit
+    // Spinner — acessar
     document.getElementById('form-acesso').addEventListener('submit', function () {
       document.getElementById('btn-text').style.display = 'none';
       document.getElementById('spinner').style.display = 'block';
       document.getElementById('btn-buscar').disabled = true;
     });
 
-    // Se veio com erro, manter aba acessar ativa (já é padrão)
+    // Spinner — solicitar
+    document.getElementById('form-solicitar') && document.getElementById('form-solicitar').addEventListener('submit', function () {
+      document.getElementById('btn-sol-text').style.display = 'none';
+      document.getElementById('spinner-sol').style.display = 'block';
+      document.getElementById('btn-solicitar').disabled = true;
+    });
   </script>
 </body>
 </html>
