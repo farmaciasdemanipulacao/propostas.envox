@@ -649,14 +649,20 @@ function getProposalsByLead(leadId) {
 
 function saveProposalItems(proposalId, items) {
   const database = getDb();
-  database.prepare(`DELETE FROM proposal_items WHERE proposal_id = ?`).run(proposalId);
+  // ── Proteção contra apagamento acidental ──────────────────────────────────
+  // Se nenhum item foi enviado (items vazio), NÃO apaga os itens existentes.
+  // O DELETE só é executado quando há itens novos para substituir os antigos,
+  // evitando que um submit sem checkboxes marcados destrua dados do lead.
   if (!items || items.length === 0) return;
+  // ─────────────────────────────────────────────────────────────────────────
   const ins = database.prepare(`
     INSERT INTO proposal_items
       (proposal_id, service_id, name, description, price, qty, unit, category, sort_order)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  const insertMany = database.transaction((rows) => {
+  const replaceAll = database.transaction((rows) => {
+    // DELETE dentro da transação: atômico com os INSERTs
+    database.prepare(`DELETE FROM proposal_items WHERE proposal_id = ?`).run(proposalId);
     rows.forEach((item, idx) => {
       ins.run(
         proposalId,
@@ -671,7 +677,7 @@ function saveProposalItems(proposalId, items) {
       );
     });
   });
-  insertMany(items);
+  replaceAll(items);
 }
 
 function getProposalItems(proposalId) {

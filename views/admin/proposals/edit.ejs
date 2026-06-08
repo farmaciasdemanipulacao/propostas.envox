@@ -744,6 +744,24 @@
           sort_order: items.length
         });
       });
+
+      // ── Proteção contra apagamento acidental de itens ──────────────────
+      // Se nenhum serviço está marcado MAS a proposta já tinha itens salvos,
+      // exige confirmação explícita antes de submeter sem itens.
+      // O servidor também protege, mas este aviso previne o submit por engano.
+      const existingCount = (typeof PROPOSAL_ITEMS_DATA !== 'undefined') ? PROPOSAL_ITEMS_DATA.length : 0;
+      if (items.length === 0 && existingCount > 0) {
+        const ok = confirm(
+          '⚠️ Nenhum serviço está selecionado!\n\n' +
+          'Esta proposta possui ' + existingCount + ' item(ns) atualmente salvos.\n\n' +
+          'Se continuar, os itens NÃO serão alterados (proteção ativa).\n' +
+          'Para remover todos os itens intencionalmente, use o botão de edição individual.\n\n' +
+          'Deseja salvar mesmo assim (sem alterar os itens)?'
+        );
+        if (!ok) { e.preventDefault(); return; }
+      }
+      // ───────────────────────────────────────────────────────────────────
+
       const container = document.getElementById('hiddenItemsContainer');
       container.innerHTML = '';
       const input = document.createElement('input');
