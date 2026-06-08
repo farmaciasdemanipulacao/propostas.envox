@@ -197,6 +197,40 @@ router.get('/:token/view', (req, res) => {
   });
 });
 
+// GET /proposta/:token/view-admin — visualizador da proposta para admin (sem auth de lead)
+router.get('/:token/view-admin', (req, res) => {
+  // Apenas admins autenticados
+  if (!req.session || !req.session.isAdmin) {
+    return res.redirect('/admin');
+  }
+
+  const { token } = req.params;
+  const proposal = db.getProposalByTokenWithLeads(token);
+  if (!proposal) return res.redirect('/admin/leads');
+
+  // Resolver lead primário — sem exigir sessão de lead
+  let viewerLead = null;
+  if (proposal.leads && proposal.leads.length > 0) {
+    viewerLead = proposal.leads.find(l => l.is_primary) || proposal.leads[0];
+  }
+  if (!viewerLead) return res.redirect('/admin/leads');
+
+  // Montar itens e enriquecer proposta (sem bloquear por client_locked)
+  const proposalItems = db.getProposalItems(proposal.id);
+  const enrichedProposal = {
+    ...proposal,
+    proposal_items: proposalItems.length > 0 ? proposalItems : null,
+  };
+
+  res.render('proposal/viewer', {
+    proposal: enrichedProposal,
+    lead: viewerLead,
+    slides,
+    token,
+    isAdminPreview: true
+  });
+});
+
 // ── API: Session tracking ─────────────────────────────────────────────────────
 
 // POST /proposta/session/start
