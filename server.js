@@ -54,9 +54,78 @@ app.use('/planejamento', planejamentoClientRouter);
 app.use('/api/track', apiRouter);
 app.use('/api', apiRouter);
 
-// Rota raiz
+// Rota raiz — página inicial para clientes
 app.get('/', (req, res) => {
-  res.redirect('/admin');
+  res.render('home', { error: null, success: null });
+});
+
+// Busca proposta pelo email + whatsapp do cliente
+app.post('/buscar-proposta', async (req, res) => {
+  const { email, whatsapp } = req.body;
+
+  if (!email || !whatsapp) {
+    return res.render('home', {
+      error: 'Preencha o e-mail e o WhatsApp para continuar.',
+      success: null
+    });
+  }
+
+  try {
+    // Normaliza WhatsApp (só dígitos)
+    const waClean = (whatsapp || '').replace(/\D/g, '');
+
+    // Busca lead pelo email
+    const lead = db.getLeadByEmail(email.trim().toLowerCase());
+
+    if (!lead) {
+      return res.render('home', {
+        error: 'Nenhuma proposta encontrada com esse e-mail. Verifique os dados ou solicite acesso.',
+        success: null
+      });
+    }
+
+    // Verifica WhatsApp
+    const storedWa = (lead.whatsapp || '').replace(/\D/g, '');
+    if (waClean !== storedWa) {
+      return res.render('home', {
+        error: 'E-mail e WhatsApp não conferem. Verifique os dados informados.',
+        success: null
+      });
+    }
+
+    // Busca propostas do lead
+    const proposals = db.getProposalsByLead(lead.id);
+
+    if (!proposals || proposals.length === 0) {
+      return res.render('home', {
+        error: 'Nenhuma proposta disponível para este cadastro ainda. Em breve a equipe Envox entrará em contato.',
+        success: null
+      });
+    }
+
+    // Autentica a sessão para todas as propostas do lead (mesma lógica das rotas de proposta)
+    if (!req.session.authenticatedTokens) req.session.authenticatedTokens = [];
+    if (!req.session.sharedAccess) req.session.sharedAccess = {};
+
+    for (const p of proposals) {
+      if (!req.session.authenticatedTokens.includes(p.token)) {
+        req.session.authenticatedTokens.push(p.token);
+      }
+      // Guarda contexto do lead para que a view consiga identificá-lo
+      req.session.sharedAccess[p.token] = { lead_id: lead.id, name: lead.name };
+    }
+
+    // Redireciona para a proposta mais recente
+    const latest = proposals[0];
+    return res.redirect(`/proposta/${latest.token}/view`);
+
+  } catch (err) {
+    console.error('[buscar-proposta]', err);
+    return res.render('home', {
+      error: 'Ocorreu um erro ao buscar sua proposta. Tente novamente.',
+      success: null
+    });
+  }
 });
 
 // 404
