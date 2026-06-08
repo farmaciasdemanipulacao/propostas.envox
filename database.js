@@ -67,6 +67,8 @@ function initDatabase() {
     db.exec('ALTER TABLE proposals ADD COLUMN admin_discount_onetime REAL DEFAULT 0');
   if (!existingCols.includes('admin_notes'))
     db.exec("ALTER TABLE proposals ADD COLUMN admin_notes TEXT DEFAULT ''");
+  if (!existingCols.includes('viewer_bounced'))
+    db.exec('ALTER TABLE proposals ADD COLUMN viewer_bounced INTEGER DEFAULT 0');
 
   // ══════════════════════════════════════════════════════════════════════
   // PROPOSAL_LEADS — junction N:N
@@ -509,6 +511,12 @@ function markCreatedByClient(proposalId) {
 function updateAdminDiscounts(proposalId, discountMonthly, discountOnetime, notes) {
   getDb().prepare(`UPDATE proposals SET admin_discount_monthly = ?, admin_discount_onetime = ?, admin_notes = ? WHERE id = ?`)
     .run(parseFloat(discountMonthly) || 0, parseFloat(discountOnetime) || 0, notes || '', proposalId);
+}
+
+// Marca que o lead visualizou o slide mas não preencheu a proposta (modo build/both sem itens)
+function setViewerBounced(proposalId, bounced) {
+  getDb().prepare(`UPDATE proposals SET viewer_bounced = ? WHERE id = ?`)
+    .run(bounced ? 1 : 0, proposalId);
 }
 
 function deleteProposal(proposalId) {
@@ -1143,7 +1151,7 @@ module.exports = {
   getProposalWithLeads, getAllProposals,
   updateProposalContent, updateProposalMode, markProposalSent,
   setProposalStatus, setClientLocked, markCreatedByClient,
-  updateAdminDiscounts, deleteProposal, archiveProposal,
+  updateAdminDiscounts, setViewerBounced, deleteProposal, archiveProposal,
   // Junction
   linkLeadToProposal, unlinkLeadFromProposal, getLeadsByProposal, getProposalsByLead,
   // Proposal Items

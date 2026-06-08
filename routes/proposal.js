@@ -197,7 +197,7 @@ router.get('/:token/view', (req, res) => {
   });
 });
 
-// GET /proposta/:token/view-admin — visualizador da proposta para admin (sem auth de lead)
+// GET /proposta/:token/view-admin — visualização da proposta para admin (igual ao cliente vê)
 router.get('/:token/view-admin', (req, res) => {
   // Apenas admins autenticados
   if (!req.session || !req.session.isAdmin) {
@@ -215,20 +215,57 @@ router.get('/:token/view-admin', (req, res) => {
   }
   if (!viewerLead) return res.redirect('/admin/leads');
 
-  // Montar itens e enriquecer proposta (sem bloquear por client_locked)
-  const proposalItems = db.getProposalItems(proposal.id);
-  const enrichedProposal = {
-    ...proposal,
-    proposal_items: proposalItems.length > 0 ? proposalItems : null,
-  };
+  // Carregar itens, ações e totais (igual ao painel do cliente)
+  const items   = db.getProposalItems(proposal.id);
+  const actions = db.getProposalActionsByProposal ? db.getProposalActionsByProposal(proposal.id) : [];
 
-  res.render('proposal/viewer', {
-    proposal: enrichedProposal,
-    lead: viewerLead,
-    slides,
-    token,
-    isAdminPreview: true
+  let rawM = 0, rawO = 0;
+  items.forEach(it => {
+    const t = (parseFloat(it.price) || 0) * (parseInt(it.qty) || 1);
+    if (it.category === 'onetime') rawO += t; else rawM += t;
   });
+  const discM = parseFloat(proposal.admin_discount_monthly || 0);
+  const discO = parseFloat(proposal.admin_discount_onetime || 0);
+  const finM  = rawM * (1 - discM / 100);
+  const finO  = rawO * (1 - discO / 100);
+
+  // Calcular dias em aberto para propostas criadas pelo cliente sem itens
+  let daysOpen = null;
+  if (proposal.created_by_client && items.length === 0) {
+    const created = new Date(proposal.created_at);
+    daysOpen = Math.floor((Date.now() - created.getTime()) / (1000 * 60 * 60 * 24));
+  }
+
+  res.render('admin/proposal-view', {
+    lead: viewerLead,
+    proposal: { ...proposal, items },
+    actions,
+    totals: { rawM, rawO, discM, discO, finM, finO },
+    daysOpen,
+    backUrl: `/admin/leads/${viewerLead.id}/proposals`,
+  });
+});
+
+// ── API: Mark viewer bounced (lead viu slide mas não preencheu) ───────────────
+// POST /proposta/mark-viewer-bounced
+router.post('/mark-viewer-bounced', (req, res) => {
+  const { token } = req.body;
+  if (!token) return res.status(400).json({ error: 'token required' });
+  try {
+    const proposal = db.getProposalByToken(token);
+    if (!proposal) return res.status(404).json({ error: 'Proposal not found' });
+    // Só marca bounced se modo inclui build e ainda não tem itens
+    if ((proposal.proposal_mode === 'build' || proposal.proposal_mode === 'both')) {
+      const items = db.getProposalItems(proposal.id);
+      if (items.length === 0) {
+        db.setViewerBounced(proposal.id, true);
+      }
+    }
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('[mark-viewer-bounced]', err);
+    return res.status(500).json({ error: 'Internal error' });
+  }
 });
 
 // ── API: Session tracking ─────────────────────────────────────────────────────

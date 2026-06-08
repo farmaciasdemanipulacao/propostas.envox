@@ -82,7 +82,44 @@
             const dateStr = new Date(p.created_at).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' });
           %>
 
+          <%
+            // Calcular dias em aberto para propostas criadas pelo lead sem itens ainda
+            const noItems = !p.items || p.items.length === 0;
+            const createdByClient = !!p.created_by_client;
+            let daysOpen = null;
+            if (createdByClient && noItems) {
+              const created = new Date(p.created_at);
+              daysOpen = Math.floor((Date.now() - created.getTime()) / (1000 * 60 * 60 * 24));
+            }
+          %>
+
           <div class="proposal-row-card" id="card-<%= p.id %>">
+
+            <!-- Alerta: proposta em aberto (lead não preencheu ainda) -->
+            <% if (daysOpen !== null) { %>
+            <div style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1.5rem;background:rgba(245,158,11,0.08);border-bottom:1px solid rgba(245,158,11,0.25)">
+              <span style="font-size:1.3rem">⏳</span>
+              <div style="flex:1">
+                <div style="font-size:0.82rem;font-weight:700;color:#92400e">Aguardando preenchimento do lead</div>
+                <div style="font-size:0.74rem;color:#b45309;margin-top:0.1rem">
+                  Proposta criada há <strong><%= daysOpen %> dia<%= daysOpen !== 1 ? 's' : '' %></strong> — o cliente ainda não montou a proposta.
+                </div>
+              </div>
+              <span style="font-size:1.8rem;font-weight:900;color:#d97706"><%= daysOpen %>d</span>
+            </div>
+            <% } %>
+
+            <!-- Alerta: bounced (viu o slide, não preencheu) -->
+            <% if (p.viewer_bounced && noItems) { %>
+            <div style="display:flex;align-items:center;gap:0.75rem;padding:0.65rem 1.5rem;background:rgba(239,68,68,0.06);border-bottom:1px solid rgba(239,68,68,0.2)">
+              <span style="font-size:1.2rem">👀</span>
+              <div style="flex:1">
+                <div style="font-size:0.8rem;font-weight:700;color:#b91c1c">Lead visualizou o slide mas não preencheu a proposta</div>
+                <div style="font-size:0.72rem;color:#dc2626;margin-top:0.1rem">Recomendado enviar notificação para reengajar.</div>
+              </div>
+              <span style="font-size:0.7rem;font-weight:700;background:#fee2e2;color:#b91c1c;padding:3px 8px;border-radius:5px;white-space:nowrap">Notificar</span>
+            </div>
+            <% } %>
 
             <!-- Header da proposta -->
             <div class="prc-header">

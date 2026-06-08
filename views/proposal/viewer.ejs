@@ -193,5 +193,23 @@
   <script src="/js/proposal.js"></script>
   <script src="/js/builder.js"></script>
   <script src="/js/widgets.js"></script>
+
+  <!-- ── Bounced tracker: registra que o lead viu o slide sem preencher proposta ── -->
+  <% if (!isAdminPreview && (proposal.proposal_mode === 'build' || proposal.proposal_mode === 'both')) { %>
+  <script>
+    (function() {
+      const mode = window.PROPOSAL_MODE;
+      if (mode !== 'build' && mode !== 'both') return;
+      // Marca bounced após 8s na página (lead viu mas não agiu)
+      setTimeout(function() {
+        fetch('/proposta/mark-viewer-bounced', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: window.PROPOSAL_TOKEN })
+        }).catch(function() {});
+      }, 8000);
+    })();
+  </script>
+  <% } %>
 </body>
 </html>

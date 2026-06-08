@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Proposta <%= proposal.id %><% if (lead.company_name) { %> · <%= lead.company_name %><% } %> — Envox</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --pink:       #E91E63;
+      --pink-dark:  #c2185b;
+      --green:      #10b981;
+      --green-dark: #059669;
+      --amber:      #f59e0b;
+      --amber-dark: #d97706;
+      --red:        #ef4444;
+      --red-dark:   #dc2626;
+      --blue:       #3b82f6;
+      --purple:     #7c3aed;
+      --dark:       #1a1a2e;
+      --gray-50:    #f8fafc;
+      --gray-100:   #f1f5f9;
+      --gray-200:   #e2e8f0;
+      --gray-400:   #94a3b8;
+      --gray-600:   #475569;
+      --shadow:     0 4px 24px rgba(0,0,0,0.08);
+      --shadow-lg:  0 8px 40px rgba(0,0,0,0.13);
+      --radius:     14px;
+    }
+
+    body { font-family: 'Poppins', sans-serif; background: var(--gray-50); color: var(--dark); min-height: 100vh; }
+
+    /* ── Admin banner ── */
+    .admin-banner {
+      background: #1a1a2e;
+      border-bottom: 3px solid var(--purple);
+      padding: 0.7rem 2rem;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+      position: sticky; top: 0; z-index: 300;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+    .admin-banner-left {
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    .admin-badge {
+      background: var(--purple); color: #fff;
+      padding: 3px 10px; border-radius: 6px;
+      font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .admin-banner-info {
+      font-size: 0.8rem; color: rgba(255,255,255,0.7);
+    }
+    .admin-banner-info strong { color: #fff; }
+    .admin-banner-right { display: flex; gap: 0.5rem; align-items: center; }
+    .ab-btn {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 5px 12px; border-radius: 7px; font-size: 0.75rem; font-weight: 600;
+      text-decoration: none; border: none; cursor: pointer; font-family: 'Poppins', sans-serif;
+      transition: opacity 0.15s;
+    }
+    .ab-btn:hover { opacity: 0.85; }
+    .ab-btn-back  { background: rgba(255,255,255,0.12); color: #fff; }
+    .ab-btn-edit  { background: var(--pink); color: #fff; }
+
+    /* ── Wrapper ── */
+    .wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
+
+    /* ── Hero ── */
+    .hero { text-align: center; margin-bottom: 2.25rem; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: rgba(233,30,99,0.08); color: var(--pink);
+      border: 1px solid rgba(233,30,99,0.2); border-radius: 20px;
+      padding: 4px 14px; font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem;
+    }
+    .hero h1 { font-size: 1.7rem; font-weight: 800; color: var(--dark); margin-bottom: 0.4rem; }
+    .hero h1 span { color: var(--pink); }
+    .hero-sub { font-size: 0.88rem; color: var(--gray-400); line-height: 1.6; }
+
+    /* ── Alerta dias em aberto ── */
+    .days-open-alert {
+      background: rgba(245,158,11,0.09); border: 1.5px solid rgba(245,158,11,0.4);
+      border-radius: var(--radius); padding: 1rem 1.25rem;
+      margin-bottom: 1.75rem; display: flex; align-items: center; gap: 0.85rem;
+    }
+    .days-open-alert .doa-icon { font-size: 1.6rem; flex-shrink: 0; }
+    .days-open-alert .doa-body { flex: 1; }
+    .days-open-alert .doa-title { font-size: 0.88rem; font-weight: 700; color: #92400e; }
+    .days-open-alert .doa-sub   { font-size: 0.78rem; color: #b45309; margin-top: 0.15rem; }
+    .days-open-alert .doa-days  { font-size: 1.5rem; font-weight: 900; color: #d97706; flex-shrink: 0; }
+
+    /* ── Bounced alert ── */
+    .bounced-alert {
+      background: rgba(239,68,68,0.07); border: 1.5px solid rgba(239,68,68,0.35);
+      border-radius: var(--radius); padding: 0.9rem 1.25rem;
+      margin-bottom: 1.75rem; display: flex; align-items: center; gap: 0.75rem;
+      font-size: 0.84rem;
+    }
+    .bounced-alert .ba-icon { font-size: 1.4rem; }
+    .bounced-alert .ba-body { flex: 1; }
+    .bounced-alert .ba-title { font-weight: 700; color: var(--red-dark); }
+    .bounced-alert .ba-sub   { font-size: 0.76rem; color: #b91c1c; margin-top: 0.1rem; }
+
+    /* ── Status bar ── */
+    .status-bar {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;
+      background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius);
+      padding: 0.9rem 1.25rem; margin-bottom: 1.75rem; box-shadow: var(--shadow);
+    }
+    .status-left { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700;
+    }
+    .pill-active   { background: rgba(16,185,129,0.1);  color: var(--green-dark); }
+    .pill-awaiting { background: rgba(245,158,11,0.12); color: var(--amber-dark); }
+    .pill-accepted { background: rgba(16,185,129,0.12); color: var(--green-dark); }
+    .pill-counter  { background: rgba(59,130,246,0.1);  color: var(--blue); }
+    .pill-rejected { background: rgba(239,68,68,0.1);   color: var(--red-dark); }
+    .pill-archived { background: #f5f5f5; color: #999; }
+    .pill-locked   { background: rgba(124,58,237,0.1);  color: #7c3aed; }
+    .pill-client   { background: rgba(233,30,99,0.08);  color: var(--pink); }
+    .pill-envox    { background: rgba(100,116,139,0.08);color: #64748b; }
+    .date-txt { font-size: 0.75rem; color: var(--gray-400); }
+
+    /* ── Admin info box ── */
+    .admin-info-box {
+      background: rgba(124,58,237,0.05); border: 1px solid rgba(124,58,237,0.2);
+      border-radius: var(--radius); padding: 1rem 1.25rem;
+      margin-bottom: 1.75rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
+    }
+    @media (max-width: 560px) { .admin-info-box { grid-template-columns: 1fr; } }
+    .aib-item { display: flex; flex-direction: column; gap: 0.15rem; }
+    .aib-lbl { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--purple); }
+    .aib-val { font-size: 0.88rem; font-weight: 600; color: var(--dark); }
+    .aib-val.mono { font-family: monospace; font-size: 0.8rem; }
+
+    /* ── Summary box ── */
+    .summary-box {
+      background: #fff; border: 1px solid var(--gray-200);
+      border-radius: var(--radius); padding: 1.5rem;
+      margin-bottom: 1.75rem; box-shadow: var(--shadow);
+    }
+    .box-title {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--gray-400); margin-bottom: 1.1rem;
+    }
+    .items-list { list-style: none; margin-bottom: 1.1rem; }
+    .items-list li {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.55rem 0; border-bottom: 1px solid var(--gray-100); font-size: 0.88rem;
+    }
+    .items-list li:last-child { border-bottom: none; }
+    .item-name { color: var(--dark); font-weight: 500; display: flex; align-items: center; gap: 0.4rem; }
+    .item-cat  { font-size: 0.65rem; padding: 2px 6px; border-radius: 5px; font-weight: 700; }
+    .cat-m { background: #eff6ff; color: #1e40af; }
+    .cat-o { background: #f7fee7; color: #3f6212; }
+    .item-price { color: var(--pink); font-weight: 700; font-size: 0.88rem; }
+
+    .totals-grid {
+      display: flex; flex-wrap: wrap; gap: 1.25rem;
+      background: var(--gray-50); border-radius: 10px;
+      padding: 0.9rem 1.1rem; margin-top: 0.5rem;
+    }
+    .total-blk { display: flex; flex-direction: column; gap: 0.1rem; }
+    .total-lbl { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-400); }
+    .total-val { font-size: 1rem; font-weight: 800; color: var(--dark); }
+    .total-val.green { color: var(--green); }
+    .total-val.strike { text-decoration: line-through; font-size: 0.8rem; color: var(--gray-400); font-weight: 400; }
+    .disc-badge { font-size: 0.65rem; background: rgba(16,185,129,0.12); color: var(--green-dark); border-radius: 5px; padding: 1px 5px; font-weight: 700; margin-left: 0.3rem; }
+
+    .admin-note {
+      background: rgba(233,30,99,0.04); border: 1px solid rgba(233,30,99,0.15);
+      border-radius: 10px; padding: 0.85rem 1.1rem; margin-top: 1.1rem;
+      font-size: 0.84rem; line-height: 1.55; color: #3d0a1c;
+    }
+    .admin-note strong { display: block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--pink); margin-bottom: 0.3rem; }
+
+    /* ── Empty proposal state ── */
+    .empty-proposal {
+      background: var(--gray-50); border: 2px dashed var(--gray-200);
+      border-radius: var(--radius); padding: 2.5rem; text-align: center;
+      margin-bottom: 1.75rem;
+    }
+    .empty-proposal .ep-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .empty-proposal h3 { font-size: 1rem; font-weight: 700; color: var(--dark); margin-bottom: 0.35rem; }
+    .empty-proposal p  { font-size: 0.84rem; color: var(--gray-400); line-height: 1.6; }
+
+    /* ── History ── */
+    .history-box {
+      background: #fff; border: 1px solid var(--gray-200);
+      border-radius: var(--radius); padding: 1.25rem 1.5rem;
+      margin-bottom: 1.75rem; box-shadow: var(--shadow);
+    }
+    .history-list { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.85rem; }
+    .history-item {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      padding: 0.65rem 0.85rem; border-radius: 9px;
+      background: var(--gray-50); border: 1px solid var(--gray-100);
+    }
+    .h-icon { font-size: 1rem; flex-shrink: 0; margin-top: 2px; }
+    .h-body { flex: 1; min-width: 0; }
+    .h-type { font-size: 0.78rem; font-weight: 700; color: var(--dark); }
+    .h-date { font-size: 0.68rem; color: var(--gray-400); margin-top: 0.1rem; }
+    .h-comment { font-size: 0.78rem; color: var(--gray-600); font-style: italic; margin-top: 0.2rem; line-height: 1.5; }
+
+    /* ── Quick actions for admin ── */
+    .admin-actions {
+      background: #fff; border: 1px solid var(--gray-200);
+      border-radius: var(--radius); padding: 1.25rem 1.5rem;
+      margin-bottom: 1.75rem; box-shadow: var(--shadow);
+    }
+    .aa-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.85rem; }
+    .aa-btn {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 7px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 600;
+      text-decoration: none; border: none; cursor: pointer; font-family: 'Poppins', sans-serif;
+      transition: opacity 0.15s;
+    }
+    .aa-btn:hover { opacity: 0.85; }
+    .aa-edit     { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    .aa-discount { background: #fdf2f8; color: var(--pink); border: 1px solid #fbcfe8; }
+    .aa-lock     { background: rgba(124,58,237,0.09); color: var(--purple); border: 1px solid rgba(124,58,237,0.25); }
+
+    @media (max-width: 600px) {
+      .admin-banner { padding: 0.6rem 1rem; }
+      .wrap { padding: 1.25rem 0.85rem 4rem; }
+      .hero h1 { font-size: 1.35rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Admin banner ── -->
+  <div class="admin-banner">
+    <div class="admin-banner-left">
+      <span class="admin-badge">👁️ Visualização Admin</span>
+      <span class="admin-banner-info">
+        <strong><%= lead.name %></strong>
+        <% if (lead.company_name) { %> · <%= lead.company_name %><% } %>
+        &nbsp;·&nbsp; Proposta #<%= proposal.id %>
+      </span>
+    </div>
+    <div class="admin-banner-right">
+      <a href="<%= backUrl %>" class="ab-btn ab-btn-back">← Voltar</a>
+      <a href="/admin/proposals/<%= proposal.id %>/edit" class="ab-btn ab-btn-edit">✏️ Editar</a>
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <%
+      const items = proposal.items || [];
+      const { rawM, rawO, discM, discO, finM, finO } = totals;
+
+      const hasAccept  = proposal.latest_action === 'accept';
+      const hasReject  = proposal.proposal_status === 'rejected' || proposal.latest_action === 'reject';
+      const hasCounter = proposal.latest_action === 'counter';
+      const isAwaiting = proposal.proposal_status === 'awaiting';
+
+      let pillCls, pillTxt;
+      if (hasAccept)       { pillCls = 'pill-accepted'; pillTxt = '🎉 Aceita'; }
+      else if (hasReject)  { pillCls = 'pill-rejected'; pillTxt = '❌ Recusada'; }
+      else if (isAwaiting) { pillCls = 'pill-awaiting'; pillTxt = '⏳ Em análise'; }
+      else                 { pillCls = 'pill-active';   pillTxt = '✅ Ativa'; }
+
+      const dateStr = new Date(proposal.created_at).toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+      const modeLabels = { ready: '📋 Pronta', build: '🔧 Montar proposta', both: '✨ Ambas as opções' };
+    %>
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-badge">📋 Proposta Personalizada</div>
+      <h1>Proposta para<% if (lead.company_name) { %><br><span><%= lead.company_name %></span><% } else { %> <span><%= lead.name %></span><% } %></h1>
+      <p class="hero-sub">Visualização do que o cliente vê — nenhuma ação será tomada aqui.</p>
+    </div>
+
+    <!-- Alerta: proposta em aberto (created_by_client, sem itens) -->
+    <% if (daysOpen !== null) { %>
+    <div class="days-open-alert">
+      <span class="doa-icon">⏳</span>
+      <div class="doa-body">
+        <div class="doa-title">Proposta em aberto — aguardando preenchimento do cliente</div>
+        <div class="doa-sub">O lead recebeu o acesso mas ainda não montou a proposta. Você pode enviar uma notificação.</div>
+      </div>
+      <span class="doa-days"><%= daysOpen %>d</span>
+    </div>
+    <% } %>
+
+    <!-- Alerta: bounced (viu o slide, não preencheu) -->
+    <% if (proposal.viewer_bounced && items.length === 0) { %>
+    <div class="bounced-alert">
+      <span class="ba-icon">👀</span>
+      <div class="ba-body">
+        <div class="ba-title">Lead visualizou o slide, mas não preencheu a proposta</div>
+        <div class="ba-sub">Recomendado enviar notificação para reengajar.</div>
+      </div>
+    </div>
+    <% } %>
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <div class="status-left">
+        <span class="pill <%= pillCls %>"><%= pillTxt %></span>
+        <% if (proposal.client_locked) { %><span class="pill pill-locked">🔒 Bloqueada</span><% } %>
+        <% if (proposal.created_by_client) { %>
+          <span class="pill pill-client">👤 Criada pelo lead</span>
+        <% } else { %>
+          <span class="pill pill-envox">🏢 Criada pela Envox</span>
+        <% } %>
+        <span class="date-txt">📅 <%= dateStr %></span>
+      </div>
+    </div>
+
+    <!-- Info técnica da proposta (apenas admin vê) -->
+    <div class="admin-info-box">
+      <div class="aib-item">
+        <span class="aib-lbl">Modo</span>
+        <span class="aib-val"><%= modeLabels[proposal.proposal_mode || 'both'] %></span>
+      </div>
+      <div class="aib-item">
+        <span class="aib-lbl">Token</span>
+        <span class="aib-val mono"><%= proposal.token %></span>
+      </div>
+      <div class="aib-item">
+        <span class="aib-lbl">Lead</span>
+        <span class="aib-val"><%= lead.name %> · <%= lead.email %></span>
+      </div>
+      <div class="aib-item">
+        <span class="aib-lbl">Viewer Bounced</span>
+        <span class="aib-val"><%= proposal.viewer_bounced ? '⚠️ Sim — viu e saiu' : '✅ Não' %></span>
+      </div>
+    </div>
+
+    <!-- ── Resumo dos serviços ── -->
+    <div class="summary-box">
+      <div class="box-title">📦 Resumo do Plano</div>
+
+      <% if (items.length > 0) { %>
+        <ul class="items-list">
+          <% items.forEach(it => {
+            const qty   = parseInt(it.qty) || 1;
+            const total = (parseFloat(it.price) || 0) * qty;
+            const isMonthly = it.category !== 'onetime';
+          %>
+          <li>
+            <span class="item-name">
+              <%= it.name %><% if (qty > 1) { %> × <%= qty %><% } %>
+              <span class="item-cat <%= isMonthly ? 'cat-m' : 'cat-o' %>">
+                <%= isMonthly ? 'Mensal' : 'Único' %>
+              </span>
+            </span>
+            <span class="item-price">
+              R$ <%= total.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) %><%= isMonthly ? '/mês' : '' %>
+            </span>
+          </li>
+          <% }); %>
+        </ul>
+
+        <div class="totals-grid">
+          <% if (rawM > 0) { %>
+            <div class="total-blk">
+              <span class="total-lbl">Mensal</span>
+              <% if (discM > 0) { %>
+                <span class="total-val strike">R$ <%= rawM.toLocaleString('pt-BR',{minimumFractionDigits:0}) %>/mês</span>
+                <span class="total-val green">
+                  R$ <%= finM.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) %>/mês
+                  <span class="disc-badge">-<%= discM %>%</span>
+                </span>
+              <% } else { %>
+                <span class="total-val green">R$ <%= finM.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) %>/mês</span>
+              <% } %>
+            </div>
+          <% } %>
+          <% if (rawO > 0) { %>
+            <div class="total-blk">
+              <span class="total-lbl">Implantação</span>
+              <% if (discO > 0) { %>
+                <span class="total-val strike">R$ <%= rawO.toLocaleString('pt-BR',{minimumFractionDigits:0}) %></span>
+                <span class="total-val">
+                  R$ <%= finO.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) %>
+                  <span class="disc-badge">-<%= discO %>%</span>
+                </span>
+              <% } else { %>
+                <span class="total-val">R$ <%= finO.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) %></span>
+              <% } %>
+            </div>
+          <% } %>
+        </div>
+
+      <% } else { %>
+        <!-- Proposta sem itens: lead não preencheu ainda -->
+        <div class="empty-proposal">
+          <div class="ep-icon">📭</div>
+          <h3>
+            <% if (proposal.created_by_client) { %>
+              Lead ainda não montou a proposta
+            <% } else { %>
+              Nenhum serviço listado
+            <% } %>
+          </h3>
+          <p>
+            <% if (proposal.created_by_client) { %>
+              O lead recebeu acesso ao builder mas ainda não selecionou os serviços desejados.
+              <% if (daysOpen !== null) { %>
+                Isso aconteceu há <strong><%= daysOpen %> dia<%= daysOpen !== 1 ? 's' : '' %></strong>.
+              <% } %>
+            <% } else { %>
+              Esta proposta não possui itens de serviço cadastrados.
+            <% } %>
+          </p>
+        </div>
+      <% } %>
+
+      <% if (proposal.admin_notes && proposal.admin_notes.trim()) { %>
+        <div class="admin-note">
+          <strong>💬 Mensagem para o cliente</strong>
+          <%= proposal.admin_notes %>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- ── Histórico de decisões ── -->
+    <% if (actions && actions.length > 0) { %>
+    <div class="history-box">
+      <div class="box-title">📜 Histórico de Ações</div>
+      <div class="history-list">
+        <% const aIcons  = { accept:'✅', counter:'🔄', reject:'❌', email_sent:'📧', default:'📌' };
+           const aLabels = { accept:'Proposta aceita', counter:'Contraproposta enviada', reject:'Proposta recusada', email_sent:'E-mail enviado' };
+        %>
+        <% actions.forEach(ac => { %>
+          <div class="history-item">
+            <span class="h-icon"><%= aIcons[ac.action_type] || aIcons.default %></span>
+            <div class="h-body">
+              <div class="h-type"><%= aLabels[ac.action_type] || ac.action_type %></div>
+              <div class="h-date"><%= new Date(ac.created_at).toLocaleDateString('pt-BR', {day:'2-digit',month:'short',year:'numeric'}) %> às <%= new Date(ac.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) %></div>
+              <% if (ac.comment) { %><div class="h-comment">"<%= ac.comment %>"</div><% } %>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+    <% } %>
+
+    <!-- ── Ações rápidas admin ── -->
+    <div class="admin-actions">
+      <div class="box-title">⚡ Ações do Admin</div>
+      <div class="aa-grid">
+        <a href="/admin/proposals/<%= proposal.id %>/edit" class="aa-btn aa-edit">✏️ Editar Proposta</a>
+        <a href="<%= backUrl %>" class="aa-btn" style="background:var(--gray-100);color:var(--gray-600);border:1px solid var(--gray-200)">← Lista de Propostas</a>
+        <a href="/admin/leads/<%= lead.id %>" class="aa-btn" style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0">👤 Ver Lead</a>
+        <% if (proposal.client_locked) { %>
+          <button class="aa-btn aa-lock" onclick="toggleLock(0)">🔓 Desbloquear</button>
+        <% } else if (proposal.created_by_client) { %>
+          <button class="aa-btn aa-lock" onclick="toggleLock(1)">🔒 Bloquear</button>
+        <% } %>
+      </div>
+    </div>
+
+  </div><!-- /wrap -->
+
+  <script>
+    function toggleLock(lock) {
+      if (!confirm(lock ? 'Bloquear esta proposta?' : 'Desbloquear esta proposta?')) return;
+      fetch('/admin/proposals/<%= proposal.id %>/toggle-lock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locked: lock })
+      }).then(r => r.json()).then(d => {
+        if (d.success) location.reload();
+        else alert('Erro: ' + (d.error || 'tente novamente'));
+      }).catch(() => alert('Erro de conexão'));
+    }
+  </script>
+
+</body>
+</html>
