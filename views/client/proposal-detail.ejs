@@ -366,14 +366,19 @@
             const total = (parseFloat(it.price) || 0) * qty;
             const isMonthly = it.category !== 'onetime';
           %>
-          <li>
-            <span class="item-name">
-              <%= it.name %><% if (qty > 1) { %> × <%= qty %><% } %>
-              <span class="item-cat <%= isMonthly ? 'cat-m' : 'cat-o' %>">
-                <%= isMonthly ? 'Mensal' : 'Único' %>
+          <li style="align-items:flex-start;padding:0.65rem 0">
+            <span class="item-name" style="flex-direction:column;align-items:flex-start;gap:0.15rem">
+              <span style="display:flex;align-items:center;gap:0.4rem">
+                <%= it.name %><% if (qty > 1) { %> × <%= qty %><% } %>
+                <span class="item-cat <%= isMonthly ? 'cat-m' : 'cat-o' %>">
+                  <%= isMonthly ? 'Mensal' : 'Único' %>
+                </span>
               </span>
+              <% if (it.description && it.description.trim()) { %>
+                <span style="font-size:0.73rem;color:var(--gray-400);font-weight:400;line-height:1.4"><%= it.description %></span>
+              <% } %>
             </span>
-            <span class="item-price">
+            <span class="item-price" style="margin-top:2px">
               R$ <%= total.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) %><%= isMonthly ? '/mês' : '' %>
             </span>
           </li>

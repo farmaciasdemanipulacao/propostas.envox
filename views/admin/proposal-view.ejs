@@ -149,17 +149,22 @@
       font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
       letter-spacing: 0.08em; color: var(--gray-400); margin-bottom: 1.1rem;
     }
-    .items-list { list-style: none; margin-bottom: 1.1rem; }
-    .items-list li {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 0.55rem 0; border-bottom: 1px solid var(--gray-100); font-size: 0.88rem;
-    }
-    .items-list li:last-child { border-bottom: none; }
-    .item-name { color: var(--dark); font-weight: 500; display: flex; align-items: center; gap: 0.4rem; }
-    .item-cat  { font-size: 0.65rem; padding: 2px 6px; border-radius: 5px; font-weight: 700; }
     .cat-m { background: #eff6ff; color: #1e40af; }
     .cat-o { background: #f7fee7; color: #3f6212; }
-    .item-price { color: var(--pink); font-weight: 700; font-size: 0.88rem; }
+
+    /* ── Lista de itens com descrição ── */
+    .items-list-admin { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1.1rem; }
+    .item-row-admin {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem;
+      padding: 0.6rem 0.85rem; border-radius: 9px; background: var(--gray-50); border: 1px solid var(--gray-100);
+    }
+    .item-row-left { display: flex; align-items: flex-start; gap: 0.5rem; flex: 1; min-width: 0; }
+    .item-tag { padding: 2px 7px; border-radius: 5px; font-size: 0.63rem; font-weight: 700; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .item-info { display: flex; flex-direction: column; gap: 0.12rem; min-width: 0; }
+    .item-name-admin { font-size: 0.85rem; font-weight: 600; color: var(--dark); }
+    .item-qty { font-size: 0.73rem; color: var(--gray-400); font-weight: 400; }
+    .item-desc-admin { font-size: 0.73rem; color: var(--gray-400); line-height: 1.4; }
+    .item-price-admin { font-size: 0.85rem; font-weight: 700; color: var(--pink); white-space: nowrap; flex-shrink: 0; padding-top: 2px; }
 
     .totals-grid {
       display: flex; flex-wrap: wrap; gap: 1.25rem;
@@ -341,25 +346,32 @@
       <div class="box-title">📦 Resumo do Plano</div>
 
       <% if (items.length > 0) { %>
-        <ul class="items-list">
+        <div class="items-list-admin">
           <% items.forEach(it => {
             const qty   = parseInt(it.qty) || 1;
             const total = (parseFloat(it.price) || 0) * qty;
             const isMonthly = it.category !== 'onetime';
           %>
-          <li>
-            <span class="item-name">
-              <%= it.name %><% if (qty > 1) { %> × <%= qty %><% } %>
-              <span class="item-cat <%= isMonthly ? 'cat-m' : 'cat-o' %>">
+          <div class="item-row-admin">
+            <div class="item-row-left">
+              <span class="item-tag <%= isMonthly ? 'cat-m' : 'cat-o' %>">
                 <%= isMonthly ? 'Mensal' : 'Único' %>
               </span>
-            </span>
-            <span class="item-price">
+              <div class="item-info">
+                <span class="item-name-admin">
+                  <%= it.name %><% if (qty > 1) { %> <span class="item-qty">× <%= qty %></span><% } %>
+                </span>
+                <% if (it.description && it.description.trim()) { %>
+                  <span class="item-desc-admin"><%= it.description %></span>
+                <% } %>
+              </div>
+            </div>
+            <span class="item-price-admin">
               R$ <%= total.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) %><%= isMonthly ? '/mês' : '' %>
             </span>
-          </li>
+          </div>
           <% }); %>
-        </ul>
+        </div>
 
         <div class="totals-grid">
           <% if (rawM > 0) { %>

@@ -154,13 +154,29 @@
               <% if (p.items && p.items.length > 0) { %>
                 <div class="prc-items">
                   <div class="prc-label">Serviços</div>
-                  <div class="items-chips">
-                    <% p.items.forEach(it => { %>
-                      <span class="chip <%= it.category === 'onetime' ? 'chip-onetime' : 'chip-monthly' %>">
-                        <%= it.name %>
-                        <% if (parseInt(it.qty) > 1) { %> ×<%= it.qty %><% } %>
-                        — R$ <%= ((parseFloat(it.price)||0)*(parseInt(it.qty)||1)).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) %>
-                      </span>
+                  <div class="items-list-admin">
+                    <% p.items.forEach(it => {
+                      const itTotal = ((parseFloat(it.price)||0)*(parseInt(it.qty)||1));
+                      const isMonthly = it.category !== 'onetime';
+                    %>
+                      <div class="item-row-admin">
+                        <div class="item-row-left">
+                          <span class="item-tag <%= isMonthly ? 'chip-monthly' : 'chip-onetime' %>">
+                            <%= isMonthly ? 'Mensal' : 'Único' %>
+                          </span>
+                          <div class="item-info">
+                            <span class="item-name-admin">
+                              <%= it.name %><% if (parseInt(it.qty) > 1) { %> <span class="item-qty">×<%= it.qty %></span><% } %>
+                            </span>
+                            <% if (it.description && it.description.trim()) { %>
+                              <span class="item-desc-admin"><%= it.description %></span>
+                            <% } %>
+                          </div>
+                        </div>
+                        <span class="item-price-admin">
+                          R$ <%= itTotal.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) %><%= isMonthly ? '/mês' : '' %>
+                        </span>
+                      </div>
                     <% }); %>
                   </div>
                 </div>
@@ -226,20 +242,18 @@
             <!-- Footer: ações admin -->
             <div class="prc-footer">
               <div class="prc-footer-left">
-                <a href="/admin/proposals/<%= p.id %>/edit" class="btn-sm btn-outline">✏️ Editar</a>
-                <a href="/admin/proposals/<%= p.id %>/heat" class="btn-sm btn-heat">🌡️ Calor</a>
-                <a href="/proposta/<%= p.token %>/view-admin" class="btn-sm" style="background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;border-radius:6px;padding:4px 10px;font-size:0.75rem;text-decoration:none" target="_blank">👁️ Ver Proposta</a>
-                <button class="btn-sm btn-copy" onclick="copyLink('<%= p.token %>', this)">🔗 Copiar link</button>
+                <a href="/admin/proposals/<%= p.id %>/edit" class="prc-btn prc-btn-default">✏️ Editar</a>
+                <a href="/admin/proposals/<%= p.id %>/heat" class="prc-btn prc-btn-heat">🌡️ Calor</a>
+                <a href="/proposta/<%= p.token %>/view-admin" class="prc-btn prc-btn-view" target="_blank">Ver Proposta</a>
+                <button class="prc-btn prc-btn-copy" onclick="copyLink('<%= p.token %>', this)">🔗 Copiar link</button>
                 <% if (p.created_by_client && !p.client_locked) { %>
-                  <button class="btn-sm" style="background:rgba(124,58,237,0.1);color:#7c3aed;border:1px solid rgba(124,58,237,0.3);border-radius:6px;padding:4px 10px;font-size:0.75rem;cursor:pointer"
-                          onclick="toggleLock(<%= p.id %>, 1, this)">🔒 Bloquear</button>
+                  <button class="prc-btn prc-btn-lock" onclick="toggleLock(<%= p.id %>, 1, this)">🔒 Bloquear</button>
                 <% } else if (p.client_locked) { %>
-                  <button class="btn-sm" style="background:rgba(16,185,129,0.1);color:#059669;border:1px solid rgba(16,185,129,0.3);border-radius:6px;padding:4px 10px;font-size:0.75rem;cursor:pointer"
-                          onclick="toggleLock(<%= p.id %>, 0, this)">🔓 Desbloquear</button>
+                  <button class="prc-btn prc-btn-unlock" onclick="toggleLock(<%= p.id %>, 0, this)">🔓 Desbloquear</button>
                 <% } %>
               </div>
               <% if (p.created_by_client || p.proposal_status === 'awaiting') { %>
-                <button class="btn-sm btn-discount"
+                <button class="prc-btn prc-btn-discount"
                         onclick="openDiscountPanel(<%= p.id %>, <%= discM %>, <%= discO %>, `<%= (p.admin_notes || '').replace(/`/g, "'") %>`)">
                   💰 Ajustar Valores
                 </button>
@@ -362,8 +376,37 @@
     }
     .prc-footer-left { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 
-    .btn-discount { background: linear-gradient(135deg,#E91E63,#c2185b); color: #fff; border: none; border-radius: 8px; padding: 6px 14px; font-size: 0.78rem; font-weight: 700; font-family: Poppins,sans-serif; cursor: pointer; transition: opacity 0.15s; }
-    .btn-discount:hover { opacity: 0.88; }
+    /* ── Botões padronizados do footer ── */
+    .prc-btn {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 6px 13px; border-radius: 7px; font-size: 0.76rem; font-weight: 600;
+      font-family: Poppins, sans-serif; cursor: pointer; text-decoration: none;
+      border: 1px solid transparent; transition: opacity 0.15s, background 0.15s;
+      white-space: nowrap; line-height: 1.4;
+    }
+    .prc-btn:hover { opacity: 0.78; }
+    .prc-btn-default  { background: #f3f4f6; color: #374151; border-color: #e5e7eb; }
+    .prc-btn-heat     { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+    .prc-btn-view     { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+    .prc-btn-copy     { background: #f8fafc; color: #475569; border-color: #cbd5e1; }
+    .prc-btn-lock     { background: rgba(124,58,237,0.08); color: #6d28d9; border-color: rgba(124,58,237,0.25); }
+    .prc-btn-unlock   { background: rgba(16,185,129,0.08); color: #047857; border-color: rgba(16,185,129,0.25); }
+    .prc-btn-discount { background: #E91E63; color: #fff; border-color: #c2185b; font-weight: 700; }
+    .prc-btn-discount:hover { opacity: 1; background: #c2185b; }
+
+    /* ── Lista de itens com descrição ── */
+    .items-list-admin { display: flex; flex-direction: column; gap: 0.35rem; }
+    .item-row-admin {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem;
+      padding: 0.55rem 0.75rem; border-radius: 8px; background: #fafafa; border: 1px solid #f0f0f0;
+    }
+    .item-row-left { display: flex; align-items: flex-start; gap: 0.5rem; flex: 1; min-width: 0; }
+    .item-tag { padding: 2px 7px; border-radius: 5px; font-size: 0.63rem; font-weight: 700; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .item-info { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+    .item-name-admin { font-size: 0.83rem; font-weight: 600; color: #1a1a2e; }
+    .item-qty { font-size: 0.72rem; color: #888; font-weight: 400; }
+    .item-desc-admin { font-size: 0.71rem; color: #888; line-height: 1.4; }
+    .item-price-admin { font-size: 0.83rem; font-weight: 700; color: #E91E63; white-space: nowrap; flex-shrink: 0; padding-top: 2px; }
 
     @media (max-width: 600px) {
       .prc-header { flex-direction: column; }
