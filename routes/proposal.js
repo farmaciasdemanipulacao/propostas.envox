@@ -419,9 +419,33 @@ router.post('/request-new', async (req, res) => {
   }
 });
 
+// ── API: Salvar itens do builder sem enviar email ─────────────────────────────
+// Chamado por abrirFinalizacao() quando o lead vai direto para /finalizar
+router.post('/save-builder-items', (req, res) => {
+  const { token, builder_items } = req.body;
+  if (!token) return res.status(400).json({ error: 'Token obrigatório' });
+
+  const proposal = db.getProposalByToken(token);
+  if (!proposal) return res.status(404).json({ error: 'Proposta não encontrada' });
+
+  try {
+    const incoming = Array.isArray(builder_items) ? builder_items : [];
+    if (incoming.length > 0) {
+      const existingItems = db.getProposalItems(proposal.id);
+      if (existingItems.length === 0) {
+        db.saveProposalItems(proposal.id, incoming);
+      }
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[SaveBuilderItems]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── API: Enviar proposta por email (link para /finalizar) ─────────────────────
 router.post('/send-plan-email', async (req, res) => {
-  const { token, lead_id } = req.body;
+  const { token, lead_id, builder_items } = req.body;
 
   if (!token) return res.status(400).json({ error: 'Token obrigatório' });
 
@@ -485,6 +509,17 @@ router.post('/send-plan-email', async (req, res) => {
 
     // 5. Marcar como criada pelo cliente (builder) + modo 'ready'
     try { db.markCreatedByClient(proposal.id); } catch(e) {}
+
+    // 5b. Persistir itens do builder em proposal_items (se vieram no payload)
+    //     Só salva se a proposta ainda não tem itens — evita sobrescrever itens
+    //     que o admin já tenha configurado manualmente.
+    try {
+      const existingItems = db.getProposalItems(proposal.id);
+      const incoming = Array.isArray(builder_items) ? builder_items : [];
+      if (incoming.length > 0 && existingItems.length === 0) {
+        db.saveProposalItems(proposal.id, incoming);
+      }
+    } catch(e) { console.error('[SendPlanEmail] Erro ao salvar itens do builder:', e.message); }
 
     // 6. Notificar admin (não bloqueante)
     const leadLabel = leadData.name + (leadData.company_name ? ` — ${leadData.company_name}` : '');

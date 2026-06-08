@@ -795,10 +795,23 @@
     const sentEl = document.getElementById('builder-email-sent');
     if (btn) { btn.disabled = true; btn.textContent = '📨 Enviando...'; }
 
+    // Incluir os itens selecionados no builder para serem persistidos como proposal_items
+    // _builderItems tem estrutura: { name, price, isMonthly, key }
+    const builderItems = (window._builderItems || []).map((item, idx) => ({
+      service_id:  null,                                      // builder não tem service_id fixo
+      name:        item.name  || '',
+      description: '',
+      price:       parseFloat(item.price) || 0,
+      qty:         1,
+      unit:        item.isMonthly ? '/mês' : 'único',
+      category:    item.isMonthly ? 'monthly' : 'onetime',
+      sort_order:  idx
+    }));
+
     fetch('/proposta/send-plan-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, lead_id: leadId })
+      body: JSON.stringify({ token, lead_id: leadId, builder_items: builderItems })
     })
     .then(r => r.json())
     .then(data => {
@@ -880,9 +893,10 @@
 
   // ── Abrir página de finalização ────────────────────────────────────
   window.abrirFinalizacao = function() {
-    const token = window.PROPOSAL_TOKEN;
+    const token  = window.PROPOSAL_TOKEN;
+    const leadId = window.PROPOSAL_LEAD_ID;
     if (!token) { alert('Token não encontrado.'); return; }
-    // Salvar seleções do builder na sessão antes de navegar
+
     const items       = window._builderItems || [];
     const monthly     = window._builderMonthlyDisc || window._builderMonthly || 0;
     const onetime     = window._builderOnetimeDisc || window._builderOnetime || 0;
@@ -890,13 +904,39 @@
     const discPctO    = window._builderDiscPctO || 0;
     const rawMonthly  = window._builderMonthly || 0;
     const rawOnetime  = window._builderOnetime || 0;
-    // Encode selections in sessionStorage so finalize page can read them
+
+    // Persistir seleções no sessionStorage (para a página /finalizar ler)
     try {
       sessionStorage.setItem('builderSelections', JSON.stringify({
         items, monthly, onetime, discPctM, discPctO, rawMonthly, rawOnetime
       }));
     } catch(e) {}
-    window.location.href = '/proposta/' + token + '/finalizar';
+
+    // Persistir itens como proposal_items no servidor antes de navegar
+    // Usa send-plan-email com flag save_only=true para apenas salvar os itens
+    // sem enviar email (o lead pode não ter chegado pelo fluxo de email)
+    if (items.length > 0) {
+      const builderItems = items.map((item, idx) => ({
+        service_id:  null,
+        name:        item.name  || '',
+        description: '',
+        price:       parseFloat(item.price) || 0,
+        qty:         1,
+        unit:        item.isMonthly ? '/mês' : 'único',
+        category:    item.isMonthly ? 'monthly' : 'onetime',
+        sort_order:  idx
+      }));
+      // Salvar itens de forma não-bloqueante; navegar após (ou em caso de erro)
+      fetch('/proposta/save-builder-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, lead_id: leadId, builder_items: builderItems })
+      }).catch(() => {}).finally(() => {
+        window.location.href = '/proposta/' + token + '/finalizar';
+      });
+    } else {
+      window.location.href = '/proposta/' + token + '/finalizar';
+    }
   };
 
   // ── Builder-summary: painel fixo na esquerda ─────────────────────
