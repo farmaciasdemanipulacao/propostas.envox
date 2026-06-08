@@ -524,13 +524,15 @@
         </button>
         <% if (proposal.proposal_status !== 'archived') { %>
           <form action="/admin/proposals/<%= proposal.id %>/archive" method="POST" style="display:contents"
-                onsubmit="return confirm('Arquivar esta proposta?')">
+                onsubmit="return confirm('Arquivar esta proposta? Ela ficará oculta da lista principal.')">
             <input type="hidden" name="archived" value="1">
+            <input type="hidden" name="redirect_to" value="view">
             <button type="submit" class="vs-action-btn danger">🗃️ Arquivar</button>
           </form>
         <% } else { %>
           <form action="/admin/proposals/<%= proposal.id %>/archive" method="POST" style="display:contents">
             <input type="hidden" name="archived" value="0">
+            <input type="hidden" name="redirect_to" value="view">
             <button type="submit" class="vs-action-btn">♻️ Reativar</button>
           </form>
         <% } %>
@@ -561,7 +563,7 @@
         <iframe
           id="proposalIframe"
           class="proposal-iframe"
-          src="/proposta/<%= proposal.token %>/view"
+          src="/proposta/<%= proposal.token %>/view-iframe"
           title="Visualização da Proposta"
           onload="onIframeLoad()"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups">

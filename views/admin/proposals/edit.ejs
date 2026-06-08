@@ -142,6 +142,20 @@
           <form action="/admin/proposals/<%= proposal.id %>/resend-emails" method="POST" style="display:inline">
             <button type="submit" class="btn-outline">📧 Reenviar Emails</button>
           </form>
+          <% if (proposal.proposal_status === 'archived') { %>
+            <form action="/admin/proposals/<%= proposal.id %>/archive" method="POST" style="display:inline">
+              <input type="hidden" name="archived" value="0">
+              <input type="hidden" name="redirect_to" value="edit">
+              <button type="submit" class="btn-outline">♻️ Reativar</button>
+            </form>
+          <% } else { %>
+            <form action="/admin/proposals/<%= proposal.id %>/archive" method="POST" style="display:inline"
+                  onsubmit="return confirm('Arquivar esta proposta? Ela ficará oculta da lista principal.')">
+              <input type="hidden" name="archived" value="1">
+              <input type="hidden" name="redirect_to" value="edit">
+              <button type="submit" class="btn-outline" style="color:#e53935;border-color:#e53935">🗃️ Arquivar</button>
+            </form>
+          <% } %>
           <a href="/admin/proposals" class="btn-outline">← Propostas</a>
         </div>
       </div>

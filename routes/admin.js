@@ -657,10 +657,14 @@ router.get('/proposals/:proposalId/view', requireAdmin, (req, res) => {
 
 // POST /admin/proposals/:proposalId/archive
 router.post('/proposals/:proposalId/archive', requireAdmin, (req, res) => {
+  const proposalId = parseInt(req.params.proposalId);
   const archived = parseInt(req.body.archived) || 0;
+  const redirectTo = req.body.redirect_to; // 'edit' | 'view' | undefined (→ lista)
   try {
-    db.archiveProposal(parseInt(req.params.proposalId), archived === 1);
+    db.archiveProposal(proposalId, archived === 1);
     const msg = archived ? 'Proposta+arquivada.' : 'Proposta+reativada.';
+    if (redirectTo === 'edit') return res.redirect(`/admin/proposals/${proposalId}/edit?success=${msg}`);
+    if (redirectTo === 'view') return res.redirect(`/admin/proposals/${proposalId}/view?success=${msg}`);
     return res.redirect(`/admin/proposals?success=${msg}`);
   } catch (err) {
     return res.redirect(`/admin/proposals?error=Erro+ao+arquivar`);

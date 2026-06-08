@@ -207,11 +207,20 @@
                   <%= p.items_count || 0 %> item(s)
                 </td>
                 <td>
-                  <% if (p.proposal_status === 'archived') { %>
-                    <span class="badge" style="background:#f5f5f5;color:#999">Arquivada</span>
-                  <% } else { %>
-                    <span class="badge badge-success">Ativa</span>
-                  <% } %>
+                  <%
+                    const hasAccept = p.latest_action === 'accept';
+                    const statusCfg = {
+                      archived: { bg: '#f5f5f5',                   color: '#999',     label: '🗃️ Arquivada'    },
+                      rejected: { bg: 'rgba(220,38,38,0.1)',        color: '#dc2626',  label: '❌ Rejeitada'    },
+                      awaiting: { bg: 'rgba(217,119,6,0.12)',       color: '#d97706',  label: '⏳ Aguardando'   },
+                      active:   { bg: 'rgba(46,125,50,0.1)',        color: '#2e7d32',  label: '✅ Ativa'        },
+                    };
+                    const accepted  = { bg: 'rgba(16,185,129,0.12)', color: '#059669', label: '🎉 Aceita' };
+                    const st = hasAccept ? accepted : (statusCfg[p.proposal_status] || statusCfg.active);
+                  %>
+                  <span style="display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;background:<%= st.bg %>;color:<%= st.color %>">
+                    <%= st.label %>
+                  </span>
                 </td>
                 <td style="font-size:0.78rem;color:#666">
                   <%= new Date(p.created_at).toLocaleDateString('pt-BR') %>

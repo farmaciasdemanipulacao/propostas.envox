@@ -198,6 +198,35 @@ router.get('/:token/view', (req, res) => {
   });
 });
 
+// GET /proposta/:token/view-iframe — renderiza o viewer como o cliente vê, para uso no iframe do admin
+// Não redireciona para /painel mesmo se client_locked=1. Apenas admins autenticados.
+router.get('/:token/view-iframe', (req, res) => {
+  if (!req.session || !req.session.isAdmin) return res.redirect('/admin');
+
+  const { token } = req.params;
+  const proposal = db.getProposalByTokenWithLeads(token);
+  if (!proposal) return res.redirect('/admin/proposals');
+
+  // Lead primário como viewer (admin sempre vê pela perspectiva do lead primário)
+  let viewerLead = null;
+  if (proposal.leads && proposal.leads.length > 0) {
+    // Respeitar override de lead se admin selecionou outro
+    const overrideId = req.session.proposalLeadOverride && req.session.proposalLeadOverride[token];
+    if (overrideId) viewerLead = proposal.leads.find(l => l.id === overrideId);
+    if (!viewerLead) viewerLead = proposal.leads.find(l => l.is_primary) || proposal.leads[0];
+  }
+  if (!viewerLead) return res.redirect('/admin/proposals');
+
+  const proposalItems = db.getProposalItems(proposal.id);
+  res.render('proposal/viewer', {
+    proposal: { ...proposal, proposal_items: proposalItems.length > 0 ? proposalItems : null },
+    lead: viewerLead,
+    slides,
+    token,
+    isAdminPreview: true   // desabilita tracking e ações reais no viewer
+  });
+});
+
 // GET /proposta/:token/view-admin — visualização da proposta para admin (igual ao cliente vê)
 router.get('/:token/view-admin', (req, res) => {
   // Apenas admins autenticados
