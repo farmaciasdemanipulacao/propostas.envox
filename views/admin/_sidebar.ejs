@@ -1,61 +1,54 @@
+<%
+  let _pendingCount = 0;
+  try { _pendingCount = require('../../../database').countPendingAccessRequests(); } catch(e) {}
+%>
 <aside class="sidebar">
   <div class="sidebar-logo">
     <span class="brand-env">env</span><span class="brand-ox">ox</span>
     <div class="brand-tagline">ADMIN</div>
   </div>
+
   <nav class="sidebar-nav">
+
+    <!-- INÍCIO -->
     <a href="/admin" class="nav-item <%= (typeof active !== 'undefined' && active === 'dashboard') ? 'active' : '' %>">
-      <span class="nav-icon">📊</span> Dashboard
+      <span class="nav-icon">🏠</span> Início
     </a>
 
-    <!-- LEADS GROUP -->
-    <div class="nav-group-label">LEADS</div>
-    <a href="/admin/leads" class="nav-item <%= (typeof active !== 'undefined' && active === 'leads') ? 'active' : '' %>">
-      <span class="nav-icon">👥</span> Todos os Leads
-    </a>
-    <a href="/admin/leads/new" class="nav-item nav-item-sub <%= (typeof active !== 'undefined' && active === 'new-lead') ? 'active' : '' %>">
-      <span class="nav-icon">➕</span> Novo Lead
+    <!-- LEADS -->
+    <a href="/admin/leads" class="nav-item <%= (typeof active !== 'undefined' && (active === 'leads' || active === 'new-lead')) ? 'active' : '' %>">
+      <span class="nav-icon">👥</span> Leads
     </a>
 
-    <!-- PROPOSTAS GROUP -->
-    <div class="nav-group-label">PROPOSTAS</div>
-    <a href="/admin/proposals" class="nav-item <%= (typeof active !== 'undefined' && active === 'proposals') ? 'active' : '' %>">
-      <span class="nav-icon">📋</span> Todas as Propostas
-    </a>
-    <a href="/admin/proposals/new" class="nav-item nav-item-sub <%= (typeof active !== 'undefined' && active === 'new-proposal') ? 'active' : '' %>">
-      <span class="nav-icon">➕</span> Nova Proposta
-    </a>
-    <a href="/admin/proposal-requests" class="nav-item nav-item-sub <%= (typeof active !== 'undefined' && active === 'proposal-requests') ? 'active' : '' %>">
-      <span class="nav-icon">📝</span> Novas Solicitações
+    <!-- PROPOSTAS -->
+    <a href="/admin/proposals" class="nav-item <%= (typeof active !== 'undefined' && (active === 'proposals' || active === 'new-proposal')) ? 'active' : '' %>">
+      <span class="nav-icon">📋</span> Propostas
     </a>
 
-    <!-- SOLICITAÇÕES DE ACESSO -->
-    <div class="nav-group-label">ACESSO PÚBLICO</div>
-    <%
-      let pendingCount = 0;
-      try { pendingCount = require('../../../database').countPendingAccessRequests(); } catch(e) {}
-    %>
+    <!-- SOLICITAÇÕES -->
     <a href="/admin/solicitacoes" class="nav-item <%= (typeof active !== 'undefined' && active === 'solicitacoes') ? 'active' : '' %>"
        style="position:relative">
       <span class="nav-icon">🔔</span> Solicitações
-      <% if (pendingCount > 0) { %>
+      <% if (_pendingCount > 0) { %>
         <span style="
           position:absolute;right:12px;top:50%;transform:translateY(-50%);
           background:#E91E63;color:#fff;font-size:0.65rem;font-weight:700;
-          padding:2px 7px;border-radius:20px;line-height:1.4
-        "><%= pendingCount %></span>
+          padding:2px 7px;border-radius:20px;line-height:1.4;min-width:20px;text-align:center
+        "><%= _pendingCount %></span>
       <% } %>
     </a>
 
-    <!-- OTHER -->
+    <!-- SISTEMA -->
     <div class="nav-group-label">SISTEMA</div>
-    <a href="/admin/planejamentos" class="nav-item <%= (typeof active !== 'undefined' && active === 'planejamentos') ? 'active' : '' %>">
-      <span class="nav-icon">📁</span> Planejamentos
-    </a>
     <a href="/admin/services" class="nav-item <%= (typeof active !== 'undefined' && active === 'services') ? 'active' : '' %>">
       <span class="nav-icon">💰</span> Serviços & Preços
     </a>
+    <a href="/admin/planejamentos" class="nav-item <%= (typeof active !== 'undefined' && active === 'planejamentos') ? 'active' : '' %>">
+      <span class="nav-icon">📁</span> Planejamentos
+    </a>
+
   </nav>
+
   <div class="sidebar-footer">
     <a href="/admin/logout" class="nav-item logout"><span class="nav-icon">🚪</span> Sair</a>
   </div>

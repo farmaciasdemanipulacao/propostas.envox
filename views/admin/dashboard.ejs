@@ -17,12 +17,11 @@
     <main class="main-content">
       <div class="page-header">
         <div>
-          <h1>Dashboard</h1>
-          <p class="page-subtitle">Gerencie seus leads e acompanhe o engajamento</p>
+          <h1>Início</h1>
+          <p class="page-subtitle">Visão geral de leads, atividade recente e alertas</p>
         </div>
         <div class="header-actions">
           <a href="/admin/leads/new" class="btn-primary">➕ Novo Lead</a>
-          <a href="/admin/planejamentos/new" class="btn-outline">📤 Novo Planejamento</a>
         </div>
       </div>
       
@@ -32,8 +31,97 @@
       <% if (error) { %>
         <div class="alert alert-error"><span>⚠️</span> <%= error %></div>
       <% } %>
+
+      <!-- ── ALERTAS IMPORTANTES ── -->
+      <%
+        const alertItems = (recentActivity || []).filter(a => {
+          if (a.source === 'access_request' && a.status === 'pending') return true;
+          if (a.source === 'action' && (a.event_type === 'accept' || a.event_type === 'reject' || a.event_type === 'counter')) return true;
+          if (a.source === 'client_proposal') return true;
+          if (a.source === 'event' && a.event_type === 'custom_plan_sent') return true;
+          return false;
+        }).slice(0, 10);
+      %>
+      <% if (alertItems.length > 0 || pendingAccessRequests > 0) { %>
+      <div style="margin-bottom:1.5rem">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <span style="font-size:1.1rem">🔔</span>
+          <h2 style="font-size:1rem;font-weight:700;color:#1a1a2e">Alertas & Novidades</h2>
+          <% if (pendingAccessRequests > 0) { %>
+            <span style="background:#E91E63;color:#fff;font-size:0.7rem;font-weight:700;padding:2px 9px;border-radius:20px">
+              <%= pendingAccessRequests %> pendente<%= pendingAccessRequests > 1 ? 's' : '' %>
+            </span>
+          <% } %>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <!-- Badge de solicitações pendentes -->
+          <% if (pendingAccessRequests > 0) { %>
+          <a href="/admin/solicitacoes" style="
+            display:flex;align-items:center;gap:14px;
+            background:linear-gradient(135deg,rgba(233,30,99,0.08),rgba(233,30,99,0.04));
+            border:1.5px solid rgba(233,30,99,0.3);border-radius:12px;
+            padding:14px 18px;text-decoration:none;transition:all .2s
+          " onmouseover="this.style.background='linear-gradient(135deg,rgba(233,30,99,0.14),rgba(233,30,99,0.08))'"
+             onmouseout="this.style.background='linear-gradient(135deg,rgba(233,30,99,0.08),rgba(233,30,99,0.04))'">
+            <span style="font-size:1.5rem">📬</span>
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:0.88rem;color:#1a1a2e">
+                <%= pendingAccessRequests %> solicitaç<%= pendingAccessRequests > 1 ? 'ões' : 'ão' %> de acesso aguardando aprovação
+              </div>
+              <div style="font-size:0.76rem;color:#888;margin-top:2px">Clique para analisar e aprovar ou rejeitar</div>
+            </div>
+            <span style="color:#E91E63;font-size:0.82rem;font-weight:700">Ver →</span>
+          </a>
+          <% } %>
+
+          <!-- Outros alertas do feed -->
+          <% alertItems.forEach(function(item) {
+            if (item.source === 'access_request') return; // já mostrado acima
+            let icon = '📌', msg = '', sub = '', href = '#', color = '#1565c0', bg = 'rgba(21,101,192,0.07)', border = 'rgba(21,101,192,0.2)';
+            const ts = new Date(item.ts);
+            const tsStr = ts.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) + ' ' + ts.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+            if (item.event_type === 'accept') {
+              icon = '🎉'; color = '#2e7d32'; bg = 'rgba(46,125,50,0.07)'; border = 'rgba(46,125,50,0.25)';
+              msg = item.lead_name + ' ACEITOU a proposta!';
+              sub = tsStr; href = item.proposal_id ? `/admin/proposals/${item.proposal_id}/view` : `/admin/leads/${item.lead_id}`;
+            } else if (item.event_type === 'reject') {
+              icon = '❌'; color = '#c62828'; bg = 'rgba(198,40,40,0.07)'; border = 'rgba(198,40,40,0.25)';
+              msg = item.lead_name + ' rejeitou a proposta';
+              sub = tsStr; href = item.proposal_id ? `/admin/proposals/${item.proposal_id}/view` : `/admin/leads/${item.lead_id}`;
+            } else if (item.event_type === 'counter') {
+              icon = '🔄'; color = '#1565c0'; bg = 'rgba(21,101,192,0.07)'; border = 'rgba(21,101,192,0.2)';
+              msg = item.lead_name + ' enviou uma contra-proposta';
+              sub = tsStr; href = item.proposal_id ? `/admin/proposals/${item.proposal_id}/view` : `/admin/leads/${item.lead_id}`;
+            } else if (item.source === 'client_proposal') {
+              icon = '🛠️'; color = '#d97706'; bg = 'rgba(217,119,6,0.07)'; border = 'rgba(217,119,6,0.25)';
+              msg = item.lead_name + ' montou a própria proposta!';
+              sub = tsStr; href = item.lead_id ? `/admin/leads/${item.lead_id}/proposals` : '#';
+            } else if (item.event_type === 'custom_plan_sent') {
+              icon = '📋'; color = '#7c3aed'; bg = 'rgba(124,58,237,0.07)'; border = 'rgba(124,58,237,0.2)';
+              msg = item.lead_name + ' enviou um plano customizado pelo WhatsApp';
+              sub = tsStr; href = item.lead_id ? `/admin/leads/${item.lead_id}` : '#';
+            }
+            if (!msg) return;
+          %>
+          <a href="<%= href %>" style="
+            display:flex;align-items:center;gap:14px;
+            background:<%= bg %>;border:1.5px solid <%= border %>;
+            border-radius:12px;padding:13px 17px;text-decoration:none;transition:all .2s
+          ">
+            <span style="font-size:1.3rem"><%= icon %></span>
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:0.87rem;color:#1a1a2e"><%= msg %></div>
+              <div style="font-size:0.74rem;color:#888;margin-top:2px"><%= sub %></div>
+            </div>
+            <span style="color:<%= color %>;font-size:0.8rem;font-weight:700">Ver →</span>
+          </a>
+          <% }); %>
+        </div>
+      </div>
+      <% } %>
       
-      <!-- Stats Cards -->
+      <!-- ── STATS ── -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon">👥</div>
@@ -51,163 +139,152 @@
           <div class="stat-label">Não Visualizaram</div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon">📋</div>
-          <div class="stat-value"><%= planejamentos ? planejamentos.length : 0 %></div>
-          <div class="stat-label">Planejamentos</div>
-        </div>
-      </div>
-      
-      <!-- Email Test Panel -->
-      <div class="table-card" style="margin-bottom:1.5rem" id="emailTestPanel">
-        <div class="table-header" style="cursor:pointer;user-select:none" onclick="toggleEmailPanel()">
-          <h2>📧 Testar Configuração de Email</h2>
-          <span style="font-size:0.78rem;color:#888" id="emailPanelToggle">▼ expandir</span>
-        </div>
-        <div id="emailPanelBody" style="display:none;padding:1rem 1.25rem;border-top:1px solid #f0f0f0">
-          <div style="display:grid;grid-template-columns:1fr auto auto;gap:0.75rem;align-items:center;max-width:560px">
-            <input type="email" id="emailTestTo" placeholder="email para teste ex: gustavo@envox.com.br"
-              style="padding:0.55rem 0.85rem;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.83rem;font-family:Poppins,sans-serif;outline:none">
-            <button onclick="checkSmtp()"
-              style="padding:0.55rem 1rem;border:1.5px solid #1a1a2e;background:#1a1a2e;color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:Poppins,sans-serif;white-space:nowrap">
-              🔍 Testar Conexão
-            </button>
-            <button onclick="sendTestEmail()"
-              style="padding:0.55rem 1rem;border:1.5px solid #E91E63;background:#E91E63;color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:Poppins,sans-serif;white-space:nowrap">
-              📤 Enviar Teste
-            </button>
-          </div>
-          <div id="emailTestResult" style="margin-top:0.85rem;font-size:0.82rem;display:none;padding:0.75rem 1rem;border-radius:8px"></div>
+          <div class="stat-icon">🔔</div>
+          <div class="stat-value"><%= pendingAccessRequests || 0 %></div>
+          <div class="stat-label">Solicitações Pendentes</div>
         </div>
       </div>
 
-      <!-- Leads Table -->
-      <div class="table-card">
-        <div class="table-header">
-          <h2>Leads Cadastrados</h2>
-          <span class="table-count"><%= leads.length %> leads</span>
-        </div>
-        
-        <% if (leads.length === 0) { %>
-          <div class="empty-state">
-            <div class="empty-icon">📋</div>
-            <p>Nenhum lead cadastrado ainda.</p>
-            <a href="/admin/leads/new" class="btn-primary">Cadastrar Primeiro Lead</a>
+      <!-- ── LAYOUT 2 COLUNAS: ATIVIDADE RECENTE + LEADS ── -->
+      <div style="display:grid;grid-template-columns:340px 1fr;gap:1.25rem;align-items:start">
+
+        <!-- COLUNA ESQUERDA: Feed de Atividade -->
+        <div class="table-card" style="max-height:520px;overflow-y:auto">
+          <div class="table-header" style="position:sticky;top:0;background:#fff;z-index:1">
+            <h2>⚡ Atividade Recente</h2>
           </div>
-        <% } else { %>
-          <div class="table-wrapper">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>WhatsApp</th>
-                  <th>Status</th>
-                  <th>Acessos</th>
-                  <th>Tempo</th>
-                  <th>Interesse</th>
-                  <th>Link</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% leads.forEach(lead => { %>
-                  <tr onclick="window.location='/admin/leads/<%= lead.id %>'" style="cursor:pointer">
-                    <td class="td-name">
-                      <strong><%= lead.name %></strong>
-                      <div style="font-size:0.78rem;color:#999"><%= lead.email %></div>
-                    </td>
-                    <td><%= lead.whatsapp %></td>
-                    <td>
-                      <% if (lead.status === 'viewed') { %>
-                        <span class="badge badge-success">✅ Visualizou</span>
-                      <% } else if (lead.status === 'viewing') { %>
-                        <span class="badge badge-warning">👁️ Vendo agora</span>
-                      <% } else { %>
-                        <span class="badge badge-danger">❌ Não visualizou</span>
-                      <% } %>
-                    </td>
-                    <td class="td-center"><%= lead.total_accesses || 0 %></td>
-                    <td class="td-center">
-                      <% const mins = Math.floor((lead.total_duration || 0) / 60); %>
-                      <% const secs = (lead.total_duration || 0) % 60; %>
-                      <%= mins %>m<%= secs %>s
-                    </td>
-                    <td class="td-center">
-                      <% if (lead.interestLevel > 0) { %>
-                        <span class="interest-badge badge-<%= lead.interestInfo.color %>"><%= lead.interestLevel %>/10</span>
-                      <% } else { %>
-                        <span class="text-muted">—</span>
-                      <% } %>
-                    </td>
-                    <td onclick="event.stopPropagation()">
-                      <button class="btn-copy-link btn-sm" data-url="<%= baseUrl %>/proposta/<%= lead.token %>" title="Copiar link">
-                        📋
-                      </button>
-                    </td>
-                    <td onclick="event.stopPropagation()" style="white-space:nowrap">
-                      <a href="/admin/leads/<%= lead.id %>" class="btn-sm btn-outline">Ver</a>
-                      <% if (lead.status === 'not_viewed') { %>
-                        <form action="/admin/leads/<%= lead.id %>/invite" method="POST" style="display:inline">
-                          <button type="submit" class="btn-sm" style="background:#25D366;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer" title="Enviar convite WA">
-                            📲 Convidar
-                          </button>
-                        </form>
-                      <% } else if (lead.status === 'viewed') { %>
-                        <button class="btn-sm" style="background:#1a73e8;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer" onclick="event.stopPropagation();showFollowup(<%= lead.id %>, '<%= lead.name.split(' ')[0] %>')">
-                          🔄 Follow-up
-                        </button>
-                      <% } %>
-                    </td>
+          <% const activity = recentActivity || []; %>
+          <% if (activity.length === 0) { %>
+            <div style="text-align:center;padding:2rem;color:#bbb">
+              <div style="font-size:2rem;margin-bottom:0.5rem">😴</div>
+              <p style="font-size:0.82rem">Sem atividade registrada ainda.</p>
+            </div>
+          <% } else { %>
+          <div style="padding:0.5rem 0">
+            <% activity.forEach(function(item) {
+              let icon = '📌', msg = '', color = '#555';
+              const ts = new Date(item.ts);
+              const now = new Date();
+              const diffMs = now - ts;
+              const diffMin = Math.floor(diffMs / 60000);
+              const diffH = Math.floor(diffMin / 60);
+              const diffD = Math.floor(diffH / 24);
+              let timeStr = diffMin < 1 ? 'agora mesmo' :
+                            diffMin < 60 ? diffMin + 'min atrás' :
+                            diffH < 24 ? diffH + 'h atrás' :
+                            diffD + 'd atrás';
+
+              let href = '#';
+              if (item.event_type === 'proposal_opened') { icon = '👁️'; msg = (item.lead_name||'Lead') + ' abriu a proposta'; color='#1565c0'; href=`/admin/leads/${item.lead_id}`; }
+              else if (item.event_type === 'proposal_closed') { icon = '⏹️'; msg = (item.lead_name||'Lead') + ' fechou a proposta'; color='#888'; href=`/admin/leads/${item.lead_id}`; }
+              else if (item.event_type === 'accept') { icon = '🎉'; msg = (item.lead_name||'Lead') + ' ACEITOU a proposta!'; color='#2e7d32'; href=item.proposal_id?`/admin/proposals/${item.proposal_id}/view`:`/admin/leads/${item.lead_id}`; }
+              else if (item.event_type === 'reject') { icon = '❌'; msg = (item.lead_name||'Lead') + ' rejeitou a proposta'; color='#c62828'; href=item.lead_id?`/admin/leads/${item.lead_id}`:'#'; }
+              else if (item.event_type === 'counter') { icon = '🔄'; msg = (item.lead_name||'Lead') + ' enviou contra-proposta'; color='#d97706'; href=item.lead_id?`/admin/leads/${item.lead_id}`:'#'; }
+              else if (item.event_type === 'custom_plan_sent') { icon = '📋'; msg = (item.lead_name||'Lead') + ' montou um plano'; color='#7c3aed'; href=item.lead_id?`/admin/leads/${item.lead_id}`:'#'; }
+              else if (item.event_type === 'finalize_page_opened') { icon = '🔥'; msg = (item.lead_name||'Lead') + ' foi finalizar a proposta!'; color='#ea580c'; href=item.lead_id?`/admin/leads/${item.lead_id}`:'#'; }
+              else if (item.event_type === 'client_proposal' || item.source === 'client_proposal') { icon = '🛠️'; msg = (item.lead_name||'Lead') + ' montou própria proposta'; color='#d97706'; href=item.lead_id?`/admin/leads/${item.lead_id}/proposals`:'#'; }
+              else if (item.source === 'access_request') { icon = '📬'; msg = (item.lead_name||'?') + ' solicitou acesso'; color='#E91E63'; href='/admin/solicitacoes'; }
+              else if (item.event_type === 'plan_email_sent') { icon = '📧'; msg = (item.lead_name||'Lead') + ' pediu proposta por email'; color='#1565c0'; href=item.lead_id?`/admin/leads/${item.lead_id}`:'#'; }
+              else { return; } // evento desconhecido, pular
+            %>
+            <a href="<%= href %>" style="
+              display:flex;align-items:flex-start;gap:10px;
+              padding:10px 16px;border-bottom:1px solid #f5f5f5;
+              text-decoration:none;transition:background .15s
+            " onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background='transparent'">
+              <span style="font-size:1.1rem;flex-shrink:0;margin-top:1px"><%= icon %></span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:0.8rem;font-weight:600;color:<%= color %>;
+                            white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                  <%= msg %>
+                </div>
+                <div style="font-size:0.7rem;color:#bbb;margin-top:1px"><%= timeStr %></div>
+              </div>
+            </a>
+            <% }); %>
+          </div>
+          <% } %>
+        </div>
+
+        <!-- COLUNA DIREITA: Leads -->
+        <div class="table-card">
+          <div class="table-header">
+            <h2>Leads Cadastrados</h2>
+            <span class="table-count"><%= leads.length %> leads</span>
+          </div>
+          
+          <% if (leads.length === 0) { %>
+            <div class="empty-state">
+              <div class="empty-icon">📋</div>
+              <p>Nenhum lead cadastrado ainda.</p>
+              <a href="/admin/leads/new" class="btn-primary">Cadastrar Primeiro Lead</a>
+            </div>
+          <% } else { %>
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>WhatsApp</th>
+                    <th>Status</th>
+                    <th>Acessos</th>
+                    <th>Interesse</th>
+                    <th>Ações</th>
                   </tr>
-                <% }) %>
-              </tbody>
-            </table>
-          </div>
-        <% } %>
-      </div>
+                </thead>
+                <tbody>
+                  <% leads.forEach(lead => { %>
+                    <tr onclick="window.location='/admin/leads/<%= lead.id %>'" style="cursor:pointer">
+                      <td class="td-name">
+                        <strong><%= lead.name %></strong>
+                        <div style="font-size:0.78rem;color:#999"><%= lead.email %></div>
+                      </td>
+                      <td><%= lead.whatsapp %></td>
+                      <td>
+                        <% if (lead.status === 'viewed') { %>
+                          <span class="badge badge-success">✅ Visualizou</span>
+                        <% } else if (lead.status === 'viewing') { %>
+                          <span class="badge badge-warning">👁️ Vendo agora</span>
+                        <% } else { %>
+                          <span class="badge badge-danger">❌ Não visualizou</span>
+                        <% } %>
+                      </td>
+                      <td class="td-center"><%= lead.total_accesses || 0 %></td>
+                      <td class="td-center">
+                        <% if (lead.interestLevel > 0) { %>
+                          <span class="interest-badge badge-<%= lead.interestInfo.color %>"><%= lead.interestLevel %>/10</span>
+                        <% } else { %>
+                          <span class="text-muted">—</span>
+                        <% } %>
+                      </td>
+                      <td onclick="event.stopPropagation()" style="white-space:nowrap">
+                        <a href="/admin/leads/<%= lead.id %>" class="btn-sm btn-outline">Ver</a>
+                        <% if (lead.status === 'not_viewed') { %>
+                          <form action="/admin/leads/<%= lead.id %>/invite" method="POST" style="display:inline">
+                            <button type="submit" class="btn-sm" style="background:#25D366;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer">
+                              📲 Convidar
+                            </button>
+                          </form>
+                        <% } else if (lead.status === 'viewed') { %>
+                          <button class="btn-sm" style="background:#1a73e8;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer"
+                                  onclick="event.stopPropagation();showFollowup(<%= lead.id %>, '<%= lead.name.split(' ')[0] %>')">
+                            🔄 Follow-up
+                          </button>
+                        <% } %>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </div>
 
-      <!-- Planejamentos recentes -->
-      <% if (planejamentos && planejamentos.length > 0) { %>
-      <div class="table-card">
-        <div class="table-header">
-          <h2>Planejamentos Recentes</h2>
-          <a href="/admin/planejamentos" class="btn-sm btn-outline">Ver todos</a>
-        </div>
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Título</th>
-                <th>Cliente</th>
-                <th>Status</th>
-                <th>Slides</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% planejamentos.slice(0,5).forEach(plan => { %>
-              <tr onclick="window.location='/admin/planejamentos/<%= plan.id %>'" style="cursor:pointer">
-                <td><strong><%= plan.title %></strong></td>
-                <td><%= plan.client_name || '<span class="text-muted">—</span>' %></td>
-                <td>
-                  <% if (plan.status === 'reviewed') { %><span class="badge badge-success">✅ Revisado</span>
-                  <% } else if (plan.status === 'sent') { %><span class="badge badge-warning">📤 Enviado</span>
-                  <% } else { %><span class="badge badge-secondary">✏️ Rascunho</span><% } %>
-                </td>
-                <td class="td-center"><%= plan.total_slides || 0 %></td>
-                <td onclick="event.stopPropagation()">
-                  <a href="/admin/planejamentos/<%= plan.id %>" class="btn-sm btn-outline">Ver</a>
-                </td>
-              </tr>
-              <% }) %>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <% } %>
+      </div><!-- /grid -->
+
     </main>
   </div>
   
-  <!-- Toast notification -->
   <div id="toast" class="toast hidden">Link copiado!</div>
 
   <!-- Follow-up Modal -->
@@ -229,35 +306,20 @@
       <button onclick="closeFollowup()" style="margin-top:12px;width:100%;background:#f0f0f0;border:none;padding:10px;border-radius:8px;cursor:pointer">Cancelar</button>
     </div>
   </div>
-  
+
   <script>
     let currentLeadId = null;
-
-    document.querySelectorAll('.btn-copy-link').forEach(btn => {
-      btn.addEventListener('click', function() {
-        navigator.clipboard.writeText(this.dataset.url).then(() => {
-          const toast = document.getElementById('toast');
-          toast.classList.remove('hidden');
-          setTimeout(() => toast.classList.add('hidden'), 2500);
-        });
-      });
-    });
-
     function showFollowup(leadId, name) {
       currentLeadId = leadId;
       document.getElementById('fupName').textContent = name;
-      const modal = document.getElementById('followupModal');
-      modal.style.display = 'flex';
+      document.getElementById('followupModal').style.display = 'flex';
     }
-
     function closeFollowup() {
       document.getElementById('followupModal').style.display = 'none';
       currentLeadId = null;
     }
-
     function sendFollowup(category) {
       if (!currentLeadId) return;
-      // Submeter form para redirect ao WA
       const form = document.createElement('form');
       form.method = 'POST';
       form.action = `/admin/leads/${currentLeadId}/followup`;
@@ -266,71 +328,6 @@
       form.appendChild(input);
       document.body.appendChild(form);
       form.submit();
-    }
-
-    // ── Email Test Panel ────────────────────────────────────────────
-    function toggleEmailPanel() {
-      const body   = document.getElementById('emailPanelBody');
-      const toggle = document.getElementById('emailPanelToggle');
-      const open   = body.style.display === 'none';
-      body.style.display  = open ? 'block' : 'none';
-      toggle.textContent  = open ? '▲ recolher' : '▼ expandir';
-    }
-
-    function showEmailResult(msg, ok) {
-      const el = document.getElementById('emailTestResult');
-      el.style.display    = 'block';
-      el.style.background = ok ? 'rgba(46,125,50,0.08)'  : 'rgba(220,38,38,0.08)';
-      el.style.border     = ok ? '1.5px solid rgba(46,125,50,0.25)' : '1.5px solid rgba(220,38,38,0.25)';
-      el.style.color      = ok ? '#2e7d32' : '#b71c1c';
-      el.innerHTML        = msg;
-    }
-
-    async function checkSmtp() {
-      showEmailResult('🔄 Verificando conexão SMTP...', true);
-      try {
-        const r = await fetch('/admin/email-test');
-        const d = await r.json();
-        if (d.smtp_verify && d.smtp_verify.ok) {
-          showEmailResult(`✅ <strong>Conexão OK!</strong> SMTP pronto para enviar.<br>
-            <small style="opacity:0.7">Host: ${d.config.host} · Porta: ${d.config.port} · User: ${d.config.user}</small>`, true);
-        } else {
-          const err = d.smtp_verify ? d.smtp_verify.error : 'Credenciais não configuradas';
-          showEmailResult(`❌ <strong>Falha na conexão:</strong> ${err}<br>
-            <small style="opacity:0.7">Verifique EMAIL_HOST, EMAIL_PORT, EMAIL_USER e EMAIL_PASS no .env</small>`, false);
-        }
-      } catch(e) {
-        showEmailResult('❌ Erro ao chamar rota de teste: ' + e.message, false);
-      }
-    }
-
-    async function sendTestEmail() {
-      const to = document.getElementById('emailTestTo').value.trim();
-      if (!to || !to.includes('@')) {
-        showEmailResult('⚠️ Informe um endereço de email válido no campo acima.', false);
-        return;
-      }
-      showEmailResult(`🔄 Enviando email de teste para <strong>${to}</strong>...`, true);
-      try {
-        const r = await fetch('/admin/email-test', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ to })
-        });
-        const d = await r.json();
-        if (d.ok) {
-          showEmailResult(`✅ <strong>Email enviado com sucesso!</strong><br>
-            Verifique a caixa de entrada de <strong>${to}</strong>.<br>
-            <small style="opacity:0.7">MessageId: ${d.messageId || '—'} | ${d.response || ''}</small>`, true);
-        } else if (d.skipped) {
-          showEmailResult('⚠️ Email não enviado — credenciais SMTP não configuradas no .env', false);
-        } else {
-          showEmailResult(`❌ <strong>Falha no envio:</strong> ${d.error || 'erro desconhecido'}<br>
-            <small style="opacity:0.7">Código: ${d.code || '—'}</small>`, false);
-        }
-      } catch(e) {
-        showEmailResult('❌ Erro ao chamar rota de envio: ' + e.message, false);
-      }
     }
   </script>
 </body>

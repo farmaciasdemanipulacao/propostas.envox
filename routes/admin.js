@@ -75,8 +75,16 @@ router.get('/', requireAdmin, (req, res) => {
   });
   const planejamentos = db.getAllPlanejamentos();
   const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+
+  // Feed de atividade recente + badges de notificação
+  let recentActivity = [];
+  let pendingAccessRequests = 0;
+  try { recentActivity = db.getRecentActivity(25); } catch(e) { console.error('getRecentActivity:', e.message); }
+  try { pendingAccessRequests = db.countPendingAccessRequests(); } catch(e) {}
+
   res.render('admin/dashboard', {
     leads: leadsWithInterest, planejamentos, baseUrl,
+    recentActivity, pendingAccessRequests,
     success: req.query.success, error: req.query.error
   });
 });

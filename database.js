@@ -1156,6 +1156,86 @@ function getPlanejamentoStats(planejamentoId) {
 
 // ══════════════════════════════════════════════════════════
 // ══════════════════════════════════════════════════════════
+// RECENT ACTIVITY — feed unificado para o dashboard admin
+// ══════════════════════════════════════════════════════════
+
+function getRecentActivity(limit) {
+  limit = limit || 30;
+  const db = getDb();
+
+  // Eventos de leads (acessos, planos, ações)
+  const events = db.prepare(`
+    SELECT
+      'event' as source,
+      e.timestamp as ts,
+      e.event_type,
+      e.details,
+      l.name as lead_name,
+      l.id as lead_id,
+      e.proposal_id
+    FROM event_log e
+    JOIN leads l ON l.id = e.lead_id
+    ORDER BY e.timestamp DESC
+    LIMIT 60
+  `).all();
+
+  // Ações de proposta (aceite, rejeição, contra-proposta)
+  const actions = db.prepare(`
+    SELECT
+      'action' as source,
+      pa.created_at as ts,
+      pa.action_type as event_type,
+      pa.comment as details,
+      l.name as lead_name,
+      l.id as lead_id,
+      pa.proposal_id
+    FROM proposal_actions pa
+    JOIN leads l ON l.id = pa.lead_id
+    ORDER BY pa.created_at DESC
+    LIMIT 20
+  `).all();
+
+  // Solicitações de acesso público (access_requests)
+  const accessReqs = db.prepare(`
+    SELECT
+      'access_request' as source,
+      created_at as ts,
+      'access_request' as event_type,
+      name || ' — ' || company as details,
+      name as lead_name,
+      id as lead_id,
+      NULL as proposal_id,
+      status
+    FROM access_requests
+    ORDER BY created_at DESC
+    LIMIT 20
+  `).all();
+
+  // Propostas criadas pelo cliente
+  const clientProposals = db.prepare(`
+    SELECT
+      'client_proposal' as source,
+      p.created_at as ts,
+      'client_proposal' as event_type,
+      l.name || ' montou a própria proposta' as details,
+      l.name as lead_name,
+      l.id as lead_id,
+      p.id as proposal_id
+    FROM proposals p
+    JOIN proposal_leads pl ON pl.proposal_id = p.id AND pl.is_primary = 1
+    JOIN leads l ON l.id = pl.lead_id
+    WHERE p.created_by_client = 1
+    ORDER BY p.created_at DESC
+    LIMIT 20
+  `).all();
+
+  // Juntar tudo, ordenar por data desc, limitar
+  const all = [...events, ...actions, ...accessReqs, ...clientProposals];
+  all.sort((a, b) => new Date(b.ts) - new Date(a.ts));
+  return all.slice(0, limit);
+}
+
+// ══════════════════════════════════════════════════════════
 // ACCESS REQUESTS — solicitações públicas de acesso
 // ══════════════════════════════════════════════════════════
 
@@ -1234,6 +1314,8 @@ module.exports = {
   // Access Requests (public home form)
   createAccessRequest, getAllAccessRequests, getPendingAccessRequests,
   getAccessRequestById, updateAccessRequestStatus, countPendingAccessRequests,
+  // Recent Activity feed
+  getRecentActivity,
   // Services
   getAllServices, getServiceById, createService, updateService, deleteService,
   // Discount Rules
