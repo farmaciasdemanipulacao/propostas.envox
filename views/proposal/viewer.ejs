@@ -7,6 +7,61 @@
   <title>Proposta Envox<% if (lead.company_name) { %> — <%= lead.company_name %><% } else { %> — <%= lead.name %><% } %></title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/proposal.css">
+  <style>
+    /* ── Decision Widget: PF/PJ tipo toggle buttons ── */
+    .dw-tipo-btn {
+      flex: 1;
+      padding: 0.45rem 0.5rem;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      background: #f9fafb;
+      color: #374151;
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      text-align: center;
+    }
+    .dw-tipo-btn:hover {
+      background: #f0f4ff;
+      border-color: #6366f1;
+    }
+    .dw-tipo-btn.active {
+      background: #6366f1;
+      border-color: #6366f1;
+      color: #fff;
+      font-weight: 600;
+    }
+    /* ── Decision Widget: form rows inside accept form ── */
+    #dwFormAccept .dw-form-row {
+      margin-bottom: 0.55rem;
+    }
+    #dwFormAccept .dw-form-row label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #6b7280;
+      margin-bottom: 0.2rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    #dwFormAccept .dw-form-row input {
+      width: 100%;
+      padding: 0.4rem 0.55rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      color: #111;
+      background: #fff;
+      box-sizing: border-box;
+      transition: border-color 0.15s;
+    }
+    #dwFormAccept .dw-form-row input:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 2px rgba(99,102,241,0.15);
+    }
+  </style>
 </head>
 <body class="proposal-body">
 
@@ -117,6 +172,58 @@
          target="_blank">💬 Falar sobre esta Proposta</a>
     </div>
     <div class="dw-form" id="dwForm">
+
+      <!-- ── Aceitar: formulário de dados cadastrais ── -->
+      <div id="dwFormAccept" style="display:none">
+        <p style="font-size:0.78rem;color:#555;margin-bottom:0.85rem;line-height:1.5">
+          Ótimo! Precisamos de alguns dados para iniciar o processo de contratação.<br>
+          Selecione o tipo:
+        </p>
+        <div style="display:flex;gap:0.5rem;margin-bottom:1rem">
+          <button type="button" class="dw-tipo-btn active" id="dw-btn-pf" onclick="dwSwitchTipo('pf')">🧑 Pessoa Física</button>
+          <button type="button" class="dw-tipo-btn" id="dw-btn-pj" onclick="dwSwitchTipo('pj')">🏢 Pessoa Jurídica</button>
+        </div>
+        <input type="hidden" id="dwTipoPessoa" value="pf">
+
+        <!-- Pessoa Física -->
+        <div id="dw-section-pf">
+          <div class="dw-form-row"><label>Nome completo *</label><input type="text" id="dw-nome_completo" placeholder="Seu nome completo"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+            <div class="dw-form-row"><label>CPF *</label><input type="text" id="dw-cpf" placeholder="000.000.000-00"></div>
+            <div class="dw-form-row"><label>RG *</label><input type="text" id="dw-rg" placeholder="00.000.000-0"></div>
+          </div>
+          <div class="dw-form-row"><label>Data de Nascimento *</label><input type="date" id="dw-data_nascimento"></div>
+          <div class="dw-form-row"><label>Endereço Residencial *</label><input type="text" id="dw-endereco_residencial" placeholder="Rua, número, bairro, cidade — Estado"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+            <div class="dw-form-row"><label>E-mail assinatura *</label><input type="email" id="dw-email_assinatura" placeholder="assinatura@empresa.com"></div>
+            <div class="dw-form-row"><label>E-mail financeiro *</label><input type="email" id="dw-email_financeiro" placeholder="financeiro@empresa.com"></div>
+          </div>
+        </div>
+
+        <!-- Pessoa Jurídica -->
+        <div id="dw-section-pj" style="display:none">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+            <div class="dw-form-row"><label>CNPJ *</label><input type="text" id="dw-cnpj" placeholder="00.000.000/0000-00"></div>
+            <div class="dw-form-row"><label>Razão Social *</label><input type="text" id="dw-razao_social" placeholder="Nome empresarial"></div>
+          </div>
+          <div class="dw-form-row"><label>Endereço da Sede *</label><input type="text" id="dw-endereco_sede" placeholder="Rua, número, bairro, cidade — Estado"></div>
+          <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:#aaa;letter-spacing:.4px;margin:0.6rem 0 0.25rem">Sócio Representante Legal</div>
+          <div class="dw-form-row"><label>Nome completo *</label><input type="text" id="dw-nome_socio" placeholder="Nome completo"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+            <div class="dw-form-row"><label>CPF *</label><input type="text" id="dw-cpf_socio" placeholder="000.000.000-00"></div>
+            <div class="dw-form-row"><label>RG *</label><input type="text" id="dw-rg_socio" placeholder="00.000.000-0"></div>
+          </div>
+          <div class="dw-form-row"><label>Data de Nascimento *</label><input type="date" id="dw-data_nascimento_socio"></div>
+          <div class="dw-form-row"><label>Endereço Residencial do Sócio *</label><input type="text" id="dw-endereco_residencial_socio" placeholder="Rua, número, bairro, cidade — Estado"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+            <div class="dw-form-row"><label>E-mail assinatura *</label><input type="email" id="dw-email_assinatura-pj" placeholder="assinatura@empresa.com"></div>
+            <div class="dw-form-row"><label>E-mail financeiro *</label><input type="email" id="dw-email_financeiro-pj" placeholder="financeiro@empresa.com"></div>
+          </div>
+        </div>
+        <div id="dw-accept-error" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:0.5rem 0.75rem;color:#b91c1c;font-size:0.78rem;margin-top:0.5rem"></div>
+      </div>
+
+      <!-- ── Contraproposta ── -->
       <div id="dwFormCounter" style="display:none">
         <div class="dw-form-row">
           <label>Valor que faz sentido para você (R$)</label>
@@ -127,12 +234,15 @@
           <textarea id="dwComment" placeholder="Descreva sua proposta..."></textarea>
         </div>
       </div>
+
+      <!-- ── Rejeitar ── -->
       <div id="dwFormReject" style="display:none">
         <div class="dw-form-row">
           <label>Por que você está rejeitando? (opcional)</label>
           <textarea id="dwRejectComment" placeholder="Nos ajude a entender..."></textarea>
         </div>
       </div>
+
       <button class="dw-submit" id="dwSubmitBtn" onclick="dwSubmit()">Enviar Decisão</button>
     </div>
     <div class="dw-success" id="dwSuccess">
