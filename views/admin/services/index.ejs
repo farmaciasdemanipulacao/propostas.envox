@@ -8,47 +8,164 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/admin.css">
   <style>
-    .services-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    @media(max-width:900px){ .services-grid { grid-template-columns: 1fr; } }
-    .svc-card { background:#fff; border:1px solid #eee; border-radius:12px; overflow:hidden; }
-    .svc-card-header { background:#f8f9fa; padding:16px 20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; }
-    .svc-card-header h3 { font-size:1rem; font-weight:700; margin:0; }
+    /* ── Layout ── */
+    .svc-page { display:flex; flex-direction:column; gap:1.5rem; }
+
+    /* ── Section card ── */
+    .svc-section {
+      background:#fff; border:1px solid #eee; border-radius:14px; overflow:hidden;
+    }
+    .svc-section-header {
+      padding:1rem 1.25rem; background:#f8f9fa; border-bottom:1px solid #eee;
+      display:flex; justify-content:space-between; align-items:center; gap:1rem;
+    }
+    .svc-section-header h2 {
+      font-size:0.95rem; font-weight:700; color:#1a1a2e; margin:0;
+    }
+    .svc-section-header small { font-size:0.75rem; color:#888; font-weight:400; }
+
+    /* ── Accordion (category) ── */
+    .cat-accordion {
+      border-bottom:1px solid #f0f0f0;
+    }
+    .cat-accordion:last-child { border-bottom:none; }
+    .cat-header {
+      display:flex; align-items:center; gap:0.75rem;
+      padding:0.85rem 1.25rem;
+      cursor:pointer;
+      user-select:none;
+      transition:background 0.15s;
+    }
+    .cat-header:hover { background:#fafafa; }
+    .cat-chevron {
+      font-size:0.7rem; color:#aaa;
+      transition:transform 0.2s;
+      flex-shrink:0;
+    }
+    .cat-accordion.open .cat-chevron { transform:rotate(90deg); }
+    .cat-name {
+      font-size:0.875rem; font-weight:600; color:#1a1a2e; flex:1;
+    }
+    .cat-count {
+      font-size:0.72rem; color:#888; background:#f0f0f0; border-radius:20px;
+      padding:1px 8px; font-weight:600;
+    }
+    .cat-actions { display:flex; gap:0.35rem; }
+
+    /* ── Service rows inside accordion ── */
+    .cat-body { display:none; padding:0 0 0.5rem; }
+    .cat-accordion.open .cat-body { display:block; }
+
+    .svc-row {
+      display:grid;
+      grid-template-columns: 2fr 0.8fr 1fr 0.7fr 0.6fr 0.6fr auto;
+      align-items:center;
+      gap:0.5rem;
+      padding:0.65rem 1.25rem 0.65rem 2.5rem;
+      border-top:1px solid #f8f8f8;
+      font-size:0.83rem;
+    }
+    .svc-row:hover { background:#fafafa; }
+    .svc-row.inactive { opacity:0.45; }
+    .svc-col-label {
+      display:grid;
+      grid-template-columns: 2fr 0.8fr 1fr 0.7fr 0.6fr 0.6fr auto;
+      gap:0.5rem;
+      padding:0.4rem 1.25rem 0.4rem 2.5rem;
+      background:#fafafa;
+      border-top:1px solid #f0f0f0;
+      font-size:0.68rem; font-weight:700; text-transform:uppercase;
+      letter-spacing:0.4px; color:#aaa;
+    }
+
+    /* ── "Sem categoria" section ── */
+    .uncategorized-section { padding:0 0 0.5rem; }
+
+    /* ── Add service row button inside accordion ── */
+    .cat-add-svc-btn {
+      display:flex; align-items:center; gap:0.4rem;
+      margin:0.5rem 1.25rem 0.25rem 2.5rem;
+      padding:0.45rem 0.9rem;
+      border:1.5px dashed #E91E63;
+      border-radius:8px;
+      background:rgba(233,30,99,0.04);
+      color:#E91E63;
+      font-size:0.78rem; font-weight:600;
+      cursor:pointer;
+      width:fit-content;
+      transition:background 0.15s;
+    }
+    .cat-add-svc-btn:hover { background:rgba(233,30,99,0.1); }
+
+    /* ── Small buttons ── */
+    .btn-icon {
+      background:none; border:1px solid #e0e0e0; border-radius:6px;
+      padding:3px 7px; font-size:0.78rem; cursor:pointer;
+      color:#666; transition:all 0.14s; white-space:nowrap;
+    }
+    .btn-icon:hover { border-color:#E91E63; color:#E91E63; }
+    .btn-icon.danger { border-color:#fcc; color:#dc3545; }
+    .btn-icon.danger:hover { background:#dc3545; color:#fff; border-color:#dc3545; }
+
+    /* ── Status badge (NOT via innerHTML) ── */
+    .badge-active-svc   { background:rgba(46,125,50,0.1);  color:#2e7d32; border-radius:20px; padding:2px 9px; font-size:0.72rem; font-weight:600; }
+    .badge-inactive-svc { background:#f0f0f0; color:#999; border-radius:20px; padding:2px 9px; font-size:0.72rem; font-weight:600; }
+    .badge-monthly { background:#e3f2fd; color:#1565c0; border-radius:12px; padding:2px 7px; font-size:0.7rem; font-weight:600; }
+    .badge-onetime { background:#fff3e0; color:#e65100; border-radius:12px; padding:2px 7px; font-size:0.7rem; font-weight:600; }
+
+    /* ── Discount rules table ── */
     .svc-table { width:100%; border-collapse:collapse; }
-    .svc-table th { background:#f8f9fa; padding:10px 16px; font-size:0.8rem; font-weight:600; color:#666; text-align:left; border-bottom:1px solid #eee; }
-    .svc-table td { padding:10px 16px; font-size:0.85rem; border-bottom:1px solid #f0f0f0; vertical-align:middle; }
+    .svc-table th { background:#f8f9fa; padding:9px 16px; font-size:0.75rem; font-weight:600; color:#888; text-align:left; border-bottom:1px solid #eee; }
+    .svc-table td { padding:9px 16px; font-size:0.82rem; border-bottom:1px solid #f5f5f5; vertical-align:middle; color:#333; }
     .svc-table tr:last-child td { border-bottom:none; }
     .svc-table tr:hover td { background:#fafafa; }
     .inactive-row td { opacity:0.45; }
-    .inline-edit { display:none; background:#fffbe6; }
-    .inline-edit.open { display:table-row; }
-    .inline-edit td { padding:12px 16px; }
-    .inline-form { display:grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap:8px; align-items:end; }
-    .inline-form.wide { grid-template-columns: 2fr 3fr 1fr auto; }
-    input.svc-input, select.svc-input { padding:6px 10px; border:1px solid #ddd; border-radius:6px; font-family:inherit; font-size:0.85rem; width:100%; }
-    .btn-edit-svc { background:none; border:1px solid #ddd; border-radius:6px; padding:3px 8px; cursor:pointer; font-size:0.8rem; }
-    .btn-edit-svc:hover { border-color:#E91E63; color:#E91E63; }
-    .btn-del-svc { background:none; border:1px solid #fcc; border-radius:6px; padding:3px 8px; cursor:pointer; font-size:0.8rem; color:#dc3545; }
-    .btn-del-svc:hover { background:#dc3545; color:#fff; }
     .keys-list { display:flex; flex-wrap:wrap; gap:4px; }
-    .key-chip { background:#e8f5e9; color:#2e7d32; border-radius:12px; padding:2px 8px; font-size:0.75rem; font-weight:600; }
-    .key-chip.monthly { background:#e3f2fd; color:#1565c0; }
-    .key-chip.onetime { background:#fff3e0; color:#e65100; }
-    .pct-badge { background:#E91E63; color:#fff; border-radius:12px; padding:2px 8px; font-size:0.82rem; font-weight:700; }
-    .rule-keys { font-size:0.8rem; color:#555; }
-    .add-form-section { background:#f8f9fa; border-radius:10px; padding:20px; margin-top:16px; }
-    .add-form-section h4 { margin:0 0 14px 0; font-size:0.95rem; color:#333; }
-    .form-grid-3 { display:grid; grid-template-columns: 2fr 1fr 1fr; gap:10px; }
-    .form-grid-4 { display:grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap:10px; }
-    .form-grid-2 { display:grid; grid-template-columns: 2fr 1fr; gap:10px; }
-    @media(max-width:700px){
-      .form-grid-3, .form-grid-4, .form-grid-2 { grid-template-columns:1fr; }
-      .inline-form, .inline-form.wide { grid-template-columns:1fr; }
+    .key-chip { background:#e8f5e9; color:#2e7d32; border-radius:12px; padding:2px 8px; font-size:0.72rem; font-weight:600; }
+    .pct-badge { background:#E91E63; color:#fff; border-radius:12px; padding:2px 8px; font-size:0.78rem; font-weight:700; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45);
+      z-index:1000; align-items:center; justify-content:center;
     }
-    label.form-label-sm { font-size:0.8rem; font-weight:600; color:#555; display:block; margin-bottom:3px; }
-    .checkboxes-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap:6px; margin:8px 0; }
-    .cb-item { display:flex; align-items:center; gap:6px; font-size:0.82rem; background:#fff; border:1px solid #eee; border-radius:6px; padding:6px 10px; cursor:pointer; }
+    .modal-overlay.open { display:flex; }
+    .modal {
+      background:#fff; border-radius:14px; padding:1.75rem;
+      width:100%; max-width:540px; max-height:90vh; overflow-y:auto;
+      box-shadow:0 20px 60px rgba(0,0,0,0.18);
+      position:relative;
+    }
+    .modal h3 { font-size:1rem; font-weight:700; color:#1a1a2e; margin:0 0 1.25rem; }
+    .modal-close {
+      position:absolute; top:1rem; right:1rem;
+      background:none; border:none; font-size:1.2rem; cursor:pointer; color:#aaa;
+    }
+    .modal-close:hover { color:#333; }
+
+    .f-row { margin-bottom:0.9rem; }
+    .f-row label { display:block; font-size:0.78rem; font-weight:600; color:#555; margin-bottom:0.3rem; }
+    .f-row input, .f-row select, .f-row textarea {
+      width:100%; padding:0.55rem 0.75rem;
+      border:1px solid #ddd; border-radius:8px;
+      font-family:Poppins,sans-serif; font-size:0.85rem; color:#1a1a2e;
+      outline:none; transition:border-color 0.15s; box-sizing:border-box;
+    }
+    .f-row input:focus, .f-row select:focus { border-color:#E91E63; }
+    .f-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
+    .modal-actions { display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1.25rem; }
+
+    /* ── Checkboxes for rules ── */
+    .checkboxes-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:6px; margin:6px 0 10px; }
+    .cb-item { display:flex; align-items:center; gap:6px; font-size:0.8rem; background:#fafafa; border:1px solid #eee; border-radius:6px; padding:6px 10px; cursor:pointer; }
     .cb-item:hover { border-color:#E91E63; }
     .cb-item input { margin:0; accent-color:#E91E63; }
+
+    /* ── Empty state ── */
+    .cat-empty { padding:1rem 1.25rem 1rem 2.5rem; font-size:0.8rem; color:#bbb; }
+
+    /* ── "Sem categorias" placeholder ── */
+    .no-cats-hint { padding:2rem; text-align:center; color:#bbb; font-size:0.85rem; }
   </style>
 </head>
 <body>
@@ -60,155 +177,189 @@
       <div class="page-header">
         <div>
           <h1>Serviços & Preços</h1>
-          <p class="page-subtitle">Gerencie os serviços, valores e regras de desconto do Montador de Plano</p>
+          <p class="page-subtitle">Organize os serviços por categorias e gerencie valores e regras de desconto</p>
         </div>
       </div>
 
       <% if (success) { %><div class="alert alert-success"><span>✅</span> <%=success%></div><% } %>
       <% if (error)   { %><div class="alert alert-error"><span>⚠️</span> <%=error%></div><% } %>
 
-      <div class="services-grid">
+      <%
+        // Pre-compute: services por categoria
+        function svcsOfCat(catId) {
+          return services.filter(s => s.category_id == catId);
+        }
+        const uncategorized = services.filter(s => !s.category_id);
+      %>
 
-        <!-- ── SERVIÇOS ────────────────────────────────── -->
-        <div class="svc-card" style="grid-column: 1 / -1">
-          <div class="svc-card-header">
-            <h3>📦 Serviços Cadastrados</h3>
-            <button class="btn-primary" style="font-size:0.8rem;padding:6px 14px" onclick="toggleAddSvc()">➕ Novo Serviço</button>
-          </div>
+      <div class="svc-page">
 
-          <table class="svc-table" id="svcTable">
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Chave</th>
-                <th>Categoria</th>
-                <th>Preço</th>
-                <th>Unidade</th>
-                <th>Status</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <% services.forEach(svc => { %>
-              <tr class="<%= svc.active ? '' : 'inactive-row' %>" id="svc-row-<%= svc.id %>">
-                <td><strong><%= svc.name %></strong></td>
-                <td><code style="font-size:0.78rem;background:#f0f0f0;padding:2px 5px;border-radius:3px"><%= svc.key %></code></td>
-                <td><span class="key-chip <%= svc.category %>"><%= svc.category === 'monthly' ? '📅 Mensal' : '💳 Único' %></span></td>
-                <td><strong>R$ <%= (svc.price||0).toLocaleString('pt-BR') %></strong></td>
-                <td style="color:#888"><%= svc.unit %></td>
-                <td><%= svc.active ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-secondary">Inativo</span>' %></td>
-                <td style="white-space:nowrap">
-                  <button class="btn-edit-svc" onclick="toggleEditSvc(<%= svc.id %>)">✏️</button>
-                  <form action="/admin/services/<%= svc.id %>/delete" method="POST" style="display:inline" onsubmit="return confirm('Remover este serviço?')">
-                    <button type="submit" class="btn-del-svc">🗑️</button>
-                  </form>
-                </td>
-              </tr>
-              <tr class="inline-edit" id="svc-edit-<%= svc.id %>">
-                <td colspan="7">
-                  <form action="/admin/services/<%= svc.id %>/update" method="POST">
-                    <div class="inline-form">
-                      <div>
-                        <label class="form-label-sm">Nome</label>
-                        <input class="svc-input" type="text" name="name" value="<%= svc.name %>" required>
-                      </div>
-                      <div>
-                        <label class="form-label-sm">Preço (R$)</label>
-                        <input class="svc-input" type="number" name="price" value="<%= svc.price %>" step="0.01" min="0" required>
-                      </div>
-                      <div>
-                        <label class="form-label-sm">Unidade</label>
-                        <input class="svc-input" type="text" name="unit" value="<%= svc.unit %>">
-                      </div>
-                      <div>
-                        <label class="form-label-sm">Categoria</label>
-                        <select class="svc-input" name="category">
-                          <option value="monthly" <%= svc.category==='monthly'?'selected':'' %>>Mensal</option>
-                          <option value="onetime" <%= svc.category==='onetime'?'selected':'' %>>Único</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label class="form-label-sm">Status</label>
-                        <select class="svc-input" name="active">
-                          <option value="1" <%= svc.active?'selected':'' %>>Ativo</option>
-                          <option value="0" <%= !svc.active?'selected':'' %>>Inativo</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div style="margin-top:8px">
-                      <label class="form-label-sm">Descrição</label>
-                      <input class="svc-input" type="text" name="description" value="<%= svc.description||'' %>">
-                    </div>
-                    <div style="margin-top:10px;display:flex;gap:8px">
-                      <button type="submit" class="btn-primary" style="font-size:0.85rem;padding:6px 14px">💾 Salvar</button>
-                      <button type="button" class="btn-outline" style="font-size:0.85rem" onclick="toggleEditSvc(<%= svc.id %>)">Cancelar</button>
-                    </div>
-                  </form>
-                </td>
-              </tr>
-              <% }) %>
-            </tbody>
-          </table>
-
-          <!-- Adicionar novo serviço -->
-          <div class="add-form-section" id="addSvcForm" style="display:none">
-            <h4>➕ Adicionar Novo Serviço</h4>
-            <form action="/admin/services/create" method="POST">
-              <div class="form-grid-4" style="margin-bottom:10px">
-                <div>
-                  <label class="form-label-sm">Nome do serviço *</label>
-                  <input class="svc-input" type="text" name="name" placeholder="Ex: Social Media — 15 posts/mês" required>
-                </div>
-                <div>
-                  <label class="form-label-sm">Chave única * <small style="font-weight:400">(sem espaços)</small></label>
-                  <input class="svc-input" type="text" name="key" placeholder="social_15" required>
-                </div>
-                <div>
-                  <label class="form-label-sm">Preço (R$) *</label>
-                  <input class="svc-input" type="number" name="price" placeholder="2500" step="0.01" min="0" required>
-                </div>
-                <div>
-                  <label class="form-label-sm">Unidade</label>
-                  <input class="svc-input" type="text" name="unit" placeholder="/mês" value="/mês">
-                </div>
-              </div>
-              <div class="form-grid-2" style="margin-bottom:10px">
-                <div>
-                  <label class="form-label-sm">Descrição</label>
-                  <input class="svc-input" type="text" name="description" placeholder="Breve descrição do serviço">
-                </div>
-                <div>
-                  <label class="form-label-sm">Categoria</label>
-                  <select class="svc-input" name="category">
-                    <option value="monthly">📅 Mensal (recorrente)</option>
-                    <option value="onetime">💳 Único (pontual)</option>
-                  </select>
-                </div>
-              </div>
-              <button type="submit" class="btn-primary" style="font-size:0.85rem">✅ Criar Serviço</button>
-              <button type="button" class="btn-outline" style="font-size:0.85rem;margin-left:8px" onclick="toggleAddSvc()">Cancelar</button>
-            </form>
-          </div>
-        </div>
-
-        <!-- ── REGRAS DE DESCONTO ─────────────────────── -->
-        <div class="svc-card" style="grid-column: 1 / -1">
-          <div class="svc-card-header">
+        <!-- ══════════════════════════════════════════════
+             SEÇÃO: CATEGORIAS + SERVIÇOS
+        ═══════════════════════════════════════════════ -->
+        <div class="svc-section">
+          <div class="svc-section-header">
             <div>
-              <h3>🎁 Regras de Desconto por Combinação</h3>
-              <small style="color:#888">Quando o cliente selecionar esses serviços juntos, o desconto é aplicado no total</small>
+              <h2>📦 Serviços por Categoria</h2>
+              <small>Crie categorias para organizar os serviços em acordeões</small>
             </div>
-            <button class="btn-primary" style="font-size:0.8rem;padding:6px 14px" onclick="toggleAddRule()">➕ Nova Regra</button>
+            <div style="display:flex;gap:0.5rem">
+              <button class="btn-outline" style="font-size:0.8rem;padding:6px 14px"
+                onclick="openModal('modal-add-cat')">➕ Nova Categoria</button>
+              <button class="btn-primary" style="font-size:0.8rem;padding:6px 14px"
+                onclick="openSvcModal(null, null)">➕ Novo Serviço</button>
+            </div>
+          </div>
+
+          <% if (categories.length === 0 && uncategorized.length === 0) { %>
+            <div class="no-cats-hint">
+              <div style="font-size:2rem;margin-bottom:0.5rem">📦</div>
+              Nenhum serviço ainda. Crie uma categoria e adicione serviços.
+            </div>
+          <% } %>
+
+          <!-- ── Acordeões por categoria ── -->
+          <% categories.forEach(cat => { %>
+          <%   const catSvcs = svcsOfCat(cat.id); %>
+          <div class="cat-accordion open" id="cat-<%= cat.id %>">
+            <div class="cat-header" onclick="toggleCat(<%= cat.id %>)">
+              <span class="cat-chevron">▶</span>
+              <span class="cat-name"><%= cat.name %></span>
+              <span class="cat-count"><%= catSvcs.length %> serviço(s)</span>
+              <div class="cat-actions" onclick="event.stopPropagation()">
+                <button class="btn-icon"
+                  onclick="openEditCatModal(<%= cat.id %>, <%- JSON.stringify(cat.name) %>)"
+                  title="Renomear categoria">✏️</button>
+                <form action="/admin/services/categories/<%= cat.id %>/delete" method="POST" style="display:inline"
+                  onsubmit="return confirm('Remover categoria \\'<%= cat.name %>\\'? Os serviços ficam sem categoria.')">
+                  <button type="submit" class="btn-icon danger" title="Remover categoria">🗑️</button>
+                </form>
+              </div>
+            </div>
+            <div class="cat-body">
+              <% if (catSvcs.length > 0) { %>
+              <div class="svc-col-label">
+                <span>Nome</span>
+                <span>Tipo</span>
+                <span>Preço</span>
+                <span>Unidade</span>
+                <span>Status</span>
+                <span></span>
+                <span></span>
+              </div>
+              <% catSvcs.forEach(svc => { %>
+              <div class="svc-row <%= svc.active ? '' : 'inactive' %>" id="svc-row-<%= svc.id %>">
+                <span><%= svc.name %></span>
+                <span>
+                  <% if (svc.category === 'monthly') { %>
+                    <span class="badge-monthly">📅 Mensal</span>
+                  <% } else { %>
+                    <span class="badge-onetime">💳 Único</span>
+                  <% } %>
+                </span>
+                <span style="font-weight:600;color:#1a1a2e">R$ <%= (svc.price||0).toLocaleString('pt-BR') %></span>
+                <span style="color:#888"><%= svc.unit %></span>
+                <span>
+                  <% if (svc.active) { %>
+                    <span class="badge-active-svc">Ativo</span>
+                  <% } else { %>
+                    <span class="badge-inactive-svc">Inativo</span>
+                  <% } %>
+                </span>
+                <span></span>
+                <span style="display:flex;gap:0.3rem;white-space:nowrap">
+                  <button class="btn-icon" onclick="openSvcModal(<%= svc.id %>, <%= cat.id %>)" title="Editar">✏️</button>
+                  <form action="/admin/services/<%= svc.id %>/delete" method="POST" style="display:inline"
+                    onsubmit="return confirm('Remover este serviço?')">
+                    <button type="submit" class="btn-icon danger" title="Remover">🗑️</button>
+                  </form>
+                </span>
+              </div>
+              <% }) %>
+              <% } else { %>
+                <div class="cat-empty">Nenhum serviço nesta categoria ainda.</div>
+              <% } %>
+              <button class="cat-add-svc-btn" onclick="openSvcModal(null, <%= cat.id %>)">
+                ➕ Adicionar serviço em "<%= cat.name %>"
+              </button>
+            </div>
+          </div>
+          <% }) %>
+
+          <!-- ── Serviços sem categoria ── -->
+          <% if (uncategorized.length > 0) { %>
+          <div class="cat-accordion open" id="cat-uncategorized">
+            <div class="cat-header" onclick="toggleCat('uncategorized')">
+              <span class="cat-chevron">▶</span>
+              <span class="cat-name" style="color:#888">📁 Sem Categoria</span>
+              <span class="cat-count"><%= uncategorized.length %> serviço(s)</span>
+            </div>
+            <div class="cat-body">
+              <div class="svc-col-label">
+                <span>Nome</span>
+                <span>Tipo</span>
+                <span>Preço</span>
+                <span>Unidade</span>
+                <span>Status</span>
+                <span></span>
+                <span></span>
+              </div>
+              <% uncategorized.forEach(svc => { %>
+              <div class="svc-row <%= svc.active ? '' : 'inactive' %>" id="svc-row-<%= svc.id %>">
+                <span><%= svc.name %></span>
+                <span>
+                  <% if (svc.category === 'monthly') { %>
+                    <span class="badge-monthly">📅 Mensal</span>
+                  <% } else { %>
+                    <span class="badge-onetime">💳 Único</span>
+                  <% } %>
+                </span>
+                <span style="font-weight:600;color:#1a1a2e">R$ <%= (svc.price||0).toLocaleString('pt-BR') %></span>
+                <span style="color:#888"><%= svc.unit %></span>
+                <span>
+                  <% if (svc.active) { %>
+                    <span class="badge-active-svc">Ativo</span>
+                  <% } else { %>
+                    <span class="badge-inactive-svc">Inativo</span>
+                  <% } %>
+                </span>
+                <span></span>
+                <span style="display:flex;gap:0.3rem;white-space:nowrap">
+                  <button class="btn-icon" onclick="openSvcModal(<%= svc.id %>, null)" title="Editar">✏️</button>
+                  <form action="/admin/services/<%= svc.id %>/delete" method="POST" style="display:inline"
+                    onsubmit="return confirm('Remover este serviço?')">
+                    <button type="submit" class="btn-icon danger" title="Remover">🗑️</button>
+                  </form>
+                </span>
+              </div>
+              <% }) %>
+            </div>
+          </div>
+          <% } %>
+
+        </div><!-- /svc-section -->
+
+        <!-- ══════════════════════════════════════════════
+             SEÇÃO: REGRAS DE DESCONTO
+        ═══════════════════════════════════════════════ -->
+        <div class="svc-section">
+          <div class="svc-section-header">
+            <div>
+              <h2>🎁 Regras de Desconto por Combinação</h2>
+              <small>Quando o cliente selecionar esses serviços juntos, o desconto é aplicado no total</small>
+            </div>
+            <button class="btn-primary" style="font-size:0.8rem;padding:6px 14px"
+              onclick="openModal('modal-add-rule')">➕ Nova Regra</button>
           </div>
 
           <% if (rules.length === 0) { %>
-            <div style="padding:24px;text-align:center;color:#aaa">Nenhuma regra de desconto cadastrada.</div>
+            <div style="padding:2rem;text-align:center;color:#bbb;font-size:0.85rem">Nenhuma regra de desconto cadastrada.</div>
           <% } else { %>
           <table class="svc-table">
             <thead>
               <tr>
-                <th>Nome da Regra</th>
-                <th>Serviços Combinados</th>
+                <th>Nome</th>
+                <th>Serviços combinados</th>
                 <th>Desconto</th>
                 <th>Descrição</th>
                 <th>Status</th>
@@ -218,8 +369,8 @@
             <tbody>
               <% rules.forEach(rule => { %>
               <% const ruleKeys = (rule.service_keys||'').split(',').map(k=>k.trim()).filter(Boolean); %>
-              <tr class="<%= rule.active ? '' : 'inactive-row' %>" id="rule-row-<%= rule.id %>">
-                <td><strong><%= rule.name %></strong></td>
+              <tr class="<%= rule.active ? '' : 'inactive-row' %>">
+                <td><%= rule.name %></td>
                 <td>
                   <div class="keys-list">
                     <% ruleKeys.forEach(k => { %>
@@ -229,55 +380,19 @@
                   </div>
                 </td>
                 <td><span class="pct-badge">-<%= rule.discount_pct %>%</span></td>
-                <td style="color:#666;font-size:0.82rem"><%= rule.description || '—' %></td>
-                <td><%= rule.active ? '<span class="badge badge-success">Ativa</span>' : '<span class="badge badge-secondary">Inativa</span>' %></td>
-                <td style="white-space:nowrap">
-                  <button class="btn-edit-svc" onclick="toggleEditRule(<%= rule.id %>)">✏️</button>
-                  <form action="/admin/services/rules/<%= rule.id %>/delete" method="POST" style="display:inline" onsubmit="return confirm('Remover esta regra?')">
-                    <button type="submit" class="btn-del-svc">🗑️</button>
-                  </form>
+                <td style="color:#666;font-size:0.8rem"><%= rule.description || '—' %></td>
+                <td>
+                  <% if (rule.active) { %>
+                    <span class="badge-active-svc">Ativa</span>
+                  <% } else { %>
+                    <span class="badge-inactive-svc">Inativa</span>
+                  <% } %>
                 </td>
-              </tr>
-              <tr class="inline-edit" id="rule-edit-<%= rule.id %>">
-                <td colspan="6">
-                  <form action="/admin/services/rules/<%= rule.id %>/update" method="POST">
-                    <div class="form-grid-3" style="margin-bottom:10px">
-                      <div>
-                        <label class="form-label-sm">Nome</label>
-                        <input class="svc-input" type="text" name="name" value="<%= rule.name %>" required>
-                      </div>
-                      <div>
-                        <label class="form-label-sm">Desconto (%)</label>
-                        <input class="svc-input" type="number" name="discount_pct" value="<%= rule.discount_pct %>" min="1" max="100" step="0.5" required>
-                      </div>
-                      <div>
-                        <label class="form-label-sm">Status</label>
-                        <select class="svc-input" name="active">
-                          <option value="1" <%= rule.active?'selected':'' %>>Ativa</option>
-                          <option value="0" <%= !rule.active?'selected':'' %>>Inativa</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div style="margin-bottom:10px">
-                      <label class="form-label-sm">Descrição</label>
-                      <input class="svc-input" type="text" name="description" value="<%= rule.description||'' %>">
-                    </div>
-                    <div style="margin-bottom:10px">
-                      <label class="form-label-sm">Serviços da combinação (marque os que ativam esta regra):</label>
-                      <div class="checkboxes-grid">
-                        <% services.filter(s=>s.active).forEach(svc => { %>
-                          <label class="cb-item">
-                            <input type="checkbox" name="service_keys" value="<%= svc.key %>"
-                              <%= ruleKeys.includes(svc.key) ? 'checked' : '' %>>
-                            <%= svc.name %>
-                          </label>
-                        <% }) %>
-                      </div>
-                    </div>
-                    <div style="display:flex;gap:8px">
-                      <button type="submit" class="btn-primary" style="font-size:0.85rem;padding:6px 14px">💾 Salvar</button>
-                      <button type="button" class="btn-outline" style="font-size:0.85rem" onclick="toggleEditRule(<%= rule.id %>)">Cancelar</button>
-                    </div>
+                <td style="white-space:nowrap">
+                  <button class="btn-icon" onclick="openEditRuleModal(<%- JSON.stringify(rule) %>, <%- JSON.stringify(ruleKeys) %>)">✏️</button>
+                  <form action="/admin/services/rules/<%= rule.id %>/delete" method="POST" style="display:inline"
+                    onsubmit="return confirm('Remover esta regra?')">
+                    <button type="submit" class="btn-icon danger">🗑️</button>
                   </form>
                 </td>
               </tr>
@@ -285,63 +400,305 @@
             </tbody>
           </table>
           <% } %>
-
-          <!-- Adicionar nova regra -->
-          <div class="add-form-section" id="addRuleForm" style="display:none">
-            <h4>➕ Nova Regra de Desconto</h4>
-            <p style="font-size:0.82rem;color:#888;margin-bottom:12px">
-              Selecione 2 ou mais serviços. Quando o cliente selecionar <strong>todos</strong> eles no Montador, o desconto será aplicado no total.
-            </p>
-            <form action="/admin/services/rules/create" method="POST">
-              <div class="form-grid-3" style="margin-bottom:10px">
-                <div>
-                  <label class="form-label-sm">Nome da regra *</label>
-                  <input class="svc-input" type="text" name="name" placeholder="Ex: Social Media + Captação" required>
-                </div>
-                <div>
-                  <label class="form-label-sm">Desconto (%) *</label>
-                  <input class="svc-input" type="number" name="discount_pct" placeholder="30" min="1" max="100" step="0.5" required>
-                </div>
-                <div>
-                  <label class="form-label-sm">Descrição (opcional)</label>
-                  <input class="svc-input" type="text" name="description" placeholder="Ex: Trabalho de captação potencializa as redes">
-                </div>
-              </div>
-              <div style="margin-bottom:12px">
-                <label class="form-label-sm">Selecione os serviços da combinação (mín. 2) *</label>
-                <div class="checkboxes-grid">
-                  <% services.filter(s=>s.active).forEach(svc => { %>
-                    <label class="cb-item">
-                      <input type="checkbox" name="service_keys" value="<%= svc.key %>">
-                      <span><%= svc.name %> <small style="color:#999">(<%= svc.category==='monthly'?'mensal':'único' %>)</small></span>
-                    </label>
-                  <% }) %>
-                </div>
-              </div>
-              <button type="submit" class="btn-primary" style="font-size:0.85rem">✅ Criar Regra</button>
-              <button type="button" class="btn-outline" style="font-size:0.85rem;margin-left:8px" onclick="toggleAddRule()">Cancelar</button>
-            </form>
-          </div>
         </div>
 
-      </div><!-- /services-grid -->
+      </div><!-- /svc-page -->
     </main>
   </div>
 
+  <!-- ═══════════════════════════════════════
+       MODAL: Nova Categoria
+  ══════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-add-cat">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal('modal-add-cat')">✕</button>
+      <h3>➕ Nova Categoria</h3>
+      <form action="/admin/services/categories/create" method="POST">
+        <div class="f-row">
+          <label>Nome da Categoria *</label>
+          <input type="text" name="name" placeholder="Ex: Social Media, Tráfego Pago, SDR..." required autofocus>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-outline" onclick="closeModal('modal-add-cat')">Cancelar</button>
+          <button type="submit" class="btn-primary">✅ Criar Categoria</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       MODAL: Editar Categoria
+  ══════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-edit-cat">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal('modal-edit-cat')">✕</button>
+      <h3>✏️ Renomear Categoria</h3>
+      <form id="form-edit-cat" method="POST">
+        <div class="f-row">
+          <label>Nome da Categoria *</label>
+          <input type="text" id="edit-cat-name" name="name" required autofocus>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-outline" onclick="closeModal('modal-edit-cat')">Cancelar</button>
+          <button type="submit" class="btn-primary">💾 Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       MODAL: Criar / Editar Serviço
+  ══════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-svc">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal('modal-svc')">✕</button>
+      <h3 id="modal-svc-title">➕ Novo Serviço</h3>
+      <form id="form-svc" method="POST">
+        <div class="f-row">
+          <label>Nome do Serviço *</label>
+          <input type="text" id="svc-f-name" name="name" placeholder="Ex: Social Media — 15 posts/mês" required>
+        </div>
+        <div class="f-grid-2">
+          <div class="f-row">
+            <label>Chave única * <small style="font-weight:400">(sem espaços)</small></label>
+            <input type="text" id="svc-f-key" name="key" placeholder="social_15">
+          </div>
+          <div class="f-row">
+            <label>Categoria de Preço *</label>
+            <select id="svc-f-category" name="category">
+              <option value="monthly">📅 Mensal (recorrente)</option>
+              <option value="onetime">💳 Único (pontual)</option>
+            </select>
+          </div>
+        </div>
+        <div class="f-grid-2">
+          <div class="f-row">
+            <label>Preço (R$) *</label>
+            <input type="number" id="svc-f-price" name="price" placeholder="2500" step="0.01" min="0" required>
+          </div>
+          <div class="f-row">
+            <label>Unidade</label>
+            <input type="text" id="svc-f-unit" name="unit" placeholder="/mês" value="/mês">
+          </div>
+        </div>
+        <div class="f-row">
+          <label>Descrição</label>
+          <input type="text" id="svc-f-description" name="description" placeholder="Breve descrição do serviço">
+        </div>
+        <div class="f-grid-2">
+          <div class="f-row">
+            <label>Categoria (Acordeão)</label>
+            <select id="svc-f-category-id" name="category_id">
+              <option value="">— Sem categoria —</option>
+              <% categories.forEach(cat => { %>
+                <option value="<%= cat.id %>"><%= cat.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="f-row" id="svc-f-active-row" style="display:none">
+            <label>Status</label>
+            <select id="svc-f-active" name="active">
+              <option value="1">Ativo</option>
+              <option value="0">Inativo</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-outline" onclick="closeModal('modal-svc')">Cancelar</button>
+          <button type="submit" id="modal-svc-submit" class="btn-primary">✅ Criar Serviço</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       MODAL: Nova Regra de Desconto
+  ══════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-add-rule">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal('modal-add-rule')">✕</button>
+      <h3>➕ Nova Regra de Desconto</h3>
+      <p style="font-size:0.8rem;color:#888;margin:-0.5rem 0 1rem">
+        Quando o cliente selecionar <strong>todos</strong> os serviços marcados, o desconto é aplicado.
+      </p>
+      <form action="/admin/services/rules/create" method="POST">
+        <div class="f-grid-2">
+          <div class="f-row">
+            <label>Nome da Regra *</label>
+            <input type="text" name="name" placeholder="Ex: Social + Captação" required>
+          </div>
+          <div class="f-row">
+            <label>Desconto (%) *</label>
+            <input type="number" name="discount_pct" placeholder="30" min="1" max="100" step="0.5" required>
+          </div>
+        </div>
+        <div class="f-row">
+          <label>Descrição (opcional)</label>
+          <input type="text" name="description" placeholder="Por que esse combo recebe desconto?">
+        </div>
+        <div class="f-row">
+          <label>Serviços da combinação (mín. 2) *</label>
+          <div class="checkboxes-grid">
+            <% services.filter(s=>s.active).forEach(svc => { %>
+              <label class="cb-item">
+                <input type="checkbox" name="service_keys" value="<%= svc.key %>">
+                <span><%= svc.name %> <small style="color:#aaa">(<%= svc.category==='monthly'?'mensal':'único' %>)</small></span>
+              </label>
+            <% }) %>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-outline" onclick="closeModal('modal-add-rule')">Cancelar</button>
+          <button type="submit" class="btn-primary">✅ Criar Regra</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       MODAL: Editar Regra de Desconto
+  ══════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-edit-rule">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal('modal-edit-rule')">✕</button>
+      <h3>✏️ Editar Regra de Desconto</h3>
+      <form id="form-edit-rule" method="POST">
+        <div class="f-grid-2">
+          <div class="f-row">
+            <label>Nome *</label>
+            <input type="text" id="er-name" name="name" required>
+          </div>
+          <div class="f-row">
+            <label>Desconto (%) *</label>
+            <input type="number" id="er-pct" name="discount_pct" min="1" max="100" step="0.5" required>
+          </div>
+        </div>
+        <div class="f-grid-2">
+          <div class="f-row">
+            <label>Descrição</label>
+            <input type="text" id="er-desc" name="description">
+          </div>
+          <div class="f-row">
+            <label>Status</label>
+            <select id="er-active" name="active">
+              <option value="1">Ativa</option>
+              <option value="0">Inativa</option>
+            </select>
+          </div>
+        </div>
+        <div class="f-row">
+          <label>Serviços da combinação *</label>
+          <div class="checkboxes-grid" id="er-checkboxes">
+            <% services.filter(s=>s.active).forEach(svc => { %>
+              <label class="cb-item">
+                <input type="checkbox" name="service_keys" value="<%= svc.key %>" id="er-key-<%= svc.key %>">
+                <span><%= svc.name %></span>
+              </label>
+            <% }) %>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-outline" onclick="closeModal('modal-edit-rule')">Cancelar</button>
+          <button type="submit" class="btn-primary">💾 Salvar Regra</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- DATA for JS -->
   <script>
-    function toggleEditSvc(id) {
-      document.getElementById(`svc-edit-${id}`).classList.toggle('open');
+    const SERVICES_DATA = <%- JSON.stringify(services) %>;
+    const CATEGORIES_DATA = <%- JSON.stringify(categories) %>;
+  </script>
+  <script>
+    // ── Modal helpers ─────────────────────────────────────────────────
+    function openModal(id) {
+      document.getElementById(id).classList.add('open');
+      // focus first input
+      const inp = document.getElementById(id).querySelector('input[type="text"], input[type="number"]');
+      if (inp) setTimeout(() => inp.focus(), 50);
     }
-    function toggleEditRule(id) {
-      document.getElementById(`rule-edit-${id}`).classList.toggle('open');
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
     }
-    function toggleAddSvc() {
-      const el = document.getElementById('addSvcForm');
-      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    // Close on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) overlay.classList.remove('open');
+      });
+    });
+    // Close on Esc
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+      }
+    });
+
+    // ── Accordion toggle ─────────────────────────────────────────────
+    function toggleCat(id) {
+      document.getElementById('cat-' + id).classList.toggle('open');
     }
-    function toggleAddRule() {
-      const el = document.getElementById('addRuleForm');
-      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+
+    // ── Edit category modal ──────────────────────────────────────────
+    function openEditCatModal(id, name) {
+      document.getElementById('edit-cat-name').value = name;
+      document.getElementById('form-edit-cat').action = '/admin/services/categories/' + id + '/update';
+      openModal('modal-edit-cat');
+    }
+
+    // ── Service modal (create or edit) ───────────────────────────────
+    function openSvcModal(svcId, defaultCatId) {
+      const form   = document.getElementById('form-svc');
+      const title  = document.getElementById('modal-svc-title');
+      const submit = document.getElementById('modal-svc-submit');
+
+      // Reset form
+      form.reset();
+      document.getElementById('svc-f-active-row').style.display = 'none';
+      document.getElementById('svc-f-key').readOnly = false;
+
+      if (!svcId) {
+        // CREATE mode
+        title.textContent = '➕ Novo Serviço';
+        submit.textContent = '✅ Criar Serviço';
+        form.action = '/admin/services/create';
+        // Pre-select category if triggered from a category button
+        if (defaultCatId != null) {
+          document.getElementById('svc-f-category-id').value = defaultCatId;
+        }
+      } else {
+        // EDIT mode
+        const svc = SERVICES_DATA.find(s => s.id === svcId);
+        if (!svc) return;
+        title.textContent = '✏️ Editar Serviço';
+        submit.textContent = '💾 Salvar Alterações';
+        form.action = '/admin/services/' + svcId + '/update';
+        document.getElementById('svc-f-name').value        = svc.name;
+        document.getElementById('svc-f-key').value         = svc.key;
+        document.getElementById('svc-f-key').readOnly      = true; // key is unique, keep stable
+        document.getElementById('svc-f-category').value    = svc.category;
+        document.getElementById('svc-f-price').value       = svc.price;
+        document.getElementById('svc-f-unit').value        = svc.unit || '';
+        document.getElementById('svc-f-description').value = svc.description || '';
+        document.getElementById('svc-f-category-id').value = svc.category_id || '';
+        document.getElementById('svc-f-active').value      = svc.active ? '1' : '0';
+        document.getElementById('svc-f-active-row').style.display = '';
+      }
+      openModal('modal-svc');
+    }
+
+    // ── Edit rule modal ──────────────────────────────────────────────
+    function openEditRuleModal(rule, activeKeys) {
+      document.getElementById('er-name').value   = rule.name;
+      document.getElementById('er-pct').value    = rule.discount_pct;
+      document.getElementById('er-desc').value   = rule.description || '';
+      document.getElementById('er-active').value = rule.active ? '1' : '0';
+      // Reset all checkboxes then check the active ones
+      document.querySelectorAll('#er-checkboxes input[type="checkbox"]').forEach(cb => {
+        cb.checked = activeKeys.includes(cb.value);
+      });
+      document.getElementById('form-edit-rule').action = '/admin/services/rules/' + rule.id + '/update';
+      openModal('modal-edit-rule');
     }
   </script>
 </body>

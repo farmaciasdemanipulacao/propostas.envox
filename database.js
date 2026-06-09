@@ -172,6 +172,22 @@ function initDatabase() {
   } catch(e) { /* coluna já existe — ok */ }
 
   // ══════════════════════════════════════════════════════════════════════
+  // SERVICE_CATEGORIES — categorias de serviços (para organizar acordeões)
+  // ══════════════════════════════════════════════════════════════════════
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS service_categories (
+      id   INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      sort_order INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  // Migração: coluna category_id em services
+  try {
+    database.exec('ALTER TABLE services ADD COLUMN category_id INTEGER DEFAULT NULL');
+  } catch(e) { /* já existe */ }
+
+  // ══════════════════════════════════════════════════════════════════════
   // PROPOSAL_SHARED_LEADS — rastrea encaminhamentos do share widget
   // ══════════════════════════════════════════════════════════════════════
   database.exec(`
@@ -1009,6 +1025,27 @@ function updateProposalRequestStatus(id, status) {
 }
 
 // ══════════════════════════════════════════════════════════
+// SERVICE CATEGORIES
+// ══════════════════════════════════════════════════════════
+
+function getAllServiceCategories() {
+  return getDb().prepare('SELECT * FROM service_categories ORDER BY sort_order, id').all();
+}
+function createServiceCategory(name) {
+  const max = getDb().prepare('SELECT MAX(sort_order) as m FROM service_categories').get();
+  const r = getDb().prepare('INSERT INTO service_categories (name, sort_order) VALUES (?, ?)').run(name.trim(), (max.m || 0) + 1);
+  return r.lastInsertRowid;
+}
+function updateServiceCategory(id, name) {
+  getDb().prepare('UPDATE service_categories SET name=? WHERE id=?').run(name.trim(), id);
+}
+function deleteServiceCategory(id) {
+  // Desassocia serviços da categoria antes de deletar
+  getDb().prepare('UPDATE services SET category_id=NULL WHERE category_id=?').run(id);
+  getDb().prepare('DELETE FROM service_categories WHERE id=?').run(id);
+}
+
+// ══════════════════════════════════════════════════════════
 // SERVICES
 // ══════════════════════════════════════════════════════════
 
@@ -1019,17 +1056,17 @@ function getAllServices(includeInactive) {
   return getDb().prepare(q).all();
 }
 function getServiceById(id) { return getDb().prepare('SELECT * FROM services WHERE id=?').get(id); }
-function createService(name, key, category, description, price, unit, sortOrder) {
+function createService(name, key, category, description, price, unit, sortOrder, categoryId) {
   const r = getDb().prepare(`
-    INSERT INTO services (name, key, category, description, price, unit, sort_order)
-    VALUES (?,?,?,?,?,?,?)
-  `).run(name, key, category, description || '', price, unit || '/mês', sortOrder || 0);
+    INSERT INTO services (name, key, category, description, price, unit, sort_order, category_id)
+    VALUES (?,?,?,?,?,?,?,?)
+  `).run(name, key, category, description || '', price, unit || '/mês', sortOrder || 0, categoryId || null);
   return r.lastInsertRowid;
 }
-function updateService(id, name, category, description, price, unit, active) {
+function updateService(id, name, category, description, price, unit, active, categoryId) {
   getDb().prepare(`
-    UPDATE services SET name=?, category=?, description=?, price=?, unit=?, active=? WHERE id=?
-  `).run(name, category, description || '', price, unit || '/mês', active ? 1 : 0, id);
+    UPDATE services SET name=?, category=?, description=?, price=?, unit=?, active=?, category_id=? WHERE id=?
+  `).run(name, category, description || '', price, unit || '/mês', active ? 1 : 0, categoryId || null, id);
 }
 function deleteService(id) { getDb().prepare('DELETE FROM services WHERE id=?').run(id); }
 
@@ -1345,6 +1382,8 @@ module.exports = {
   getAccessRequestById, updateAccessRequestStatus, countPendingAccessRequests,
   // Recent Activity feed
   getRecentActivity,
+  // Service Categories
+  getAllServiceCategories, createServiceCategory, updateServiceCategory, deleteServiceCategory,
   // Services
   getAllServices, getServiceById, createService, updateService, deleteService,
   // Discount Rules
