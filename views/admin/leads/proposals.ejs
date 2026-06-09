@@ -237,6 +237,46 @@
                 </div>
               <% } %>
 
+              <!-- Dados cadastrais do aceite -->
+              <% if (p.acceptFormData) {
+                   const af = p.acceptFormData;
+                   const isPJ = af.tipo_pessoa === 'pj';
+                   const fields = isPJ ? [
+                     ['CNPJ',                      af.cnpj],
+                     ['Razão Social',              af.razao_social],
+                     ['Endereço da Sede',          af.endereco_sede],
+                     ['Sócio / Rep. Legal',        af.nome_socio],
+                     ['CPF do Sócio',              af.cpf_socio],
+                     ['RG do Sócio',               af.rg_socio],
+                     ['Nascimento do Sócio',       af.data_nascimento_socio],
+                     ['End. Residencial do Sócio', af.endereco_residencial_socio],
+                     ['E-mail Assinatura',         af.email_assinatura],
+                     ['E-mail Financeiro',         af.email_financeiro],
+                   ] : [
+                     ['Nome Completo',         af.nome_completo],
+                     ['CPF',                   af.cpf],
+                     ['RG',                    af.rg],
+                     ['Data de Nascimento',    af.data_nascimento],
+                     ['Endereço Residencial',  af.endereco_residencial],
+                     ['E-mail Assinatura',     af.email_assinatura],
+                     ['E-mail Financeiro',     af.email_financeiro],
+                   ];
+              %>
+                <div class="prc-actions-block" style="margin-top:0.75rem;border-top:1px solid #d1fae5;padding-top:0.75rem">
+                  <div class="prc-label" style="color:#16a34a">✅ Dados Cadastrais do Aceite
+                    <span style="font-weight:400;color:#888;margin-left:0.5rem">(<%= isPJ ? 'Pessoa Jurídica' : 'Pessoa Física' %>)</span>
+                  </div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:0.5rem 1.25rem;margin-top:0.5rem">
+                    <% fields.filter(([,v]) => v).forEach(([label, val]) => { %>
+                      <div style="font-size:0.78rem">
+                        <span style="font-size:0.66rem;font-weight:700;text-transform:uppercase;color:#aaa;letter-spacing:.3px"><%= label %></span>
+                        <div style="font-weight:600;color:#1a1a2e"><%= val %></div>
+                      </div>
+                    <% }) %>
+                  </div>
+                </div>
+              <% } %>
+
             </div>
 
             <!-- Footer: ações admin -->

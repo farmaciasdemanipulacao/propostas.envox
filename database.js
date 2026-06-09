@@ -162,9 +162,14 @@ function initDatabase() {
       action_type TEXT NOT NULL,
       comment TEXT,
       counter_value REAL,
+      accept_form_data TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  // Migração: adicionar accept_form_data em bancos existentes (sem a coluna)
+  try {
+    database.exec(`ALTER TABLE proposal_actions ADD COLUMN accept_form_data TEXT`);
+  } catch(e) { /* coluna já existe — ok */ }
 
   // ══════════════════════════════════════════════════════════════════════
   // PROPOSAL_SHARED_LEADS — rastrea encaminhamentos do share widget
@@ -916,12 +921,30 @@ function countInvitesByType(leadId, inviteType) {
 // PROPOSAL ACTIONS (Accept / Counter / Reject)
 // ══════════════════════════════════════════════════════════
 
-function saveProposalAction(proposalId, leadId, actionType, comment, counterValue) {
+function saveProposalAction(proposalId, leadId, actionType, comment, counterValue, acceptFormData) {
   const r = getDb().prepare(`
-    INSERT INTO proposal_actions (proposal_id, lead_id, action_type, comment, counter_value)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(proposalId, leadId, actionType, comment || null, counterValue || null);
+    INSERT INTO proposal_actions (proposal_id, lead_id, action_type, comment, counter_value, accept_form_data)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(
+    proposalId,
+    leadId,
+    actionType,
+    comment || null,
+    counterValue || null,
+    acceptFormData ? JSON.stringify(acceptFormData) : null
+  );
   return r.lastInsertRowid;
+}
+
+// Retorna os dados do formulário de aceite de uma proposta
+function getAcceptFormData(proposalId) {
+  const row = getDb().prepare(`
+    SELECT accept_form_data FROM proposal_actions
+    WHERE proposal_id = ? AND action_type = 'accept' AND accept_form_data IS NOT NULL
+    ORDER BY created_at DESC LIMIT 1
+  `).get(proposalId);
+  if (!row || !row.accept_form_data) return null;
+  try { return JSON.parse(row.accept_form_data); } catch(e) { return null; }
 }
 
 function getProposalActionsByProposal(proposalId) {
@@ -1312,7 +1335,7 @@ module.exports = {
   // Invites
   saveInvite, getInvitesByLead, countInvitesByType,
   // Proposal Actions
-  saveProposalAction, getProposalActionsByProposal, getLatestProposalAction,
+  saveProposalAction, getProposalActionsByProposal, getLatestProposalAction, getAcceptFormData,
   // Shared Leads
   addSharedLead, getSharedLeadByToken,
   // Proposal Requests

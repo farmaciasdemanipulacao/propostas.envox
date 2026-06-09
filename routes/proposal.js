@@ -628,13 +628,17 @@ router.post('/finalizar-aceitar', async (req, res) => {
   const company   = leadData ? (leadData.company_name || '') : (formData.razao_social || '');
 
   try {
-    // Salvar ação de aceite
+    // Montar objeto limpo com todos os dados cadastrais do formulário
+    const acceptData = { tipo_pessoa, ...formData };
+
+    // Salvar ação de aceite — agora persiste os dados cadastrais na coluna accept_form_data
     const actionId = db.saveProposalAction(
       proposal.id,
       resolvedLeadId,
       'accept',
       `Aceite formal via formulário (${tipo_pessoa.toUpperCase()})`,
-      null
+      null,
+      acceptData   // ← salvo como JSON em accept_form_data
     );
 
     if (resolvedLeadId) {

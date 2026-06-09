@@ -154,8 +154,11 @@ router.get('/leads/:id', requireAdmin, (req, res) => {
   const nextInviteIdx = inviteHistory.length;
   const nextInviteMsg = getInviteMessage(stats.lead, baseUrl, nextInviteIdx);
 
-  // Propostas vinculadas
-  const linkedProposals = db.getProposalsByLead(req.params.id);
+  // Propostas vinculadas — enriquece com dados do aceite se houver
+  const linkedProposals = db.getProposalsByLead(req.params.id).map(p => ({
+    ...p,
+    acceptFormData: db.getAcceptFormData(p.id)
+  }));
 
   res.render('admin/lead-detail', {
     stats, interestLevel, interestInfo,
@@ -225,8 +228,9 @@ router.get('/leads/:id/proposals', requireAdmin, (req, res) => {
   const rawProposals = db.getProposalsByLead(leadId);
   const proposals = rawProposals.map(p => ({
     ...p,
-    items: db.getProposalItems(p.id),
-    actions: db.getProposalActionsByProposal(p.id)
+    items:          db.getProposalItems(p.id),
+    actions:        db.getProposalActionsByProposal(p.id),
+    acceptFormData: db.getAcceptFormData(p.id)
   }));
 
   res.render('admin/leads/proposals', {
@@ -401,6 +405,7 @@ router.get('/proposals/:proposalId/edit', requireAdmin, (req, res) => {
   const proposalItems = db.getProposalItems(proposalId);
   const allLeads = db.getAllLeads();
   const proposalActions = db.getProposalActionsByProposal(proposalId);
+  const acceptFormData = db.getAcceptFormData(proposalId);
 
   // Stats agregados (todos os leads vinculados)
   const stats = db.getProposalStats(proposalId);
@@ -458,6 +463,7 @@ router.get('/proposals/:proposalId/edit', requireAdmin, (req, res) => {
   res.render('admin/proposals/edit', {
     proposal, services, proposalItems, allLeads,
     proposalActions,
+    acceptFormData,
     stats,
     slideLabels: JSON.stringify(slideLabels),
     slideDurationsAll: JSON.stringify(slideDurationsAll),

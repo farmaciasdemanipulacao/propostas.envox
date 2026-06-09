@@ -289,6 +289,62 @@
       </div>
       <% } %>
 
+      <!-- Dados Cadastrais do Aceite (para cada proposta aceita vinculada) -->
+      <%
+        const proposalsWithAccept = (linkedProposals || []).filter(p => p.acceptFormData);
+      %>
+      <% if (proposalsWithAccept.length > 0) { %>
+      <div class="detail-card full-width-card" style="border-left:4px solid #16a34a">
+        <h3 class="card-title" style="color:#16a34a">✅ Dados Cadastrais do Aceite</h3>
+        <p style="font-size:0.75rem;color:#888;margin:-0.5rem 0 1rem">
+          Preenchidos pelo cliente ao aceitar formalmente a proposta.
+        </p>
+        <% proposalsWithAccept.forEach(p => {
+             const af = p.acceptFormData;
+             const isPJ = af.tipo_pessoa === 'pj';
+             const fields = isPJ ? [
+               ['CNPJ',                      af.cnpj],
+               ['Razão Social',              af.razao_social],
+               ['Endereço da Sede',          af.endereco_sede],
+               ['Sócio / Rep. Legal',        af.nome_socio],
+               ['CPF do Sócio',              af.cpf_socio],
+               ['RG do Sócio',               af.rg_socio],
+               ['Nascimento do Sócio',       af.data_nascimento_socio],
+               ['End. Residencial do Sócio', af.endereco_residencial_socio],
+               ['E-mail Assinatura',         af.email_assinatura],
+               ['E-mail Financeiro',         af.email_financeiro],
+             ] : [
+               ['Nome Completo',         af.nome_completo],
+               ['CPF',                   af.cpf],
+               ['RG',                    af.rg],
+               ['Data de Nascimento',    af.data_nascimento],
+               ['Endereço Residencial',  af.endereco_residencial],
+               ['E-mail Assinatura',     af.email_assinatura],
+               ['E-mail Financeiro',     af.email_financeiro],
+             ];
+        %>
+          <% if (proposalsWithAccept.length > 1) { %>
+            <div style="font-size:0.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:0.5rem">
+              Proposta #<%= p.id %> · Token <span style="font-family:monospace"><%= p.token %></span>
+              — <strong><%= isPJ ? 'Pessoa Jurídica' : 'Pessoa Física' %></strong>
+            </div>
+          <% } else { %>
+            <div style="font-size:0.75rem;color:#888;margin-bottom:0.75rem">
+              Proposta #<%= p.id %> · Tipo: <strong><%= isPJ ? 'Pessoa Jurídica (CNPJ)' : 'Pessoa Física (CPF)' %></strong>
+            </div>
+          <% } %>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:0.6rem 1.5rem;margin-bottom:1.25rem">
+            <% fields.filter(([,v]) => v).forEach(([label, val]) => { %>
+              <div style="font-size:0.8rem">
+                <span style="font-size:0.67rem;font-weight:700;text-transform:uppercase;color:#aaa;letter-spacing:.4px"><%= label %></span>
+                <div style="font-weight:600;color:#1a1a2e;margin-top:1px"><%= val %></div>
+              </div>
+            <% }) %>
+          </div>
+        <% }); %>
+      </div>
+      <% } %>
+
       <!-- Planos customizados -->
       <% if (stats.customPlans && stats.customPlans.length > 0) { %>
       <div class="detail-card full-width-card">
