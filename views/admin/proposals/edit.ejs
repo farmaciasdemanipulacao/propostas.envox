@@ -7,7 +7,6 @@
   <title>Proposta #<%= proposal.id %> — Envox Admin</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/admin.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     .proposal-builder-grid { display:grid;grid-template-columns:1fr 300px;gap:1.5rem;align-items:start; }
     @media(max-width:900px){.proposal-builder-grid{grid-template-columns:1fr;}}
@@ -121,6 +120,27 @@
     .link-lead-form { display:flex;gap:0.5rem;align-items:center;margin-top:0.75rem; }
     .link-lead-form select { flex:1;padding:0.45rem 0.7rem;border:1px solid #ddd;border-radius:8px;font-size:0.8rem;font-family:Poppins,sans-serif;outline:none; }
     .link-lead-form select:focus { border-color:#E91E63; }
+
+    /* Extras panel inside budget-preview */
+    .extras-panel-wrap { border-top:1px solid #eee;margin-top:0.5rem; }
+    .extras-toggle-btn { width:100%;display:flex;align-items:center;justify-content:space-between;padding:0.6rem 1rem;background:none;border:none;color:#1a1a2e;font-family:Poppins,sans-serif;font-size:0.75rem;font-weight:700;cursor:pointer;transition:background 0.15s; }
+    .extras-toggle-btn:hover { background:#f8f9fa; }
+    .extras-panel-body { padding:0 0.85rem 0.85rem; }
+    .extras-label { display:block;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:#888;margin-bottom:0.35rem; }
+    .extras-textarea { width:100%;padding:0.5rem 0.6rem;border:1px solid #ddd;border-radius:7px;background:#fff;color:#1a1a2e;font-family:Poppins,sans-serif;font-size:0.78rem;resize:vertical;outline:none;box-sizing:border-box;transition:border-color 0.15s; }
+    .extras-textarea:focus { border-color:#E91E63; }
+    .payment-row { display:grid;grid-template-columns:1fr 1fr 24px;gap:0.35rem;align-items:center; }
+    .payment-row input { padding:0.35rem 0.45rem;border:1px solid #ddd;border-radius:6px;font-size:0.75rem;font-family:Poppins,sans-serif;color:#1a1a2e;outline:none;transition:border-color 0.15s;width:100%;box-sizing:border-box; }
+    .payment-row input:focus { border-color:#E91E63; }
+    .payment-row-del { background:none;border:none;cursor:pointer;color:#bbb;font-size:1rem;line-height:1;padding:0;transition:color 0.15s; }
+    .payment-row-del:hover { color:#e53935; }
+    .payment-row-labels { display:grid;grid-template-columns:1fr 1fr 24px;gap:0.35rem;margin-bottom:0.25rem; }
+    .payment-row-labels span { font-size:0.63rem;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:0.3px; }
+    .extras-add-btn { display:flex;align-items:center;gap:0.3rem;padding:0.32rem 0.7rem;border:1px dashed #E91E63;border-radius:7px;background:rgba(233,30,99,0.05);color:#E91E63;font-size:0.72rem;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;transition:background 0.15s;margin-top:0.25rem; }
+    .extras-add-btn:hover { background:rgba(233,30,99,0.12); }
+    .extras-save-btn { width:100%;padding:0.5rem;background:#E91E63;color:#fff;border:none;border-radius:7px;font-family:Poppins,sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;transition:background 0.15s;margin-top:0.6rem; }
+    .extras-save-btn:hover { background:#c2185b; }
+    .extras-save-msg { display:none;margin-top:0.35rem;text-align:center;font-size:0.72rem;color:#2e7d32; }
   </style>
 </head>
 <body>
@@ -338,9 +358,45 @@
               <div class="budget-preview-body" id="budgetPreviewBody">
                 <p class="preview-empty">Selecione serviços para ver resumo</p>
               </div>
-            </div>
-            <div id="hiddenItemsContainer"></div>
+
+              <!-- ── Condição Especial + Formas de Pagamento (no sidebar) ── -->
+              <div class="extras-panel-wrap">
+                <button type="button" class="extras-toggle-btn" onclick="toggleExtrasPanel()" id="extrasToggleBtn">
+                  <span>🏷️ Condição Especial & Pagamento</span>
+                  <span id="extrasPanelChevron" style="font-size:0.65rem;transition:transform 0.2s">▼</span>
+                </button>
+                <div id="extrasPanel" style="display:none">
+                  <div class="extras-panel-body">
+
+                    <!-- Condição Especial -->
+                    <div style="margin-bottom:0.85rem">
+                      <label class="extras-label">🎁 Condição Especial</label>
+                      <textarea id="specialConditionInput" class="extras-textarea"
+                        placeholder="Ex: 15% off para contratos até 30/06..."
+                        rows="3"
+                      ><%= proposal.special_condition || '' %></textarea>
+                    </div>
+
+                    <!-- Formas de Pagamento -->
+                    <div style="margin-bottom:0.75rem">
+                      <label class="extras-label">💳 Condições de Pagamento</label>
+                      <div class="payment-row-labels">
+                        <span>Meses</span><span>Desconto %</span><span></span>
+                      </div>
+                      <div id="paymentConditionsContainer" style="display:flex;flex-direction:column;gap:0.4rem;margin-bottom:0.4rem"></div>
+                      <button type="button" class="extras-add-btn" onclick="addPaymentRow()">➕ Adicionar condição</button>
+                    </div>
+
+                    <!-- Salvar -->
+                    <button type="button" class="extras-save-btn" onclick="saveExtras()" id="btnSaveExtras">💾 Salvar</button>
+                    <div id="extrasSaveMsg" class="extras-save-msg"></div>
+                  </div>
+                </div>
+              </div>
+              <!-- /extras panel -->
+
             </div><!-- /budget-preview -->
+            <div id="hiddenItemsContainer"></div>
           </div><!-- /anchor -->
         </div>
 
@@ -350,438 +406,6 @@
         </div>
       </form>
 
-      <!-- ══ CONDIÇÃO ESPECIAL + FORMAS DE PAGAMENTO ══ -->
-      <div class="detail-card full-width-card" style="margin-top:1.5rem" id="extrasCard">
-        <h3 class="card-title">🏷️ Condição Especial & Formas de Pagamento</h3>
-        <p style="font-size:0.78rem;color:#888;margin:-0.25rem 0 1.25rem">Essas informações serão exibidas no slide de orçamento da proposta do cliente.</p>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start">
-
-          <!-- Coluna esquerda: Condição Especial -->
-          <div>
-            <div style="margin-bottom:0.5rem">
-              <label style="font-size:0.78rem;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.4px">
-                🎁 Condição Especial de Desconto
-              </label>
-              <p style="font-size:0.72rem;color:#aaa;margin:2px 0 0.6rem">Informe um desconto fora do padrão, válido até uma data específica ou com qualquer outra condição.</p>
-            </div>
-            <textarea id="specialConditionInput" placeholder="Ex: 15% de desconto para contratos assinados até 20/06/2025, ou Frete grátis para pagamentos à vista..."
-              style="width:100%;min-height:90px;padding:0.6rem 0.75rem;border:1px solid #ddd;border-radius:8px;font-family:Poppins,sans-serif;font-size:0.83rem;color:#1a1a2e;outline:none;resize:vertical;box-sizing:border-box;transition:border-color 0.15s"
-              onfocus="this.style.borderColor='#E91E63'" onblur="this.style.borderColor='#ddd'"
-            ><%= proposal.special_condition || '' %></textarea>
-          </div>
-
-          <!-- Coluna direita: Formas/Condições de Pagamento -->
-          <div>
-            <div style="margin-bottom:0.5rem">
-              <label style="font-size:0.78rem;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.4px">
-                💳 Condições de Pagamento
-              </label>
-              <p style="font-size:0.72rem;color:#aaa;margin:2px 0 0.6rem">Adicione opções de parcelamento com desconto. O cliente verá essas opções no orçamento.</p>
-            </div>
-            <div id="paymentConditionsContainer" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.75rem">
-              <!-- Linhas geradas por JS -->
-            </div>
-            <button type="button" onclick="addPaymentRow()"
-              style="display:flex;align-items:center;gap:0.4rem;padding:0.4rem 0.9rem;border:1.5px dashed #E91E63;border-radius:8px;background:rgba(233,30,99,0.04);color:#E91E63;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;transition:background 0.15s"
-              onmouseenter="this.style.background='rgba(233,30,99,0.1)'" onmouseleave="this.style.background='rgba(233,30,99,0.04)'">
-              ➕ Adicionar condição
-            </button>
-          </div>
-        </div>
-
-        <div style="display:flex;justify-content:flex-end;margin-top:1.25rem">
-          <button type="button" onclick="saveExtras()" id="btnSaveExtras"
-            style="display:inline-flex;align-items:center;gap:6px;padding:8px 20px;background:#E91E63;color:#fff;border:none;border-radius:8px;font-size:0.83rem;font-weight:700;cursor:pointer;font-family:Poppins,sans-serif;transition:background 0.15s"
-            onmouseenter="this.style.background='#c2185b'" onmouseleave="this.style.background='#E91E63'">
-            💾 Salvar Condições
-          </button>
-        </div>
-        <div id="extrasSaveMsg" style="display:none;margin-top:0.75rem;text-align:right;font-size:0.78rem"></div>
-      </div>
-
-      <script>
-        // ── Dados iniciais (do servidor) ──────────────────────────────────
-        var SPECIAL_CONDITION_INIT = <%- JSON.stringify(proposal.special_condition || '') %>;
-        var PAYMENT_CONDITIONS_INIT = (function() {
-          try {
-            var raw = <%- JSON.stringify(proposal.payment_conditions || null) %>;
-            if (!raw) return [];
-            return typeof raw === 'string' ? JSON.parse(raw) : raw;
-          } catch(e) { return []; }
-        })();
-
-        // ── Render payment rows ──────────────────────────────────────────
-        function renderPaymentRows() {
-          var container = document.getElementById('paymentConditionsContainer');
-          container.innerHTML = '';
-          PAYMENT_CONDITIONS_INIT.forEach(function(cond, idx) {
-            container.appendChild(createPaymentRow(cond.months, cond.discount, idx));
-          });
-        }
-
-        function createPaymentRow(months, discount, idx) {
-          var row = document.createElement('div');
-          row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:0.5rem;align-items:center';
-          row.dataset.idx = idx;
-          row.innerHTML =
-            '<div style="display:flex;align-items:center;gap:0.4rem">' +
-              '<input type="number" placeholder="Meses (ex: 12)" min="1" max="120" value="' + (months || '') + '" ' +
-              'class="pc-months" ' +
-              'style="width:100%;padding:0.45rem 0.6rem;border:1px solid #ddd;border-radius:7px;font-family:Poppins,sans-serif;font-size:0.82rem;outline:none" ' +
-              'onfocus="this.style.borderColor=\'#E91E63\'" onblur="this.style.borderColor=\'#ddd\'">' +
-              '<span style="font-size:0.72rem;color:#888;white-space:nowrap">× meses</span>' +
-            '</div>' +
-            '<div style="display:flex;align-items:center;gap:0.4rem">' +
-              '<input type="number" placeholder="Desconto %" min="0" max="100" step="0.5" value="' + (discount || '') + '" ' +
-              'class="pc-discount" ' +
-              'style="width:100%;padding:0.45rem 0.6rem;border:1px solid #ddd;border-radius:7px;font-family:Poppins,sans-serif;font-size:0.82rem;outline:none" ' +
-              'onfocus="this.style.borderColor=\'#E91E63\'" onblur="this.style.borderColor=\'#ddd\'">' +
-              '<span style="font-size:0.72rem;color:#888;white-space:nowrap">% desc.</span>' +
-            '</div>' +
-            '<button type="button" onclick="removePaymentRow(this)" ' +
-            'style="padding:4px 9px;border:1px solid #fcc;border-radius:6px;background:#fff0f0;color:#dc3545;font-size:0.8rem;cursor:pointer;font-family:Poppins,sans-serif" ' +
-            'title="Remover">✕</button>';
-          return row;
-        }
-
-        function addPaymentRow() {
-          var container = document.getElementById('paymentConditionsContainer');
-          var idx = container.children.length;
-          container.appendChild(createPaymentRow('', '', idx));
-        }
-
-        function removePaymentRow(btn) {
-          btn.closest('div[data-idx]').remove();
-        }
-
-        function collectPaymentConditions() {
-          var rows = document.querySelectorAll('#paymentConditionsContainer div[data-idx]');
-          var result = [];
-          rows.forEach(function(row) {
-            var months   = parseInt(row.querySelector('.pc-months').value);
-            var discount = parseFloat(row.querySelector('.pc-discount').value);
-            if (!isNaN(months) && months > 0) {
-              result.push({ months: months, discount: isNaN(discount) ? 0 : discount });
-            }
-          });
-          return result;
-        }
-
-        function saveExtras() {
-          var btn = document.getElementById('btnSaveExtras');
-          var msg = document.getElementById('extrasSaveMsg');
-          var specialCondition = document.getElementById('specialConditionInput').value.trim();
-          var paymentConditions = collectPaymentConditions();
-
-          btn.textContent = '⏳ Salvando...';
-          btn.disabled = true;
-
-          fetch('/admin/proposals/<%= proposal.id %>/extras', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              special_condition: specialCondition || null,
-              payment_conditions_json: JSON.stringify(paymentConditions)
-            })
-          })
-          .then(function(r) { return r.json(); })
-          .then(function(data) {
-            btn.textContent = '💾 Salvar Condições';
-            btn.disabled = false;
-            if (data.success) {
-              msg.style.display = 'block';
-              msg.style.color = '#2e7d32';
-              msg.textContent = '✅ Condições salvas com sucesso!';
-              // Atualiza dados locais para re-render correto
-              PAYMENT_CONDITIONS_INIT = paymentConditions;
-              setTimeout(function() { msg.style.display = 'none'; }, 3000);
-            } else {
-              msg.style.display = 'block';
-              msg.style.color = '#dc2626';
-              msg.textContent = '⚠️ Erro: ' + (data.error || 'desconhecido');
-            }
-          })
-          .catch(function(e) {
-            btn.textContent = '💾 Salvar Condições';
-            btn.disabled = false;
-            msg.style.display = 'block';
-            msg.style.color = '#dc2626';
-            msg.textContent = '⚠️ Erro de rede: ' + e.message;
-          });
-        }
-
-        // ── Inicializar ────────────────────────────────────────────────────
-        renderPaymentRows();
-        // Fix: rota POST /extras espera JSON no body
-        // (o fetch já envia application/json — rota usa req.body com express.json())
-      </script>
-
-      <!-- ══ RELATÓRIO DE ENGAJAMENTO ══ -->
-      <div class="detail-card full-width-card" style="margin-top:2rem">
-        <h3 class="card-title">📊 Relatório de Engajamento</h3>
-
-        <!-- Seletor de lead -->
-        <div class="report-lead-selector">
-          <span style="font-size:0.75rem;color:#888;font-weight:600">Ver:</span>
-          <button class="rls-btn active" onclick="switchReport('all', this)">
-            Todos os leads (<%= stats.totalAccesses %> acessos)
-          </button>
-          <% (proposal.leads || []).forEach(lead => { %>
-            <button class="rls-btn" onclick="switchReport(<%= lead.id %>, this)">
-              <%= lead.name %><% if (lead.is_primary) { %> ⭐<% } %>
-            </button>
-          <% }) %>
-        </div>
-
-        <!-- Métricas gerais -->
-        <div class="metrics-grid" id="reportMetrics">
-          <div class="metric-item">
-            <div class="metric-value" id="metricAccesses"><%= stats.totalAccesses %></div>
-            <div class="metric-label">Acessos</div>
-          </div>
-          <div class="metric-item">
-            <%
-              const tm = Math.floor(stats.totalDuration/60);
-              const ts = stats.totalDuration % 60;
-            %>
-            <div class="metric-value" id="metricDuration"><%= tm %>m<%= ts %>s</div>
-            <div class="metric-label">Tempo Total</div>
-          </div>
-          <div class="metric-item">
-            <div class="metric-value" id="metricSlides"><%= stats.totalSlidesSeen %>/10</div>
-            <div class="metric-label">Slides Vistos</div>
-          </div>
-          <div class="metric-item">
-            <% const revisits = stats.slideStats ? stats.slideStats.filter(s => s.revisit_count > 0).length : 0; %>
-            <div class="metric-value" id="metricRevisits"><%= revisits %></div>
-            <div class="metric-label">Slides Revisitados</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Gráfico -->
-      <div class="detail-card full-width-card">
-        <h3 class="card-title">📈 Tempo por Slide (segundos)</h3>
-        <div class="chart-wrap">
-          <canvas id="slideChart" height="100"></canvas>
-        </div>
-      </div>
-
-      <!-- Mapa de Calor -->
-      <div class="detail-card full-width-card">
-        <h3 class="card-title">🔥 Mapa de Calor — Engajamento por Slide</h3>
-        <div class="heatmap-grid" id="heatmapGrid">
-          <%
-          const _slideNames = ['','Capa','O Problema','A Solução','SDR + Ads',
-            'Clientes','Como Trabalhamos','Orçamento','Solicitar Proposta',
-            'FAQ','Agradecimento'];
-          function _heatClass(dur) {
-            if (dur <= 0)   return 'heat-none';
-            if (dur < 15)   return 'heat-1';
-            if (dur < 45)   return 'heat-2';
-            if (dur < 120)  return 'heat-3';
-            if (dur < 300)  return 'heat-4';
-            return 'heat-5';
-          }
-          %>
-          <% for (let _i = 1; _i <= 10; _i++) {
-            const _ss = (stats.slideStats || []).find(s => s.slide_number === _i);
-            const _dur = _ss ? Math.round(_ss.total_duration || 0) : 0;
-            const _views = _ss ? (_ss.view_count || 0) : 0;
-            const _avg = (_views > 0) ? Math.round(_dur / _views) : 0;
-            const _hc = _heatClass(_dur);
-          %>
-            <div class="heatmap-cell <%= _hc %>" id="hcell-<%= _i %>">
-              <div class="heat-number"><%= _i %></div>
-              <div class="heat-name"><%= _slideNames[_i] %></div>
-              <div class="heat-stats">
-                <div>
-                  <div class="heat-stat" id="hcell-<%= _i %>-dur"><%= _dur %>s</div>
-                  <div class="heat-stat-label">tempo total</div>
-                </div>
-                <div class="heat-divider"></div>
-                <div>
-                  <div class="heat-stat" id="hcell-<%= _i %>-views"><%= _views %> viz.</div>
-                  <div class="heat-stat-label">visualizações</div>
-                </div>
-                <div class="heat-divider"></div>
-                <div>
-                  <div class="heat-stat" id="hcell-<%= _i %>-avg"><%= _avg %>s/viz</div>
-                  <div class="heat-stat-label">média</div>
-                </div>
-              </div>
-            </div>
-          <% } %>
-        </div>
-        <div class="heatmap-legend">
-          <span style="font-size:0.7rem;color:#888;font-weight:600;margin-right:4px">Escala:</span>
-          <span class="legend-dot heat-none">□ Não visto</span>
-          <span class="legend-dot heat-1">■ 1–14s</span>
-          <span class="legend-dot heat-2">■ 15–44s</span>
-          <span class="legend-dot heat-3">■ 45–119s</span>
-          <span class="legend-dot heat-4">■ 120–299s</span>
-          <span class="legend-dot heat-5">■ 300s+</span>
-        </div>
-      </div>
-
-      <!-- Decisões -->
-      <% if (proposalActions && proposalActions.length > 0) { %>
-      <div class="detail-card full-width-card">
-        <h3 class="card-title">⚖️ Decisões sobre a Proposta</h3>
-        <table class="data-table">
-          <thead>
-            <tr><th>Lead</th><th>Data</th><th>Decisão</th><th>Valor (Contraproposta)</th><th>Comentário</th></tr>
-          </thead>
-          <tbody>
-            <% proposalActions.forEach(action => { %>
-            <% const actionColors = { accept: '#16a34a', counter: '#1565c0', reject: '#dc2626' }; %>
-            <% const actionLabels = { accept: '✅ Aceita', counter: '🔄 Contra-proposta', reject: '❌ Rejeitada' }; %>
-            <tr>
-              <td><strong><%= action.lead_name || '—' %></strong></td>
-              <td><small><%= new Date(action.created_at).toLocaleString('pt-BR') %></small></td>
-              <td><span style="font-weight:700;color:<%= actionColors[action.action_type] || '#666' %>"><%= actionLabels[action.action_type] || action.action_type %></span></td>
-              <td><% if (action.counter_value) { %><strong style="color:#1565c0">R$ <%= Number(action.counter_value).toLocaleString('pt-BR') %></strong><% } else { %><span style="color:#bbb">—</span><% } %></td>
-              <td style="font-size:0.82rem;color:#555;max-width:280px"><%= action.comment || '—' %></td>
-            </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      </div>
-      <% } %>
-
-      <!-- ── Dados Cadastrais do Aceite ───────────────────────────── -->
-      <% if (typeof acceptFormData !== 'undefined' && acceptFormData) {
-           const af = acceptFormData;
-           const isPJ = af.tipo_pessoa === 'pj';
-      %>
-      <div class="detail-card full-width-card" style="border-left:4px solid #16a34a">
-        <h3 class="card-title" style="color:#16a34a">✅ Dados Cadastrais do Aceite</h3>
-        <p style="font-size:0.75rem;color:#888;margin:-0.5rem 0 1rem">
-          Preenchidos pelo cliente ao aceitar formalmente a proposta.
-          Tipo: <strong><%= isPJ ? 'Pessoa Jurídica (CNPJ)' : 'Pessoa Física (CPF)' %></strong>
-        </p>
-
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.65rem 1.5rem">
-          <% if (isPJ) { %>
-            <% [
-              ['CNPJ',                     af.cnpj],
-              ['Razão Social',             af.razao_social],
-              ['Endereço da Sede',         af.endereco_sede],
-              ['Sócio / Rep. Legal',       af.nome_socio],
-              ['CPF do Sócio',             af.cpf_socio],
-              ['RG do Sócio',              af.rg_socio],
-              ['Nascimento do Sócio',      af.data_nascimento_socio],
-              ['End. Residencial do Sócio',af.endereco_residencial_socio],
-              ['E-mail para Assinatura',   af.email_assinatura],
-              ['E-mail Financeiro',        af.email_financeiro],
-            ].filter(([,v]) => v).forEach(([label, val]) => { %>
-              <div style="font-size:0.8rem">
-                <span style="font-size:0.68rem;font-weight:700;text-transform:uppercase;color:#aaa;letter-spacing:.4px"><%= label %></span>
-                <div style="font-weight:600;color:#1a1a2e;margin-top:1px"><%= val %></div>
-              </div>
-            <% }) %>
-          <% } else { %>
-            <% [
-              ['Nome Completo',        af.nome_completo],
-              ['CPF',                  af.cpf],
-              ['RG',                   af.rg],
-              ['Data de Nascimento',   af.data_nascimento],
-              ['Endereço Residencial', af.endereco_residencial],
-              ['E-mail para Assinatura', af.email_assinatura],
-              ['E-mail Financeiro',    af.email_financeiro],
-            ].filter(([,v]) => v).forEach(([label, val]) => { %>
-              <div style="font-size:0.8rem">
-                <span style="font-size:0.68rem;font-weight:700;text-transform:uppercase;color:#aaa;letter-spacing:.4px"><%= label %></span>
-                <div style="font-weight:600;color:#1a1a2e;margin-top:1px"><%= val %></div>
-              </div>
-            <% }) %>
-          <% } %>
-        </div>
-      </div>
-      <% } %>
-
-      <!-- Histórico de Sessões -->
-      <% if (stats.sessions && stats.sessions.length > 0) { %>
-      <div class="detail-card full-width-card">
-        <h3 class="card-title">🕐 Histórico de Acessos</h3>
-        <table class="data-table">
-          <thead>
-            <tr><th>Lead</th><th>#</th><th>Início</th><th>Fim</th><th>Duração</th><th>Alerta WA</th></tr>
-          </thead>
-          <tbody>
-            <% stats.sessions.forEach((sess, idx) => { %>
-            <tr>
-              <td style="font-size:0.8rem;font-weight:600;color:#555"><%= sess.lead_name || '—' %></td>
-              <td><%= stats.sessions.length - idx %></td>
-              <td><small><%= new Date(sess.started_at).toLocaleString('pt-BR') %></small></td>
-              <td>
-                <% if (sess.ended_at) { %>
-                  <small><%= new Date(sess.ended_at).toLocaleString('pt-BR') %></small>
-                <% } else { %><span class="badge badge-warning">Em andamento</span><% } %>
-              </td>
-              <td>
-                <% const _dm = Math.floor((sess.total_duration_seconds||0)/60); %>
-                <% const _ds = (sess.total_duration_seconds||0)%60; %>
-                <%= _dm %>m<%= _ds %>s
-              </td>
-              <td><%= sess.alert_sent ? '✅' : '—' %></td>
-            </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      </div>
-      <% } %>
-
-      <!-- Planos customizados -->
-      <% if (stats.customPlans && stats.customPlans.length > 0) { %>
-      <div class="detail-card full-width-card">
-        <h3 class="card-title">🛒 Planos Customizados pelo Cliente</h3>
-        <table class="data-table">
-          <thead><tr><th>Lead</th><th>Data</th><th>Mensal</th><th>Único</th><th>Enviou WA</th></tr></thead>
-          <tbody>
-            <% stats.customPlans.forEach(plan => { %>
-            <tr>
-              <td style="font-size:0.8rem;font-weight:600;color:#555"><%= plan.lead_name || '—' %></td>
-              <td><small><%= new Date(plan.created_at).toLocaleString('pt-BR') %></small></td>
-              <td>R$ <%= (plan.monthly_total||0).toLocaleString('pt-BR') %></td>
-              <td>R$ <%= (plan.onetime_total||0).toLocaleString('pt-BR') %></td>
-              <td><%= plan.sent_via_whatsapp ? '✅ Sim' : '❌ Não' %></td>
-            </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      </div>
-      <% } %>
-
-      <!-- Log de Eventos -->
-      <div class="detail-card full-width-card">
-        <h3 class="card-title">📋 Log de Eventos</h3>
-        <% if (eventLog && eventLog.length > 0) { %>
-          <div class="event-log">
-            <% eventLog.slice(0, 50).forEach(ev => { %>
-              <div class="event-item event-<%= ev.event_type %>">
-                <div class="event-time"><%= new Date(ev.timestamp).toLocaleString('pt-BR') %></div>
-                <div class="event-dot"></div>
-                <div class="event-text">
-                  <% if (ev.lead_name) { %><span style="font-weight:600;color:#E91E63"><%= ev.lead_name %>:</span> <% } %>
-                  <% if (ev.event_type === 'proposal_opened') { %>🔓 Abriu a proposta
-                  <% } else if (ev.event_type === 'proposal_closed') { %>🔒 Fechou a proposta
-                    <% if (ev.parsedDetails && ev.parsedDetails.total_duration) { %><small>(<%= Math.round(ev.parsedDetails.total_duration) %>s)</small><% } %>
-                  <% } else if (ev.event_type === 'slide_viewed') { %>👁️ Visualizou slide
-                    <% if (ev.parsedDetails && ev.parsedDetails.duration_seconds > 0) { %><small>(<%= Math.round(ev.parsedDetails.duration_seconds) %>s)</small><% } %>
-                  <% } else if (ev.event_type === 'proposal_shared') { %>📤 Compartilhou com <%= ev.parsedDetails ? ev.parsedDetails.shared_with : '' %>
-                  <% } else if (ev.event_type === 'proposal_action') { %>⚖️ <%= ev.parsedDetails ? ev.parsedDetails.action_type : 'ação' %>
-                  <% } else { %>ℹ️ <%= ev.event_type %><% } %>
-                </div>
-              </div>
-            <% }) %>
-          </div>
-        <% } else { %>
-          <p class="text-muted">Nenhum evento registrado ainda.</p>
-        <% } %>
-      </div>
-
     </main>
   </div>
 
@@ -790,121 +414,6 @@
   <script>
     const SERVICES_DATA = <%- JSON.stringify(services) %>;
     const PROPOSAL_ITEMS_DATA = <%- JSON.stringify(proposalItems) %>;
-
-    // ── Report data from server ────────────────────────────────────────
-    const SLIDE_LABELS    = <%- slideLabels %>;
-    const ALL_DURATIONS   = <%- slideDurationsAll %>;
-    const ALL_COLORS      = <%- slideColorsAll %>;
-    const PER_LEAD_STATS  = <%- perLeadStats %>;
-
-    const SLIDE_NAMES = ['','Capa','O Problema','A Solução','Diferencial SDR',
-      'Quem Confia','Como Trabalhamos','Orçamento','Minha Proposta',
-      'Perguntas','Vamos Conversar?'];
-
-    // ── Chart.js ──────────────────────────────────────────────────────
-    const ctx = document.getElementById('slideChart').getContext('2d');
-    let chart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: SLIDE_LABELS,
-        datasets: [{
-          label: 'Tempo (segundos)',
-          data: ALL_DURATIONS,
-          backgroundColor: ALL_COLORS,
-          borderRadius: 6,
-          borderWidth: 0
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          tooltip: { callbacks: { label: ctx => `${ctx.raw}s de visualização` } }
-        },
-        scales: {
-          y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { callback: v => v + 's' } },
-          x: { grid: { display: false } }
-        }
-      }
-    });
-
-    // ── View counts por slide (agregado) — vindos do server ──────────
-    const ALL_VIEW_COUNTS = <%- JSON.stringify(Array.from({length:10},(_,i)=>{ const s=(stats.slideStats||[]).find(x=>x.slide_number===i+1); return s ? (s.view_count||0) : 0; })) %>;
-
-    // ── Heatmap colour scale (frio → quente) ──────────────────
-    function heatClass(dur) {
-      if (dur <= 0)  return 'heat-none';
-      if (dur < 15)  return 'heat-1';
-      if (dur < 45)  return 'heat-2';
-      if (dur < 120) return 'heat-3';
-      if (dur < 300) return 'heat-4';
-      return 'heat-5';
-    }
-
-    // ── Heatmap renderer ─────────────────────────────────
-    function renderHeatmap(durations, viewCounts) {
-      const vc = viewCounts || new Array(10).fill(0);
-      for (let i = 1; i <= 10; i++) {
-        const cell = document.getElementById('hcell-' + i);
-        if (!cell) continue;
-        const dur   = Math.round(durations[i - 1] || 0);
-        const views = vc[i - 1] || 0;
-        const avg   = views > 0 ? Math.round(dur / views) : 0;
-        cell.className = 'heatmap-cell ' + heatClass(dur);
-        const durEl   = document.getElementById('hcell-' + i + '-dur');
-        const viewsEl = document.getElementById('hcell-' + i + '-views');
-        const avgEl   = document.getElementById('hcell-' + i + '-avg');
-        if (durEl)   durEl.textContent   = dur + 's';
-        if (viewsEl) viewsEl.textContent = views + ' viz.';
-        if (avgEl)   avgEl.textContent   = avg + 's/viz';
-      }
-    }
-
-    // Init heatmap — server já renderizou as células com dados agregados;
-    // chamada aqui apenas para garantir consistência visual inicial.
-    renderHeatmap(ALL_DURATIONS, ALL_VIEW_COUNTS);
-
-    // ── Switch report lead selector ────────────────────────────────────
-    function switchReport(leadId, btn) {
-      document.querySelectorAll('.rls-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      let durations, colors, viewCounts, accesses, totalDur, slidesSeen, revisits;
-
-      if (leadId === 'all') {
-        durations  = ALL_DURATIONS;
-        colors     = ALL_COLORS;
-        viewCounts = ALL_VIEW_COUNTS;
-        accesses   = <%= stats.totalAccesses %>;
-        totalDur   = <%= stats.totalDuration %>;
-        slidesSeen = <%= stats.totalSlidesSeen %>;
-        revisits   = <%= stats.slideStats ? stats.slideStats.filter(s => s.revisit_count > 0).length : 0 %>;
-      } else {
-        const perLead = PER_LEAD_STATS.find(p => p.lead_id == leadId);
-        durations  = perLead ? perLead.durations  : new Array(10).fill(0);
-        colors     = perLead ? perLead.colors      : new Array(10).fill('#e0e0e0');
-        viewCounts = perLead ? (perLead.viewCounts || new Array(10).fill(0)) : new Array(10).fill(0);
-        accesses   = perLead ? (perLead.accesses   || 0) : 0;
-        totalDur   = perLead ? (perLead.totalDur   || 0) : 0;
-        slidesSeen = perLead ? (perLead.slidesSeen || 0) : 0;
-        revisits   = perLead ? (perLead.revisits   || 0) : 0;
-      }
-
-      // Atualizar gráfico
-      chart.data.datasets[0].data = durations;
-      chart.data.datasets[0].backgroundColor = colors;
-      chart.update();
-
-      // Atualizar heatmap
-      renderHeatmap(durations, viewCounts);
-
-      // Atualizar métricas numéricas
-      document.getElementById('metricAccesses').textContent = accesses;
-      const mm = Math.floor(totalDur / 60), ms = totalDur % 60;
-      document.getElementById('metricDuration').textContent = mm + 'm' + ms + 's';
-      document.getElementById('metricSlides').textContent   = slidesSeen + '/10';
-      document.getElementById('metricRevisits').textContent = revisits;
-    }
 
     // ── Proposal editor JS ────────────────────────────────────────────
     function updateModeLabel() {
@@ -1013,6 +522,114 @@
     // Init
     updatePreview();
 
+    // ── Extras panel (Condição Especial & Formas de Pagamento) ───────────
+    var SPECIAL_CONDITION_INIT = <%- JSON.stringify(proposal.special_condition || '') %>;
+    var PAYMENT_CONDITIONS_INIT = (function() {
+      try {
+        var raw = <%- JSON.stringify(proposal.payment_conditions || null) %>;
+        if (!raw) return [];
+        return typeof raw === 'string' ? JSON.parse(raw) : raw;
+      } catch(e) { return []; }
+    })();
+
+    function toggleExtrasPanel() {
+      var panel   = document.getElementById('extrasPanel');
+      var chevron = document.getElementById('extrasPanelChevron');
+      var open    = panel.style.display === 'none';
+      panel.style.display   = open ? '' : 'none';
+      chevron.style.transform = open ? 'rotate(180deg)' : '';
+    }
+
+    function createPaymentRow(months, discount) {
+      var row = document.createElement('div');
+      row.className = 'payment-row';
+      row.innerHTML =
+        '<input type="number" class="pc-months" placeholder="12" min="1" max="120" value="' + (months || '') + '">' +
+        '<input type="number" class="pc-discount" placeholder="10" min="0" max="100" step="0.1" value="' + (discount || '') + '">' +
+        '<button type="button" class="payment-row-del" onclick="removePaymentRow(this)" title="Remover">✕</button>';
+      return row;
+    }
+
+    function renderPaymentRows() {
+      var container = document.getElementById('paymentConditionsContainer');
+      container.innerHTML = '';
+      if (PAYMENT_CONDITIONS_INIT && PAYMENT_CONDITIONS_INIT.length > 0) {
+        PAYMENT_CONDITIONS_INIT.forEach(function(c) {
+          container.appendChild(createPaymentRow(c.months, c.discount));
+        });
+      }
+    }
+
+    function addPaymentRow() {
+      var container = document.getElementById('paymentConditionsContainer');
+      container.appendChild(createPaymentRow('', ''));
+      // ensure panel open
+      var panel = document.getElementById('extrasPanel');
+      if (panel.style.display === 'none') toggleExtrasPanel();
+    }
+
+    function removePaymentRow(btn) {
+      btn.closest('.payment-row').remove();
+    }
+
+    function collectPaymentConditions() {
+      var rows = document.querySelectorAll('#paymentConditionsContainer .payment-row');
+      var result = [];
+      rows.forEach(function(row) {
+        var months   = parseFloat(row.querySelector('.pc-months').value);
+        var discount = parseFloat(row.querySelector('.pc-discount').value);
+        if (!isNaN(months) && months > 0 && !isNaN(discount) && discount >= 0) {
+          result.push({ months: months, discount: discount });
+        }
+      });
+      return result;
+    }
+
+    function saveExtras() {
+      var btn = document.getElementById('btnSaveExtras');
+      var msg = document.getElementById('extrasSaveMsg');
+      var specialCondition  = document.getElementById('specialConditionInput').value.trim();
+      var paymentConditions = collectPaymentConditions();
+
+      btn.disabled    = true;
+      btn.textContent = '⏳ Salvando...';
+      msg.style.display = 'none';
+
+      fetch('/admin/proposals/<%= proposal.id %>/extras', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          special_condition: specialCondition || null,
+          payment_conditions_json: paymentConditions.length > 0 ? JSON.stringify(paymentConditions) : null
+        })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        btn.disabled    = false;
+        btn.textContent = '💾 Salvar';
+        if (data.success) {
+          PAYMENT_CONDITIONS_INIT = paymentConditions;
+          msg.style.display = 'block';
+          msg.style.color   = '#2e7d32';
+          msg.textContent   = '✅ Salvo com sucesso!';
+          setTimeout(function() { msg.style.display = 'none'; }, 2500);
+        } else {
+          msg.style.display = 'block';
+          msg.style.color   = '#c62828';
+          msg.textContent   = '❌ Erro: ' + (data.error || 'falha ao salvar');
+        }
+      })
+      .catch(function(err) {
+        btn.disabled    = false;
+        btn.textContent = '💾 Salvar';
+        msg.style.display = 'block';
+        msg.style.color   = '#c62828';
+        msg.textContent   = '❌ Erro de conexão';
+      });
+    }
+
+    // Init extras
+    renderPaymentRows();
     // ── Budget preview: fixed ao rolar ─────────────────────────
     (function() {
       const bp     = document.getElementById('budgetPreview');
