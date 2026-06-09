@@ -162,6 +162,8 @@
         return typeof raw === 'string' ? JSON.parse(raw) : raw;
       } catch(e) { return []; }
     })();
+    // Sinaliza ao tracking.js que este acesso é do administrador — NUNCA registrar dados
+    window.IS_ADMIN_PREVIEW = <%= isAdminPreview ? 'true' : 'false' %>;
   </script>
 
   <!-- ── DECISION WIDGET (floating right) ── -->

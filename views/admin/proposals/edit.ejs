@@ -129,15 +129,6 @@
     .extras-label { display:block;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:#888;margin-bottom:0.35rem; }
     .extras-textarea { width:100%;padding:0.5rem 0.6rem;border:1px solid #ddd;border-radius:7px;background:#fff;color:#1a1a2e;font-family:Poppins,sans-serif;font-size:0.78rem;resize:vertical;outline:none;box-sizing:border-box;transition:border-color 0.15s; }
     .extras-textarea:focus { border-color:#E91E63; }
-    .payment-row { display:grid;grid-template-columns:1fr 1fr 24px;gap:0.35rem;align-items:center; }
-    .payment-row input { padding:0.35rem 0.45rem;border:1px solid #ddd;border-radius:6px;font-size:0.75rem;font-family:Poppins,sans-serif;color:#1a1a2e;outline:none;transition:border-color 0.15s;width:100%;box-sizing:border-box; }
-    .payment-row input:focus { border-color:#E91E63; }
-    .payment-row-del { background:none;border:none;cursor:pointer;color:#bbb;font-size:1rem;line-height:1;padding:0;transition:color 0.15s; }
-    .payment-row-del:hover { color:#e53935; }
-    .payment-row-labels { display:grid;grid-template-columns:1fr 1fr 24px;gap:0.35rem;margin-bottom:0.25rem; }
-    .payment-row-labels span { font-size:0.63rem;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:0.3px; }
-    .extras-add-btn { display:flex;align-items:center;gap:0.3rem;padding:0.32rem 0.7rem;border:1px dashed #E91E63;border-radius:7px;background:rgba(233,30,99,0.05);color:#E91E63;font-size:0.72rem;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;transition:background 0.15s;margin-top:0.25rem; }
-    .extras-add-btn:hover { background:rgba(233,30,99,0.12); }
     .extras-save-btn { width:100%;padding:0.5rem;background:#E91E63;color:#fff;border:none;border-radius:7px;font-family:Poppins,sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;transition:background 0.15s;margin-top:0.6rem; }
     .extras-save-btn:hover { background:#c2185b; }
     .extras-save-msg { display:none;margin-top:0.35rem;text-align:center;font-size:0.72rem;color:#2e7d32; }
@@ -377,13 +368,16 @@
                       ><%= proposal.special_condition || '' %></textarea>
                     </div>
 
-                    <!-- Formas de Pagamento -->
+                    <!-- Condições de Pagamento -->
                     <div style="margin-bottom:0.75rem">
                       <label class="extras-label">💳 Condições de Pagamento</label>
-                      <div class="payment-row-labels">
-                        <span>Meses</span><span>Desconto %</span><span></span>
+                      <p style="font-size:0.7rem;color:#999;margin:0 0 0.5rem;line-height:1.4">Defina quantas parcelas + % de desconto. O valor final será calculado automaticamente na proposta do cliente.</p>
+                      <div id="paymentRowsHeader" style="display:none;grid-template-columns:1fr 1fr 26px;gap:0.3rem;margin-bottom:0.2rem">
+                        <span style="font-size:0.6rem;color:#aaa;font-weight:700;text-transform:uppercase;letter-spacing:0.3px">Meses</span>
+                        <span style="font-size:0.6rem;color:#aaa;font-weight:700;text-transform:uppercase;letter-spacing:0.3px">Desconto %</span>
+                        <span></span>
                       </div>
-                      <div id="paymentConditionsContainer" style="display:flex;flex-direction:column;gap:0.4rem;margin-bottom:0.4rem"></div>
+                      <div class="payment-rows-wrap" id="paymentConditionsContainer"></div>
                       <button type="button" class="extras-add-btn" onclick="addPaymentRow()">➕ Adicionar condição</button>
                     </div>
 
@@ -536,18 +530,19 @@
       var panel   = document.getElementById('extrasPanel');
       var chevron = document.getElementById('extrasPanelChevron');
       var open    = panel.style.display === 'none';
-      panel.style.display   = open ? '' : 'none';
+      panel.style.display     = open ? '' : 'none';
       chevron.style.transform = open ? 'rotate(180deg)' : '';
     }
 
+    /* ── Linhas de condição de pagamento ─────────────────────────── */
     function createPaymentRow(months, discount) {
-      var row = document.createElement('div');
-      row.className = 'payment-row';
-      row.innerHTML =
-        '<input type="number" class="pc-months" placeholder="12" min="1" max="120" value="' + (months || '') + '">' +
-        '<input type="number" class="pc-discount" placeholder="10" min="0" max="100" step="0.1" value="' + (discount || '') + '">' +
-        '<button type="button" class="payment-row-del" onclick="removePaymentRow(this)" title="Remover">✕</button>';
-      return row;
+      var wrap = document.createElement('div');
+      wrap.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 26px;gap:0.3rem;align-items:center;margin-bottom:0.35rem';
+      wrap.innerHTML =
+        '<input type="number" class="pc-months extras-textarea" placeholder="Meses ex: 3" min="1" max="120" value="' + (months || '') + '" style="padding:0.35rem 0.45rem;font-size:0.75rem">' +
+        '<input type="number" class="pc-discount extras-textarea" placeholder="Desc % ex: 10" min="0" max="100" step="0.1" value="' + (discount !== undefined && discount !== '' ? discount : '') + '" style="padding:0.35rem 0.45rem;font-size:0.75rem">' +
+        '<button type="button" onclick="removePaymentRow(this)" title="Remover" style="background:none;border:none;cursor:pointer;color:#bbb;font-size:1rem;padding:0;transition:color 0.15s" onmouseenter="this.style.color=\'#e53935\'" onmouseleave="this.style.color=\'#bbb\'">✕</button>';
+      return wrap;
     }
 
     function renderPaymentRows() {
@@ -558,26 +553,41 @@
           container.appendChild(createPaymentRow(c.months, c.discount));
         });
       }
+      // header de colunas se houver linhas
+      updatePaymentHeader();
+    }
+
+    function updatePaymentHeader() {
+      var container = document.getElementById('paymentConditionsContainer');
+      var existing  = container.querySelectorAll('div').length;
+      var hdr = document.getElementById('paymentRowsHeader');
+      if (!hdr) return;
+      hdr.style.display = existing > 0 ? 'grid' : 'none';
     }
 
     function addPaymentRow() {
       var container = document.getElementById('paymentConditionsContainer');
       container.appendChild(createPaymentRow('', ''));
-      // ensure panel open
+      updatePaymentHeader();
       var panel = document.getElementById('extrasPanel');
       if (panel.style.display === 'none') toggleExtrasPanel();
     }
 
     function removePaymentRow(btn) {
-      btn.closest('.payment-row').remove();
+      btn.closest('div').remove();
+      updatePaymentHeader();
     }
 
     function collectPaymentConditions() {
-      var rows = document.querySelectorAll('#paymentConditionsContainer .payment-row');
+      var container = document.getElementById('paymentConditionsContainer');
+      var rows = container.querySelectorAll('div');
       var result = [];
       rows.forEach(function(row) {
-        var months   = parseFloat(row.querySelector('.pc-months').value);
-        var discount = parseFloat(row.querySelector('.pc-discount').value);
+        var mInput = row.querySelector('.pc-months');
+        var dInput = row.querySelector('.pc-discount');
+        if (!mInput || !dInput) return;
+        var months   = parseFloat(mInput.value);
+        var discount = parseFloat(dInput.value);
         if (!isNaN(months) && months > 0 && !isNaN(discount) && discount >= 0) {
           result.push({ months: months, discount: discount });
         }
@@ -619,7 +629,7 @@
           msg.textContent   = '❌ Erro: ' + (data.error || 'falha ao salvar');
         }
       })
-      .catch(function(err) {
+      .catch(function() {
         btn.disabled    = false;
         btn.textContent = '💾 Salvar';
         msg.style.display = 'block';

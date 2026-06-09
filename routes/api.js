@@ -10,9 +10,18 @@ const { sendCustomPlanAlert } = require('../services/whatsapp');
 // TRACKING
 // ══════════════════════════════════════════════════════════
 
+// Guard para rotas de tracking: bloqueia registro se a sessão for do admin.
+// Administradores NUNCA devem contaminar métricas de engajamento.
+function noAdminTracking(req, res, next) {
+  if (req.session && req.session.isAdmin) {
+    return res.json({ success: true, skipped: true }); // silencioso
+  }
+  next();
+}
+
 // POST /api/track/open
 // Aceita { token, lead_id } — token é da proposta, lead_id é o lead que está acessando
-router.post('/open', (req, res) => {
+router.post('/open', noAdminTracking, (req, res) => {
   const { token, lead_id } = req.body;
   if (!token) return res.status(400).json({ error: 'Token obrigatório' });
 
@@ -42,7 +51,7 @@ router.post('/open', (req, res) => {
 
 // POST /api/track/slide
 // Aceita { token, lead_id, sessionId, slideNumber, duration, isRevisit }
-router.post('/slide', (req, res) => {
+router.post('/slide', noAdminTracking, (req, res) => {
   const { token, lead_id, sessionId, slideNumber, duration, isRevisit } = req.body;
   if (!token || !sessionId || !slideNumber) {
     return res.status(400).json({ error: 'Dados incompletos' });
@@ -69,7 +78,7 @@ router.post('/slide', (req, res) => {
 
 // POST /api/track/close
 // Aceita { token, lead_id, sessionId, totalDuration }
-router.post('/close', async (req, res) => {
+router.post('/close', noAdminTracking, async (req, res) => {
   const { token, lead_id, sessionId, totalDuration } = req.body;
   if (!token || !sessionId) return res.status(400).json({ error: 'Dados incompletos' });
 

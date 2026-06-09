@@ -1,9 +1,23 @@
 /**
  * tracking.js — Frontend Tracking para Proposta Envox
  * Rastreia: abertura, slides, revisitas, fechamento
+ *
+ * NUNCA registra dados quando IS_ADMIN_PREVIEW = true
+ * (acesso pelo painel administrativo).
  */
 (function() {
   'use strict';
+
+  // ── Bloqueio total para visualização administrativa ─────────────────
+  if (window.IS_ADMIN_PREVIEW === true) {
+    // Expõe API vazia para não quebrar chamadas externas de builder.js
+    window.Tracking = {
+      init: function() {},
+      trackSlide: function() {},
+      close: function() {}
+    };
+    return; // encerra o módulo imediatamente
+  }
   
   // Variáveis de rastreamento (injetadas pelo servidor via viewer.ejs)
   const TOKEN   = window.PROPOSAL_TOKEN;

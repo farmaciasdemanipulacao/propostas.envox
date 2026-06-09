@@ -284,23 +284,79 @@
     }
     summaryCards += '</div>';
 
-    // Opções de pagamento (à vista vs mensal) — somente para serviços mensais
+    // ── Condições de Pagamento Admin OU fallback padrão ────────────────
+    // Se admin definiu condições customizadas, usa elas; caso contrário mostra
+    // o card padrão "Mensal" + "À Vista 3 meses 10%".
     let paymentOptions = '';
-    if (monthlyItems.length > 0 && !(discActive && discM > 0)) {
-      const avista3 = grandMonthly * 3 * 0.90;
-      paymentOptions = `
-        <div class="budget-payment-options">
-          <div class="budget-payment-card payment-mensal" style="flex:1">
-            <div class="budget-payment-badge">Mensal</div>
-            <div class="budget-payment-value">${fmtBRL(grandMonthly)}</div>
-            <div class="budget-payment-note">por mês · sem fidelidade</div>
-          </div>
-          <div class="budget-payment-card payment-avista" style="flex:1">
-            <div class="budget-payment-badge">À Vista (3 meses) 💰</div>
-            <div class="budget-payment-value">${fmtBRL(avista3)}</div>
-            <div class="budget-payment-note">10% de desconto · <strong>${fmtBRL(grandMonthly * 3 - avista3)}</strong> de economia</div>
-          </div>
-        </div>`;
+    const adminPayCondsForOptions = window.PROPOSAL_PAYMENT_CONDITIONS || [];
+
+    if (monthlyItems.length > 0 || onetimeItems.length > 0) {
+      let cards = '';
+
+      if (adminPayCondsForOptions.length > 0) {
+        // ── Cards customizados pelo admin ──────────────────────────────
+        // Cartão "Mensal" fixo (sem desconto), depois cada condição admin
+        if (monthlyItems.length > 0) {
+          cards += `
+            <div class="budget-payment-card payment-mensal">
+              <div class="budget-payment-badge">Mensal</div>
+              <div class="budget-payment-value">${fmtBRL(grandMonthly)}</div>
+              <div class="budget-payment-note">por mês · sem fidelidade</div>
+            </div>`;
+          adminPayCondsForOptions.forEach(function(c) {
+            const pct  = parseFloat(c.discount) || 0;
+            const mos  = parseInt(c.months) || 1;
+            const base = grandMonthly * mos;
+            const after = base * (1 - pct / 100);
+            const save  = base - after;
+            const discNote = pct > 0
+              ? `${pct}% de desconto · <strong>${fmtBRL(save)}</strong> de economia`
+              : `total em ${mos} ${mos === 1 ? 'mês' : 'meses'}`;
+            cards += `
+              <div class="budget-payment-card payment-avista">
+                <div class="budget-payment-badge">À Vista (${mos} ${mos === 1 ? 'mês' : 'meses'}) 💰</div>
+                <div class="budget-payment-value">${fmtBRL(after)}</div>
+                <div class="budget-payment-note">${discNote}</div>
+              </div>`;
+          });
+        }
+        if (onetimeItems.length > 0) {
+          adminPayCondsForOptions.forEach(function(c) {
+            const pct  = parseFloat(c.discount) || 0;
+            const after = grandOnetime * (1 - pct / 100);
+            const save  = grandOnetime - after;
+            const discNote = pct > 0
+              ? `${pct}% de desconto · <strong>${fmtBRL(save)}</strong> de economia`
+              : `pagamento único`;
+            cards += `
+              <div class="budget-payment-card payment-avista">
+                <div class="budget-payment-badge">Pagamento Único 💰</div>
+                <div class="budget-payment-value">${fmtBRL(after)}</div>
+                <div class="budget-payment-note">${discNote}</div>
+              </div>`;
+          });
+        }
+      } else {
+        // ── Fallback padrão: Mensal + À Vista 3 meses 10% ─────────────
+        if (monthlyItems.length > 0 && !(discActive && discM > 0)) {
+          const avista3 = grandMonthly * 3 * 0.90;
+          cards += `
+            <div class="budget-payment-card payment-mensal">
+              <div class="budget-payment-badge">Mensal</div>
+              <div class="budget-payment-value">${fmtBRL(grandMonthly)}</div>
+              <div class="budget-payment-note">por mês · sem fidelidade</div>
+            </div>
+            <div class="budget-payment-card payment-avista">
+              <div class="budget-payment-badge">À Vista (3 meses) 💰</div>
+              <div class="budget-payment-value">${fmtBRL(avista3)}</div>
+              <div class="budget-payment-note">10% de desconto · <strong>${fmtBRL(grandMonthly * 3 - avista3)}</strong> de economia</div>
+            </div>`;
+        }
+      }
+
+      if (cards) {
+        paymentOptions = `<div class="budget-payment-options">${cards}</div>`;
+      }
     }
 
     // Email send button for client
@@ -328,33 +384,9 @@
         </div>`;
     }
 
-    // ── Condições de Pagamento (admin definiu) ─────────────────────────
-    let adminPaymentCondHTML = '';
-    const adminPayConds = window.PROPOSAL_PAYMENT_CONDITIONS || [];
-    if (adminPayConds.length > 0) {
-      let rows = adminPayConds.map(c => {
-        const discVal = c.discount > 0
-          ? `<span class="apc-discount">− ${c.discount}% de desconto</span>`
-          : `<span style="color:#888;font-size:0.72rem">sem desconto</span>`;
-        const monthlyAfter = grandMonthly > 0
-          ? `<span class="apc-value">${fmtBRL(grandMonthly * c.months * (1 - (c.discount || 0) / 100))}</span><span style="font-size:0.7rem;color:#888"> total</span>`
-          : '';
-        return `
-          <div class="apc-row">
-            <div class="apc-months">${c.months}x</div>
-            <div class="apc-info">
-              <span class="apc-label">${c.months} ${c.months === 1 ? 'mês' : 'meses'}</span>
-              ${discVal}
-            </div>
-            ${monthlyAfter}
-          </div>`;
-      }).join('');
-      adminPaymentCondHTML = `
-        <div class="budget-admin-payment-conds">
-          <div class="budget-admin-payment-title">💳 Condições de Pagamento</div>
-          <div class="apc-list">${rows}</div>
-        </div>`;
-    }
+    // adminPaymentCondHTML removido — as condições admin agora são
+    // renderizadas diretamente como cards dentro de paymentOptions acima.
+    const adminPaymentCondHTML = '';
 
     // Inline decision buttons below total
     const inlineActionsHTML = buildInlineActionButtons('admin');
