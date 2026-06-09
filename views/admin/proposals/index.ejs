@@ -7,12 +7,165 @@
   <title>Propostas — Envox Admin</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    /* ── Tabs ── */
+    .proposals-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--gray-200);
+      margin-bottom: 1.5rem;
+    }
+    .proposals-tab {
+      padding: 0.65rem 1.4rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-family: 'Poppins', sans-serif;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.15s, border-color 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+    .proposals-tab:hover { color: var(--gray-800); }
+    .proposals-tab.active {
+      color: var(--pink);
+      border-bottom-color: var(--pink);
+    }
+    .tab-count {
+      background: var(--gray-100);
+      color: var(--gray-600);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 20px;
+    }
+    .proposals-tab.active .tab-count {
+      background: rgba(233,30,99,0.12);
+      color: var(--pink);
+    }
+
+    /* ── Painel de aba ── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Table ── */
+    .badge-archived  { background:#f1f1f1;color:#999; }
+    .badge-active    { background:rgba(46,125,50,0.1);color:#2e7d32; }
+    .badge-awaiting  { background:rgba(217,119,6,0.12);color:#d97706; }
+    .badge-rejected  { background:rgba(220,38,38,0.10);color:#dc2626; }
+    .badge-accepted  { background:rgba(22,163,74,0.12);color:#15803d; }
+
+    .mode-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.2rem 0.55rem;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* ── Célula de ações reorganizada ── */
+    .actions-cell {
+      min-width: 168px;
+    }
+    .action-row {
+      display: flex;
+      gap: 0.35rem;
+      align-items: center;
+      flex-wrap: nowrap;
+      margin-bottom: 0.3rem;
+    }
+    .action-row:last-child { margin-bottom: 0; }
+
+    /* Botões base */
+    .btn-sm {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 6px;
+      border: 1px solid var(--gray-300);
+      background: white;
+      color: var(--gray-700);
+      cursor: pointer;
+      text-decoration: none;
+      font-family: 'Poppins', sans-serif;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .btn-sm:hover { border-color: var(--gray-400); background: var(--gray-50); }
+
+    .btn-edit   { border-color:#e91e63;color:#e91e63;background:rgba(233,30,99,0.06); }
+    .btn-edit:hover { background:rgba(233,30,99,0.13); }
+
+    .btn-view   { border-color:#6b7280;color:#374151;background:#fff; }
+    .btn-view:hover { background:var(--gray-50); }
+
+    .btn-copy   { border-color:#7c3aed;color:#7c3aed;background:rgba(124,58,237,0.06); }
+    .btn-copy:hover { background:rgba(124,58,237,0.14); }
+    .btn-copy.copied { border-color:#16a34a;color:#16a34a;background:rgba(22,163,74,0.1); }
+
+    .btn-heat   { border-color:#f97316;color:#ea580c;background:rgba(249,115,22,0.06); }
+    .btn-heat:hover { background:rgba(249,115,22,0.14); }
+
+    .btn-archive      { border-color:#dc2626;color:#dc2626;background:rgba(220,38,38,0.06); }
+    .btn-archive:hover{ background:rgba(220,38,38,0.13); }
+
+    .btn-restore      { border-color:#16a34a;color:#16a34a;background:rgba(22,163,74,0.07); }
+    .btn-restore:hover{ background:rgba(22,163,74,0.14); }
+
+    .badge-client {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 7px;
+      border-radius: 20px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      background: rgba(233,30,99,0.09);
+      color: #E91E63;
+      white-space: nowrap;
+    }
+
+    /* ── Toast ── */
+    #copy-toast {
+      position: fixed; bottom: 1.5rem; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1a1a2e; color: #fff;
+      padding: 0.6rem 1.4rem; border-radius: 24px;
+      font-size: 0.82rem; font-weight: 600;
+      font-family: Poppins, sans-serif;
+      opacity: 0; transition: all 0.25s;
+      pointer-events: none; z-index: 9999;
+    }
+    #copy-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── Linha arquivada ── */
+    .row-archived td { opacity: 0.6; }
+
+    /* ── Empty state dentro da tab ── */
+    .tab-empty {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: #bbb;
+    }
+    .tab-empty .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+  </style>
 </head>
 <body>
   <div class="top-bar"></div>
   <div class="admin-layout">
     <%- include('../_sidebar', { active: 'proposals' }) %>
     <main class="main-content">
+
+      <!-- ── Cabeçalho ── -->
       <div class="page-header">
         <div>
           <h1>Propostas</h1>
@@ -25,160 +178,286 @@
       </div>
 
       <% if (success) { %><div class="alert alert-success"><span>✅</span> <%= success %></div><% } %>
-      <% if (error) { %><div class="alert alert-error"><span>⚠️</span> <%= error %></div><% } %>
+      <% if (error)   { %><div class="alert alert-error"><span>⚠️</span> <%= error %></div><% } %>
 
-      <div class="table-card">
-        <div class="table-header">
-          <h2>Todas as Propostas</h2>
-          <span class="table-count"><%= proposals.length %> proposta(s)</span>
-        </div>
-        <% if (proposals.length === 0) { %>
-          <div style="text-align:center;padding:3rem;color:#bbb">
-            <div style="font-size:2.5rem;margin-bottom:0.75rem">📝</div>
-            <p>Nenhuma proposta criada ainda.</p>
-            <a href="/admin/proposals/new" class="btn-primary" style="margin-top:1rem;display:inline-block">Criar Primeira Proposta</a>
-          </div>
-        <% } else { %>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Lead Principal</th>
-              <th>Leads</th>
-              <th>Modo</th>
-              <th>Itens</th>
-              <th>Criada em</th>
-              <th>Decisão</th>
-              <th>Status</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% proposals.forEach(proposal => { %>
-            <tr class="<%= proposal.proposal_status === 'archived' ? 'row-archived' : '' %>">
-              <td>
-                <% if (proposal.primary_lead_name) { %>
-                  <div style="font-weight:700;color:#1a1a2e"><%= proposal.primary_lead_name %></div>
-                  <% if (proposal.primary_company) { %>
-                    <div style="font-size:0.72rem;color:#888"><%= proposal.primary_company %></div>
-                  <% } %>
-                <% } else { %>
-                  <span style="color:#bbb;font-size:0.82rem">Sem lead</span>
-                <% } %>
-              </td>
-              <td>
-                <span style="font-size:0.82rem;color:#555;font-weight:600">
-                  <%= proposal.leads_count || 0 %> lead(s)
-                </span>
-              </td>
-              <td>
-                <% const modeLabels = { ready: '📋 Pronta', build: '🔧 Montar', both: '✨ Ambas' }; %>
-                <span class="badge" style="background:<%= proposal.proposal_mode === 'both' ? 'rgba(233,30,99,0.1)' : proposal.proposal_mode === 'ready' ? 'rgba(21,101,192,0.1)' : 'rgba(46,125,50,0.1)' %>;color:<%= proposal.proposal_mode === 'both' ? '#E91E63' : proposal.proposal_mode === 'ready' ? '#1565c0' : '#2e7d32' %>">
-                  <%= modeLabels[proposal.proposal_mode || 'both'] || '✨ Ambas' %>
-                </span>
-              </td>
-              <td><%= proposal.items_count || 0 %> item(s)</td>
-              <td style="font-size:0.78rem;color:#666">
-                <% if (proposal.proposal_sent_at) { %>
-                  <%= new Date(proposal.proposal_sent_at).toLocaleDateString('pt-BR') %>
-                <% } else { %>
-                  <span style="color:#bbb">—</span>
-                <% } %>
-              </td>
-              <td>
-                <% if (proposal.latest_action) { %>
-                  <% const actionColors = { accept: '#16a34a', counter: '#1565c0', reject: '#dc2626', email_sent: '#d97706' }; %>
-                  <% const actionLabels = { accept: '✅ Aceita', counter: '🔄 Contra-proposta', reject: '❌ Rejeitada', email_sent: '🔥 Email enviado' }; %>
-                  <span style="font-size:0.78rem;font-weight:600;color:<%= actionColors[proposal.latest_action] || '#666' %>">
-                    <%= actionLabels[proposal.latest_action] || proposal.latest_action %>
-                  </span>
-                <% } else { %>
-                  <span style="font-size:0.72rem;color:#bbb">Aguardando</span>
-                <% } %>
-              </td>
-              <td>
-                <% if (proposal.proposal_status === 'archived') { %>
-                  <span class="badge" style="background:#f5f5f5;color:#999">Arquivada</span>
-                <% } else if (proposal.proposal_status === 'awaiting') { %>
-                  <span class="badge" style="background:rgba(217,119,6,0.12);color:#d97706;font-weight:700">⏳ Aguardando</span>
-                <% } else if (proposal.proposal_status === 'rejected') { %>
-                  <span class="badge" style="background:rgba(220,38,38,0.1);color:#dc2626;font-weight:700">❌ Rejeitada</span>
-                <% } else { %>
-                  <span class="badge badge-success">Ativa</span>
-                <% } %>
-              </td>
-              <td>
-                <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
-                  <a href="/admin/proposals/<%= proposal.id %>/edit" class="btn-sm btn-outline" title="Editar proposta">✏️ Editar</a>
-                  <% if (proposal.leads_count > 0) { %>
-                    <%
-                      // Pegar ID do lead primário via token — renderizado via query no servidor
-                      // Usamos data-attribute para JS redirecionar
-                    %>
-                    <a href="/admin/proposals/<%= proposal.id %>/lead-proposals" class="btn-sm btn-outline" title="Ver histórico de propostas do lead">👁️ Ver</a>
-                  <% } else { %>
-                    <a href="/admin/proposals/<%= proposal.id %>/view" class="btn-sm btn-outline" title="Ver proposta">👁️ Ver</a>
-                  <% } %>
-                  <% if (proposal.created_by_client) { %>
-                    <span class="badge" style="background:rgba(233,30,99,0.09);color:#E91E63;font-size:0.65rem">👤 Cliente</span>
-                  <% } %>
-                  <button class="btn-sm btn-copy" title="Copiar link da proposta" onclick="copyProposalLink('<%= proposal.token %>', this)">🔗 Copiar</button>
-                  <a href="/admin/proposals/<%= proposal.id %>/heat" class="btn-sm btn-heat" title="Relatório de engajamento">🌡️ Calor</a>
-                  <form action="/admin/proposals/<%= proposal.id %>/archive" method="POST" style="display:inline" onsubmit="return confirm('<%= proposal.proposal_status === 'archived' ? 'Reativar' : 'Arquivar' %> esta proposta?')">
-                    <input type="hidden" name="archived" value="<%= proposal.proposal_status === 'archived' ? 0 : 1 %>">
-                    <button type="submit" class="btn-sm <%= proposal.proposal_status === 'archived' ? 'btn-outline' : 'btn-danger-outline' %>" title="<%= proposal.proposal_status === 'archived' ? 'Reativar' : 'Arquivar' %>">
-                      <%= proposal.proposal_status === 'archived' ? '♻️' : '🗃️' %>
-                    </button>
-                  </form>
-                </div>
-              </td>
-            </tr>
-            <% }) %>
-          </tbody>
-        </table>
-        <% } %>
+      <%
+        const activeProposals   = proposals.filter(p => p.proposal_status !== 'archived');
+        const archivedProposals = proposals.filter(p => p.proposal_status === 'archived');
+      %>
+
+      <!-- ── Abas ── -->
+      <div class="proposals-tabs">
+        <button class="proposals-tab active" id="tab-active" onclick="switchTab('active')">
+          📋 Ativas
+          <span class="tab-count" id="count-active"><%= activeProposals.length %></span>
+        </button>
+        <button class="proposals-tab" id="tab-archived" onclick="switchTab('archived')">
+          🗃️ Arquivadas
+          <span class="tab-count" id="count-archived"><%= archivedProposals.length %></span>
+        </button>
       </div>
+
+      <!-- ══════════════════════ ABA: ATIVAS ══════════════════════ -->
+      <div class="tab-panel active" id="panel-active">
+        <div class="table-card">
+          <% if (activeProposals.length === 0) { %>
+            <div class="tab-empty">
+              <div class="empty-icon">📝</div>
+              <p>Nenhuma proposta ativa.</p>
+              <a href="/admin/proposals/new" class="btn-primary" style="margin-top:1rem;display:inline-flex">Criar Primeira Proposta</a>
+            </div>
+          <% } else { %>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Lead Principal</th>
+                <th>Leads</th>
+                <th>Modo</th>
+                <th>Itens</th>
+                <th>Enviada em</th>
+                <th>Decisão</th>
+                <th>Status</th>
+                <th class="actions-cell">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% activeProposals.forEach(proposal => { %>
+              <%
+                const modeStyle = {
+                  both:  { bg: 'rgba(233,30,99,0.08)',   color: '#E91E63' },
+                  ready: { bg: 'rgba(21,101,192,0.08)',  color: '#1565c0' },
+                  build: { bg: 'rgba(46,125,50,0.08)',   color: '#2e7d32' }
+                };
+                const ms = modeStyle[proposal.proposal_mode] || modeStyle.both;
+                const modeLabels = { ready: '📋 Pronta', build: '🔧 Montar', both: '✨ Ambas' };
+                const actionColors = { accept:'#16a34a', counter:'#1565c0', reject:'#dc2626', email_sent:'#d97706' };
+                const actionLabels = { accept:'✅ Aceita', counter:'🔄 Contra-proposta', reject:'❌ Rejeitada', email_sent:'🔥 Email enviado' };
+              %>
+              <tr>
+                <td>
+                  <% if (proposal.primary_lead_name) { %>
+                    <div style="font-weight:700;color:#1a1a2e"><%= proposal.primary_lead_name %></div>
+                    <% if (proposal.primary_company) { %>
+                      <div style="font-size:0.72rem;color:#888"><%= proposal.primary_company %></div>
+                    <% } %>
+                  <% } else { %>
+                    <span style="color:#bbb;font-size:0.82rem">Sem lead</span>
+                  <% } %>
+                </td>
+                <td style="font-size:0.82rem;color:#555;font-weight:600">
+                  <%= proposal.leads_count || 0 %> lead(s)
+                </td>
+                <td>
+                  <span class="mode-badge" style="background:<%= ms.bg %>;color:<%= ms.color %>">
+                    <%= modeLabels[proposal.proposal_mode || 'both'] %>
+                  </span>
+                </td>
+                <td style="font-size:0.82rem"><%= proposal.items_count || 0 %> item(s)</td>
+                <td style="font-size:0.78rem;color:#666">
+                  <% if (proposal.proposal_sent_at) { %>
+                    <%= new Date(proposal.proposal_sent_at).toLocaleDateString('pt-BR') %>
+                  <% } else { %><span style="color:#bbb">—</span><% } %>
+                </td>
+                <td>
+                  <% if (proposal.latest_action) { %>
+                    <span style="font-size:0.78rem;font-weight:600;color:<%= actionColors[proposal.latest_action] || '#666' %>">
+                      <%= actionLabels[proposal.latest_action] || proposal.latest_action %>
+                    </span>
+                  <% } else { %>
+                    <span style="font-size:0.72rem;color:#bbb">Aguardando</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (proposal.latest_action === 'accept') { %>
+                    <span class="badge badge-accepted">🎉 Aceita</span>
+                  <% } else if (proposal.proposal_status === 'awaiting') { %>
+                    <span class="badge badge-awaiting">⏳ Aguardando</span>
+                  <% } else if (proposal.proposal_status === 'rejected' || proposal.latest_action === 'reject') { %>
+                    <span class="badge badge-rejected">❌ Rejeitada</span>
+                  <% } else { %>
+                    <span class="badge badge-active">✅ Ativa</span>
+                  <% } %>
+                </td>
+                <td class="actions-cell">
+                  <!-- Linha 1: Editar · Ver · Cliente? -->
+                  <div class="action-row">
+                    <a href="/admin/proposals/<%= proposal.id %>/edit" class="btn-sm btn-edit">✏️ Editar</a>
+                    <% if (proposal.leads_count > 0) { %>
+                      <a href="/admin/proposals/<%= proposal.id %>/lead-proposals" class="btn-sm btn-view">👁️ Ver</a>
+                    <% } else { %>
+                      <a href="/admin/proposals/<%= proposal.id %>/view" class="btn-sm btn-view">👁️ Ver</a>
+                    <% } %>
+                    <% if (proposal.created_by_client) { %>
+                      <span class="badge-client">👤 Cliente</span>
+                    <% } %>
+                  </div>
+                  <!-- Linha 2: Copiar · Calor · Arquivar -->
+                  <div class="action-row">
+                    <button class="btn-sm btn-copy" onclick="copyProposalLink('<%= proposal.token %>', this)">🔗 Copiar</button>
+                    <a href="/admin/proposals/<%= proposal.id %>/heat" class="btn-sm btn-heat">🌡️ Calor</a>
+                    <form action="/admin/proposals/<%= proposal.id %>/archive" method="POST" style="display:contents"
+                          onsubmit="return confirm('Arquivar esta proposta?')">
+                      <input type="hidden" name="archived" value="1">
+                      <button type="submit" class="btn-sm btn-archive" title="Arquivar">🗃️ Arquivar</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- ══════════════════════ ABA: ARQUIVADAS ══════════════════════ -->
+      <div class="tab-panel" id="panel-archived">
+        <div class="table-card">
+          <% if (archivedProposals.length === 0) { %>
+            <div class="tab-empty">
+              <div class="empty-icon">🗃️</div>
+              <p>Nenhuma proposta arquivada.</p>
+            </div>
+          <% } else { %>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Lead Principal</th>
+                <th>Leads</th>
+                <th>Modo</th>
+                <th>Itens</th>
+                <th>Enviada em</th>
+                <th>Decisão</th>
+                <th class="actions-cell">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% archivedProposals.forEach(proposal => { %>
+              <%
+                const modeStyle = {
+                  both:  { bg: 'rgba(233,30,99,0.08)',   color: '#E91E63' },
+                  ready: { bg: 'rgba(21,101,192,0.08)',  color: '#1565c0' },
+                  build: { bg: 'rgba(46,125,50,0.08)',   color: '#2e7d32' }
+                };
+                const ms = modeStyle[proposal.proposal_mode] || modeStyle.both;
+                const modeLabels = { ready: '📋 Pronta', build: '🔧 Montar', both: '✨ Ambas' };
+                const actionColors = { accept:'#16a34a', counter:'#1565c0', reject:'#dc2626', email_sent:'#d97706' };
+                const actionLabels = { accept:'✅ Aceita', counter:'🔄 Contra-proposta', reject:'❌ Rejeitada', email_sent:'🔥 Email enviado' };
+              %>
+              <tr class="row-archived">
+                <td>
+                  <% if (proposal.primary_lead_name) { %>
+                    <div style="font-weight:700;color:#1a1a2e"><%= proposal.primary_lead_name %></div>
+                    <% if (proposal.primary_company) { %>
+                      <div style="font-size:0.72rem;color:#888"><%= proposal.primary_company %></div>
+                    <% } %>
+                  <% } else { %>
+                    <span style="color:#bbb;font-size:0.82rem">Sem lead</span>
+                  <% } %>
+                </td>
+                <td style="font-size:0.82rem;color:#555;font-weight:600">
+                  <%= proposal.leads_count || 0 %> lead(s)
+                </td>
+                <td>
+                  <span class="mode-badge" style="background:<%= ms.bg %>;color:<%= ms.color %>">
+                    <%= modeLabels[proposal.proposal_mode || 'both'] %>
+                  </span>
+                </td>
+                <td style="font-size:0.82rem"><%= proposal.items_count || 0 %> item(s)</td>
+                <td style="font-size:0.78rem;color:#666">
+                  <% if (proposal.proposal_sent_at) { %>
+                    <%= new Date(proposal.proposal_sent_at).toLocaleDateString('pt-BR') %>
+                  <% } else { %><span style="color:#bbb">—</span><% } %>
+                </td>
+                <td>
+                  <% if (proposal.latest_action) { %>
+                    <span style="font-size:0.78rem;font-weight:600;color:<%= actionColors[proposal.latest_action] || '#666' %>">
+                      <%= actionLabels[proposal.latest_action] || proposal.latest_action %>
+                    </span>
+                  <% } else { %>
+                    <span style="font-size:0.72rem;color:#bbb">—</span>
+                  <% } %>
+                </td>
+                <td class="actions-cell">
+                  <!-- Linha 1: Editar · Ver -->
+                  <div class="action-row">
+                    <a href="/admin/proposals/<%= proposal.id %>/edit" class="btn-sm btn-edit">✏️ Editar</a>
+                    <% if (proposal.leads_count > 0) { %>
+                      <a href="/admin/proposals/<%= proposal.id %>/lead-proposals" class="btn-sm btn-view">👁️ Ver</a>
+                    <% } else { %>
+                      <a href="/admin/proposals/<%= proposal.id %>/view" class="btn-sm btn-view">👁️ Ver</a>
+                    <% } %>
+                  </div>
+                  <!-- Linha 2: Calor · Reativar -->
+                  <div class="action-row">
+                    <a href="/admin/proposals/<%= proposal.id %>/heat" class="btn-sm btn-heat">🌡️ Calor</a>
+                    <form action="/admin/proposals/<%= proposal.id %>/archive" method="POST" style="display:contents"
+                          onsubmit="return confirm('Reativar esta proposta?')">
+                      <input type="hidden" name="archived" value="0">
+                      <button type="submit" class="btn-sm btn-restore" title="Reativar">♻️ Reativar</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+          <% } %>
+        </div>
+      </div>
+
     </main>
   </div>
-  <style>
-    .row-archived { opacity: 0.55; }
-    .badge { display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700; }
-    .badge-success { background:rgba(46,125,50,0.1);color:#2e7d32; }
-    .btn-danger-outline { border-color:#dc2626;color:#dc2626;background:rgba(220,38,38,0.07); }
-    .btn-danger-outline:hover { background:rgba(220,38,38,0.14); }
-    .btn-heat { border-color:#f97316;color:#ea580c;background:rgba(249,115,22,0.07);border:1px solid #f97316;border-radius:6px;padding:4px 10px;font-size:0.75rem;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:3px;cursor:pointer; }
-    .btn-heat:hover { background:rgba(249,115,22,0.16); }
-    .btn-copy { border:1px solid #7c3aed;color:#7c3aed;background:rgba(124,58,237,0.07);border-radius:6px;padding:4px 10px;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;display:inline-flex;align-items:center;gap:3px;transition:all 0.15s; }
-    .btn-copy:hover { background:rgba(124,58,237,0.15); }
-    .btn-copy.copied { border-color:#16a34a;color:#16a34a;background:rgba(22,163,74,0.1); }
-    #copy-toast { position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a2e;color:#fff;padding:0.6rem 1.4rem;border-radius:24px;font-size:0.82rem;font-weight:600;font-family:Poppins,sans-serif;opacity:0;transition:all 0.25s;pointer-events:none;z-index:9999; }
-    #copy-toast.show { opacity:1;transform:translateX(-50%) translateY(0); }
-  </style>
+
   <div id="copy-toast">🔗 Link copiado!</div>
+
   <script>
+    /* ── Abas ── */
+    function switchTab(tab) {
+      ['active', 'archived'].forEach(function(t) {
+        document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+        document.getElementById('panel-' + t).classList.toggle('active', t === tab);
+      });
+      try { localStorage.setItem('proposalsTab', tab); } catch(e) {}
+    }
+
+    // Restaura aba salva (ou abre em 'archived' se vier ?tab=archived na URL)
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var fromUrl = params.get('tab');
+      var saved   = fromUrl || (function() { try { return localStorage.getItem('proposalsTab'); } catch(e) { return null; } })();
+      if (saved === 'archived') switchTab('archived');
+    })();
+
+    /* ── Copiar link ── */
     function copyProposalLink(token, btn) {
-      const link = window.location.origin + '/proposta/' + token;
-      navigator.clipboard.writeText(link).then(() => {
+      var link = window.location.origin + '/proposta/' + token;
+      function onCopied() {
+        var orig = btn.textContent;
         btn.textContent = '✅ Copiado';
         btn.classList.add('copied');
-        const toast = document.getElementById('copy-toast');
+        var toast = document.getElementById('copy-toast');
         toast.classList.add('show');
-        setTimeout(() => {
+        setTimeout(function() {
           btn.textContent = '🔗 Copiar';
           btn.classList.remove('copied');
           toast.classList.remove('show');
         }, 2000);
-      }).catch(() => {
-        // fallback para navegadores sem clipboard API
-        const ta = document.createElement('textarea');
-        ta.value = window.location.origin + '/proposta/' + token;
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-        btn.textContent = '✅ Copiado';
-        btn.classList.add('copied');
-        setTimeout(() => { btn.textContent = '🔗 Copiar'; btn.classList.remove('copied'); }, 2000);
-      });
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(link).then(onCopied).catch(function() { fallbackCopy(link, onCopied); });
+      } else {
+        fallbackCopy(link, onCopied);
+      }
+    }
+    function fallbackCopy(text, cb) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      cb();
     }
   </script>
 </body>
