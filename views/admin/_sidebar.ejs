@@ -2,35 +2,54 @@
   let _pendingCount = 0;
   try { _pendingCount = require('../../../database').countPendingAccessRequests(); } catch(e) {}
 %>
-<aside class="sidebar">
+<aside class="sidebar" id="adminSidebar">
+
+  <!-- ── Logo + botão toggle ── -->
   <div class="sidebar-logo">
-    <span class="brand-env">env</span><span class="brand-ox">ox</span>
-    <div class="brand-tagline">ADMIN</div>
+    <div class="sidebar-logo-text">
+      <span><span class="brand-env">env</span><span class="brand-ox">ox</span></span>
+      <div class="brand-tagline">ADMIN</div>
+    </div>
+    <button class="sidebar-toggle" id="sidebarToggle" title="Recolher menu" onclick="adminSidebarToggle()">
+      ‹
+    </button>
   </div>
 
   <nav class="sidebar-nav">
 
     <!-- INÍCIO -->
-    <a href="/admin" class="nav-item <%= (typeof active !== 'undefined' && active === 'dashboard') ? 'active' : '' %>">
-      <span class="nav-icon">🏠</span> Início
+    <a href="/admin"
+       class="nav-item <%= (typeof active !== 'undefined' && active === 'dashboard') ? 'active' : '' %>"
+       data-tip="Início">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Início</span>
     </a>
 
     <!-- LEADS -->
-    <a href="/admin/leads" class="nav-item <%= (typeof active !== 'undefined' && (active === 'leads' || active === 'new-lead')) ? 'active' : '' %>">
-      <span class="nav-icon">👥</span> Leads
+    <a href="/admin/leads"
+       class="nav-item <%= (typeof active !== 'undefined' && (active === 'leads' || active === 'new-lead')) ? 'active' : '' %>"
+       data-tip="Leads">
+      <span class="nav-icon">👥</span>
+      <span class="nav-label">Leads</span>
     </a>
 
     <!-- PROPOSTAS -->
-    <a href="/admin/proposals" class="nav-item <%= (typeof active !== 'undefined' && (active === 'proposals' || active === 'new-proposal')) ? 'active' : '' %>">
-      <span class="nav-icon">📋</span> Propostas
+    <a href="/admin/proposals"
+       class="nav-item <%= (typeof active !== 'undefined' && (active === 'proposals' || active === 'new-proposal')) ? 'active' : '' %>"
+       data-tip="Propostas">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">Propostas</span>
     </a>
 
     <!-- SOLICITAÇÕES -->
-    <a href="/admin/solicitacoes" class="nav-item <%= (typeof active !== 'undefined' && active === 'solicitacoes') ? 'active' : '' %>"
+    <a href="/admin/solicitacoes"
+       class="nav-item <%= (typeof active !== 'undefined' && active === 'solicitacoes') ? 'active' : '' %>"
+       data-tip="Solicitações"
        style="position:relative">
-      <span class="nav-icon">🔔</span> Solicitações
+      <span class="nav-icon">🔔</span>
+      <span class="nav-label">Solicitações</span>
       <% if (_pendingCount > 0) { %>
-        <span style="
+        <span class="nav-badge" style="
           position:absolute;right:12px;top:50%;transform:translateY(-50%);
           background:#E91E63;color:#fff;font-size:0.65rem;font-weight:700;
           padding:2px 7px;border-radius:20px;line-height:1.4;min-width:20px;text-align:center
@@ -40,16 +59,47 @@
 
     <!-- SISTEMA -->
     <div class="nav-group-label">SISTEMA</div>
-    <a href="/admin/services" class="nav-item <%= (typeof active !== 'undefined' && active === 'services') ? 'active' : '' %>">
-      <span class="nav-icon">💰</span> Serviços & Preços
+
+    <a href="/admin/services"
+       class="nav-item <%= (typeof active !== 'undefined' && active === 'services') ? 'active' : '' %>"
+       data-tip="Serviços & Preços">
+      <span class="nav-icon">💰</span>
+      <span class="nav-label">Serviços & Preços</span>
     </a>
-    <a href="/admin/planejamentos" class="nav-item <%= (typeof active !== 'undefined' && active === 'planejamentos') ? 'active' : '' %>">
-      <span class="nav-icon">📁</span> Planejamentos
+
+    <a href="/admin/planejamentos"
+       class="nav-item <%= (typeof active !== 'undefined' && active === 'planejamentos') ? 'active' : '' %>"
+       data-tip="Planejamentos">
+      <span class="nav-icon">📁</span>
+      <span class="nav-label">Planejamentos</span>
     </a>
 
   </nav>
 
   <div class="sidebar-footer">
-    <a href="/admin/logout" class="nav-item logout"><span class="nav-icon">🚪</span> Sair</a>
+    <a href="/admin/logout" class="nav-item logout" data-tip="Sair">
+      <span class="nav-icon">🚪</span>
+      <span class="nav-label">Sair</span>
+    </a>
   </div>
 </aside>
+
+<script>
+(function () {
+  var STORAGE_KEY = 'adminSidebarCollapsed';
+  var sidebar     = document.getElementById('adminSidebar');
+  var toggleBtn   = document.getElementById('sidebarToggle');
+
+  // Aplica estado salvo antes de qualquer render (evita flash)
+  if (localStorage.getItem(STORAGE_KEY) === '1') {
+    sidebar.classList.add('collapsed');
+    if (toggleBtn) toggleBtn.title = 'Expandir menu';
+  }
+
+  window.adminSidebarToggle = function () {
+    var isCollapsed = sidebar.classList.toggle('collapsed');
+    localStorage.setItem(STORAGE_KEY, isCollapsed ? '1' : '0');
+    if (toggleBtn) toggleBtn.title = isCollapsed ? 'Expandir menu' : 'Recolher menu';
+  };
+})();
+</script>
