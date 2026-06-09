@@ -302,6 +302,10 @@ router.post('/mark-viewer-bounced', (req, res) => {
 
 // POST /proposta/session/start
 router.post('/session/start', (req, res) => {
+  // Admin preview — não registrar sessão nem evento
+  if (req.session && req.session.isAdmin) {
+    return res.json({ success: true, sessionId: null, skipped: true });
+  }
   const { token, lead_id } = req.body;
   const proposal = token ? db.getProposalByToken(token) : null;
   const resolvedLeadId = parseInt(lead_id);
@@ -320,6 +324,10 @@ router.post('/session/start', (req, res) => {
 
 // POST /proposta/session/end
 router.post('/session/end', (req, res) => {
+  // Admin preview — não fechar sessão nem registrar evento
+  if (req.session && req.session.isAdmin) {
+    return res.json({ success: true, skipped: true });
+  }
   const { session_id, total_duration, lead_id, token } = req.body;
   const sessionId = parseInt(session_id);
   const duration = parseFloat(total_duration) || 0;
@@ -340,6 +348,10 @@ router.post('/session/end', (req, res) => {
 
 // POST /proposta/slide/event
 router.post('/slide/event', (req, res) => {
+  // Admin preview — não registrar evento de slide
+  if (req.session && req.session.isAdmin) {
+    return res.json({ success: true, skipped: true });
+  }
   const { session_id, lead_id, token, slide_number, event_type, duration_seconds } = req.body;
   const resolvedLeadId = parseInt(lead_id);
   const slideNum = parseInt(slide_number);

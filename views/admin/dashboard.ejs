@@ -42,7 +42,6 @@
           return false;
         }).slice(0, 10);
       %>
-      <% if (alertItems.length > 0 || pendingAccessRequests > 0) { %>
       <div style="margin-bottom:1.5rem">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
           <span style="font-size:1.1rem">🔔</span>
@@ -117,9 +116,23 @@
             <span style="color:<%= color %>;font-size:0.8rem;font-weight:700">Ver →</span>
           </a>
           <% }); %>
+
+          <!-- Empty state — sem alertas ativos -->
+          <% if (alertItems.length === 0 && !(pendingAccessRequests > 0)) { %>
+          <div style="
+            display:flex;align-items:center;gap:14px;
+            background:#f9f9fb;border:1.5px dashed #e0e0e8;
+            border-radius:12px;padding:14px 18px;
+          ">
+            <span style="font-size:1.4rem">😊</span>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:0.85rem;color:#888">Nenhuma ação recente dos leads</div>
+              <div style="font-size:0.74rem;color:#bbb;margin-top:2px">Aceitações, rejeições, contra-propostas e solicitações aparecerão aqui</div>
+            </div>
+          </div>
+          <% } %>
         </div>
       </div>
-      <% } %>
       
       <!-- ── STATS ── -->
       <div class="stats-grid">
