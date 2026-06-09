@@ -297,23 +297,10 @@ router.get('/proposals', requireAdmin, (req, res) => {
   const enriched = proposals.map(p => {
     const latestAction = db.getLatestProposalAction(p.id);
     const items = db.getProposalItems(p.id);
-    // Métricas de engajamento resumidas (leve: usa getProposalStats em cache-friendly query)
-    let totalAccesses = 0, totalSlidesSeen = 0, totalDuration = 0;
-    try {
-      const stats = db.getProposalStats(p.id);
-      if (stats) {
-        totalAccesses  = stats.totalAccesses  || 0;
-        totalSlidesSeen = stats.totalSlidesSeen || 0;
-        totalDuration  = stats.totalDuration   || 0;
-      }
-    } catch(e) {}
     return {
       ...p,
       items_count: items.length,
-      latest_action: latestAction ? latestAction.action_type : null,
-      totalAccesses,
-      totalSlidesSeen,
-      totalDuration,
+      latest_action: latestAction ? latestAction.action_type : null
     };
   });
   res.render('admin/proposals/index', {
