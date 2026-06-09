@@ -1654,8 +1654,22 @@ body.proposal-body {
   font-size: 0.88rem;
   color: var(--gray-700);
   line-height: 1.7;
-  white-space: pre-line;
+  white-space: pre-line;   /* para conteúdo legado (texto puro) */
 }
+/* Conteúdo proveniente do editor Quill (HTML rico) */
+.budget-context-text.budget-context-rich {
+  white-space: normal;
+}
+.budget-context-rich p   { margin: 0 0 0.45em; }
+.budget-context-rich ul,
+.budget-context-rich ol  { padding-left: 1.4em; margin: 0 0 0.5em; }
+.budget-context-rich li  { margin-bottom: 0.2em; }
+.budget-context-rich strong { font-weight: 700; }
+.budget-context-rich em  { font-style: italic; }
+.budget-context-rich u   { text-decoration: underline; }
+.budget-context-rich h1,
+.budget-context-rich h2,
+.budget-context-rich h3  { font-size: 1em; font-weight: 700; margin: 0.5em 0 0.3em; color: #1a1a2e; }
 
 /* ===== BUDGET EMAIL BUTTON ===== */
 .budget-email-btn-wrapper {

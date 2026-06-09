@@ -310,17 +310,24 @@
 
             <div class="content-sections-card">
               <h3>📝 Conteúdo da Proposta</h3>
+
+              <!-- hidden inputs que o form envia -->
+              <input type="hidden" id="edit_proposal_description" name="proposal_description">
+              <input type="hidden" id="edit_proposal_scope"       name="proposal_scope">
+              <input type="hidden" id="edit_proposal_timeline"    name="proposal_timeline">
+
               <div class="content-field">
                 <label>📄 Descrição</label>
-                <textarea name="proposal_description" rows="4"><%= proposal.proposal_description || '' %></textarea>
+                <div id="editor-description"></div>
+                <small style="font-size:0.7rem;color:#999">Aceita formatação colada do Word</small>
               </div>
               <div class="content-field">
                 <label>🎯 Escopo</label>
-                <textarea name="proposal_scope" rows="4"><%= proposal.proposal_scope || '' %></textarea>
+                <div id="editor-scope"></div>
               </div>
               <div class="content-field">
                 <label>📅 Cronograma</label>
-                <textarea name="proposal_timeline" rows="4"><%= proposal.proposal_timeline || '' %></textarea>
+                <div id="editor-timeline"></div>
               </div>
             </div>
           </div>
@@ -874,6 +881,41 @@
       window.addEventListener('scroll',  syncFixed, { passive: true });
       window.addEventListener('resize',  syncFixed, { passive: true });
       syncFixed();
+    })();
+  </script>
+
+  <!-- Quill rich text editors -->
+  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+  <script>
+    (function () {
+      const TOOLBAR = [
+        [{ header: [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['clean']
+      ];
+
+      const quillDesc     = new Quill('#editor-description', { theme: 'snow', modules: { toolbar: TOOLBAR }, placeholder: 'Descreva a proposta de forma geral...' });
+      const quillScope    = new Quill('#editor-scope',       { theme: 'snow', modules: { toolbar: TOOLBAR }, placeholder: 'Liste o que está incluído no escopo...' });
+      const quillTimeline = new Quill('#editor-timeline',    { theme: 'snow', modules: { toolbar: TOOLBAR }, placeholder: 'Descreva o cronograma ou prazos...' });
+
+      // Populate editors with existing server-side content
+      const initDesc     = <%- JSON.stringify(proposal.proposal_description || '') %>;
+      const initScope    = <%- JSON.stringify(proposal.proposal_scope       || '') %>;
+      const initTimeline = <%- JSON.stringify(proposal.proposal_timeline    || '') %>;
+
+      if (initDesc)     quillDesc.clipboard.dangerouslyPasteHTML(initDesc);
+      if (initScope)    quillScope.clipboard.dangerouslyPasteHTML(initScope);
+      if (initTimeline) quillTimeline.clipboard.dangerouslyPasteHTML(initTimeline);
+
+      // Sync Quill HTML → hidden inputs before any form submit (capture phase)
+      document.querySelectorAll('form').forEach(function (form) {
+        form.addEventListener('submit', function () {
+          document.getElementById('edit_proposal_description').value = quillDesc.getSemanticHTML();
+          document.getElementById('edit_proposal_scope').value       = quillScope.getSemanticHTML();
+          document.getElementById('edit_proposal_timeline').value    = quillTimeline.getSemanticHTML();
+        }, true);
+      });
     })();
   </script>
 </body>

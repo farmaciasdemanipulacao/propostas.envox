@@ -7,7 +7,51 @@
   <title>Criar Proposta — Envox Admin</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/admin.css">
+  <!-- Quill rich text editor -->
+  <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
   <style>
+    /* ── Quill editor overrides ── */
+    .ql-toolbar.ql-snow {
+      border: 1px solid #ddd;
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      background: #fafafa;
+      padding: 6px 8px;
+      font-family: 'Poppins', sans-serif;
+    }
+    .ql-container.ql-snow {
+      border: 1px solid #ddd;
+      border-radius: 0 0 8px 8px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.85rem;
+      color: #1a1a2e;
+    }
+    .ql-container.ql-snow:focus-within {
+      border-color: #E91E63;
+    }
+    .ql-toolbar.ql-snow:has(+ .ql-container.ql-snow:focus-within) {
+      border-color: #E91E63;
+    }
+    .ql-editor {
+      min-height: 110px;
+      max-height: 320px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+    .ql-editor p { margin: 0 0 0.35em; }
+    /* Make toolbar buttons match Poppins feel */
+    .ql-snow .ql-picker { font-family: 'Poppins', sans-serif; font-size: 0.78rem; }
+    .ql-snow.ql-toolbar button:hover,
+    .ql-snow .ql-toolbar button:hover,
+    .ql-snow.ql-toolbar button.ql-active,
+    .ql-snow .ql-toolbar button.ql-active { color: #E91E63; }
+    .ql-snow.ql-toolbar button:hover .ql-stroke,
+    .ql-snow .ql-toolbar button:hover .ql-stroke,
+    .ql-snow.ql-toolbar button.ql-active .ql-stroke { stroke: #E91E63; }
+    .ql-snow.ql-toolbar button:hover .ql-fill,
+    .ql-snow .ql-toolbar button:hover .ql-fill,
+    .ql-snow.ql-toolbar button.ql-active .ql-fill { fill: #E91E63; }
+
     /* ── Proposal Builder Extras ──────────────────────────────── */
     .proposal-builder-grid {
       display: grid;
@@ -532,27 +576,26 @@
             <div class="content-sections-card">
               <h3>📝 Conteúdo da Proposta (opcional)</h3>
 
+              <!-- hidden inputs que o form envia -->
+              <input type="hidden" id="proposal_description" name="proposal_description" value="<%= formData ? (formData.proposal_description || '') : '' %>">
+              <input type="hidden" id="proposal_scope"       name="proposal_scope"       value="<%= formData ? (formData.proposal_scope || '') : '' %>">
+              <input type="hidden" id="proposal_timeline"    name="proposal_timeline"    value="<%= formData ? (formData.proposal_timeline || '') : '' %>">
+
               <div class="content-field">
-                <label for="proposal_description">📄 Descrição</label>
-                <textarea id="proposal_description" name="proposal_description"
-                  rows="4"
-                  placeholder="Descreva a proposta de forma geral. Ex: Esta proposta foi preparada especialmente para a empresa X, com foco em crescimento orgânico e aumento de conversões no digital..."><%= formData ? formData.proposal_description || '' : '' %></textarea>
-                <small>Apresentação geral da proposta para o cliente</small>
+                <label>📄 Descrição</label>
+                <div id="editor-description"></div>
+                <small>Apresentação geral da proposta para o cliente — aceita formatação colada do Word</small>
               </div>
 
               <div class="content-field">
-                <label for="proposal_scope">🎯 Escopo</label>
-                <textarea id="proposal_scope" name="proposal_scope"
-                  rows="4"
-                  placeholder="Liste o que está incluído no escopo. Ex:&#10;• Gestão completa das redes sociais&#10;• 9 posts mensais (feed + stories)&#10;• Relatório mensal de performance..."><%= formData ? formData.proposal_scope || '' : '' %></textarea>
+                <label>🎯 Escopo</label>
+                <div id="editor-scope"></div>
                 <small>O que está incluído no escopo desta proposta</small>
               </div>
 
               <div class="content-field">
-                <label for="proposal_timeline">📅 Cronograma</label>
-                <textarea id="proposal_timeline" name="proposal_timeline"
-                  rows="4"
-                  placeholder="Descreva o cronograma ou prazos. Ex:&#10;• Semana 1: Onboarding e reunião de briefing&#10;• Semana 2: Criação dos primeiros conteúdos&#10;• Mês 1: Campanha piloto rodando..."><%= formData ? formData.proposal_timeline || '' : '' %></textarea>
+                <label>📅 Cronograma</label>
+                <div id="editor-timeline"></div>
                 <small>Prazos, etapas e cronograma de entrega</small>
               </div>
             </div>
@@ -600,7 +643,14 @@
     const SERVICES_DATA = <%- JSON.stringify(services) %>;
     const LEADS_DATA    = <%- JSON.stringify(leads) %>;
     let currentLeadDiscount = { monthly: 0, onetime: 0, expires: '' };
+    // Initial content for rich editors (empty on new form)
+    const EDITOR_INIT = {
+      description: <%- JSON.stringify(formData ? formData.proposal_description || '' : '') %>,
+      scope:       <%- JSON.stringify(formData ? formData.proposal_scope       || '' : '') %>,
+      timeline:    <%- JSON.stringify(formData ? formData.proposal_timeline    || '' : '') %>
+    };
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 
   <script>
     // ── Multi Lead selector ───────────────────────────────────────────
@@ -811,6 +861,29 @@
         }
       });
     }
+
+    // ── Rich text editors (Quill) ─────────────────────────────────
+    const QUILL_TOOLBAR = [
+      [{ header: [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      ['clean']
+    ];
+    const quillDesc     = new Quill('#editor-description', { theme: 'snow', modules: { toolbar: QUILL_TOOLBAR }, placeholder: 'Descreva a proposta de forma geral...' });
+    const quillScope    = new Quill('#editor-scope',       { theme: 'snow', modules: { toolbar: QUILL_TOOLBAR }, placeholder: 'Liste o que está incluído no escopo...' });
+    const quillTimeline = new Quill('#editor-timeline',    { theme: 'snow', modules: { toolbar: QUILL_TOOLBAR }, placeholder: 'Descreva o cronograma ou prazos...' });
+
+    // Populate with server-side values if editing (e.g. form re-render on error)
+    if (EDITOR_INIT.description) quillDesc.clipboard.dangerouslyPasteHTML(EDITOR_INIT.description);
+    if (EDITOR_INIT.scope)       quillScope.clipboard.dangerouslyPasteHTML(EDITOR_INIT.scope);
+    if (EDITOR_INIT.timeline)    quillTimeline.clipboard.dangerouslyPasteHTML(EDITOR_INIT.timeline);
+
+    // Sync Quill HTML → hidden inputs before submit
+    document.getElementById('proposalForm').addEventListener('submit', function syncQuill() {
+      document.getElementById('proposal_description').value = quillDesc.getSemanticHTML();
+      document.getElementById('proposal_scope').value       = quillScope.getSemanticHTML();
+      document.getElementById('proposal_timeline').value    = quillTimeline.getSemanticHTML();
+    }, true); // capture phase — runs BEFORE the existing submit handler
 
     // Init: trigger chip update if pre-selected
     onLeadChipChange();

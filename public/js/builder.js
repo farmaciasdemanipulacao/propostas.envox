@@ -137,20 +137,21 @@
     }
 
     // ── Context sections: Entendimento + Cronograma BEFORE table ──
+    // desc/timeline may contain HTML from Quill editor — render as-is (not escaped)
     let contextHTML = '';
     if (desc) {
       const label = company ? `Entendimento do Cenário da ${company}` : 'Entendimento do Cenário';
       contextHTML += `
         <div class="budget-context-block">
           <div class="budget-context-title">📋 ${esc(label)}</div>
-          <div class="budget-context-text">${esc(desc)}</div>
+          <div class="budget-context-text budget-context-rich">${desc}</div>
         </div>`;
     }
     if (timeline) {
       contextHTML += `
         <div class="budget-context-block">
           <div class="budget-context-title">📅 Cronograma</div>
-          <div class="budget-context-text">${esc(timeline)}</div>
+          <div class="budget-context-text budget-context-rich">${timeline}</div>
         </div>`;
     }
     if (contextHTML) {
