@@ -350,6 +350,173 @@
         </div>
       </form>
 
+      <!-- ══ CONDIÇÃO ESPECIAL + FORMAS DE PAGAMENTO ══ -->
+      <div class="detail-card full-width-card" style="margin-top:1.5rem" id="extrasCard">
+        <h3 class="card-title">🏷️ Condição Especial & Formas de Pagamento</h3>
+        <p style="font-size:0.78rem;color:#888;margin:-0.25rem 0 1.25rem">Essas informações serão exibidas no slide de orçamento da proposta do cliente.</p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start">
+
+          <!-- Coluna esquerda: Condição Especial -->
+          <div>
+            <div style="margin-bottom:0.5rem">
+              <label style="font-size:0.78rem;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.4px">
+                🎁 Condição Especial de Desconto
+              </label>
+              <p style="font-size:0.72rem;color:#aaa;margin:2px 0 0.6rem">Informe um desconto fora do padrão, válido até uma data específica ou com qualquer outra condição.</p>
+            </div>
+            <textarea id="specialConditionInput" placeholder="Ex: 15% de desconto para contratos assinados até 20/06/2025, ou Frete grátis para pagamentos à vista..."
+              style="width:100%;min-height:90px;padding:0.6rem 0.75rem;border:1px solid #ddd;border-radius:8px;font-family:Poppins,sans-serif;font-size:0.83rem;color:#1a1a2e;outline:none;resize:vertical;box-sizing:border-box;transition:border-color 0.15s"
+              onfocus="this.style.borderColor='#E91E63'" onblur="this.style.borderColor='#ddd'"
+            ><%= proposal.special_condition || '' %></textarea>
+          </div>
+
+          <!-- Coluna direita: Formas/Condições de Pagamento -->
+          <div>
+            <div style="margin-bottom:0.5rem">
+              <label style="font-size:0.78rem;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.4px">
+                💳 Condições de Pagamento
+              </label>
+              <p style="font-size:0.72rem;color:#aaa;margin:2px 0 0.6rem">Adicione opções de parcelamento com desconto. O cliente verá essas opções no orçamento.</p>
+            </div>
+            <div id="paymentConditionsContainer" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.75rem">
+              <!-- Linhas geradas por JS -->
+            </div>
+            <button type="button" onclick="addPaymentRow()"
+              style="display:flex;align-items:center;gap:0.4rem;padding:0.4rem 0.9rem;border:1.5px dashed #E91E63;border-radius:8px;background:rgba(233,30,99,0.04);color:#E91E63;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;transition:background 0.15s"
+              onmouseenter="this.style.background='rgba(233,30,99,0.1)'" onmouseleave="this.style.background='rgba(233,30,99,0.04)'">
+              ➕ Adicionar condição
+            </button>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;margin-top:1.25rem">
+          <button type="button" onclick="saveExtras()" id="btnSaveExtras"
+            style="display:inline-flex;align-items:center;gap:6px;padding:8px 20px;background:#E91E63;color:#fff;border:none;border-radius:8px;font-size:0.83rem;font-weight:700;cursor:pointer;font-family:Poppins,sans-serif;transition:background 0.15s"
+            onmouseenter="this.style.background='#c2185b'" onmouseleave="this.style.background='#E91E63'">
+            💾 Salvar Condições
+          </button>
+        </div>
+        <div id="extrasSaveMsg" style="display:none;margin-top:0.75rem;text-align:right;font-size:0.78rem"></div>
+      </div>
+
+      <script>
+        // ── Dados iniciais (do servidor) ──────────────────────────────────
+        var SPECIAL_CONDITION_INIT = <%- JSON.stringify(proposal.special_condition || '') %>;
+        var PAYMENT_CONDITIONS_INIT = (function() {
+          try {
+            var raw = <%- JSON.stringify(proposal.payment_conditions || null) %>;
+            if (!raw) return [];
+            return typeof raw === 'string' ? JSON.parse(raw) : raw;
+          } catch(e) { return []; }
+        })();
+
+        // ── Render payment rows ──────────────────────────────────────────
+        function renderPaymentRows() {
+          var container = document.getElementById('paymentConditionsContainer');
+          container.innerHTML = '';
+          PAYMENT_CONDITIONS_INIT.forEach(function(cond, idx) {
+            container.appendChild(createPaymentRow(cond.months, cond.discount, idx));
+          });
+        }
+
+        function createPaymentRow(months, discount, idx) {
+          var row = document.createElement('div');
+          row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:0.5rem;align-items:center';
+          row.dataset.idx = idx;
+          row.innerHTML =
+            '<div style="display:flex;align-items:center;gap:0.4rem">' +
+              '<input type="number" placeholder="Meses (ex: 12)" min="1" max="120" value="' + (months || '') + '" ' +
+              'class="pc-months" ' +
+              'style="width:100%;padding:0.45rem 0.6rem;border:1px solid #ddd;border-radius:7px;font-family:Poppins,sans-serif;font-size:0.82rem;outline:none" ' +
+              'onfocus="this.style.borderColor=\'#E91E63\'" onblur="this.style.borderColor=\'#ddd\'">' +
+              '<span style="font-size:0.72rem;color:#888;white-space:nowrap">× meses</span>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:0.4rem">' +
+              '<input type="number" placeholder="Desconto %" min="0" max="100" step="0.5" value="' + (discount || '') + '" ' +
+              'class="pc-discount" ' +
+              'style="width:100%;padding:0.45rem 0.6rem;border:1px solid #ddd;border-radius:7px;font-family:Poppins,sans-serif;font-size:0.82rem;outline:none" ' +
+              'onfocus="this.style.borderColor=\'#E91E63\'" onblur="this.style.borderColor=\'#ddd\'">' +
+              '<span style="font-size:0.72rem;color:#888;white-space:nowrap">% desc.</span>' +
+            '</div>' +
+            '<button type="button" onclick="removePaymentRow(this)" ' +
+            'style="padding:4px 9px;border:1px solid #fcc;border-radius:6px;background:#fff0f0;color:#dc3545;font-size:0.8rem;cursor:pointer;font-family:Poppins,sans-serif" ' +
+            'title="Remover">✕</button>';
+          return row;
+        }
+
+        function addPaymentRow() {
+          var container = document.getElementById('paymentConditionsContainer');
+          var idx = container.children.length;
+          container.appendChild(createPaymentRow('', '', idx));
+        }
+
+        function removePaymentRow(btn) {
+          btn.closest('div[data-idx]').remove();
+        }
+
+        function collectPaymentConditions() {
+          var rows = document.querySelectorAll('#paymentConditionsContainer div[data-idx]');
+          var result = [];
+          rows.forEach(function(row) {
+            var months   = parseInt(row.querySelector('.pc-months').value);
+            var discount = parseFloat(row.querySelector('.pc-discount').value);
+            if (!isNaN(months) && months > 0) {
+              result.push({ months: months, discount: isNaN(discount) ? 0 : discount });
+            }
+          });
+          return result;
+        }
+
+        function saveExtras() {
+          var btn = document.getElementById('btnSaveExtras');
+          var msg = document.getElementById('extrasSaveMsg');
+          var specialCondition = document.getElementById('specialConditionInput').value.trim();
+          var paymentConditions = collectPaymentConditions();
+
+          btn.textContent = '⏳ Salvando...';
+          btn.disabled = true;
+
+          fetch('/admin/proposals/<%= proposal.id %>/extras', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              special_condition: specialCondition || null,
+              payment_conditions_json: JSON.stringify(paymentConditions)
+            })
+          })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            btn.textContent = '💾 Salvar Condições';
+            btn.disabled = false;
+            if (data.success) {
+              msg.style.display = 'block';
+              msg.style.color = '#2e7d32';
+              msg.textContent = '✅ Condições salvas com sucesso!';
+              // Atualiza dados locais para re-render correto
+              PAYMENT_CONDITIONS_INIT = paymentConditions;
+              setTimeout(function() { msg.style.display = 'none'; }, 3000);
+            } else {
+              msg.style.display = 'block';
+              msg.style.color = '#dc2626';
+              msg.textContent = '⚠️ Erro: ' + (data.error || 'desconhecido');
+            }
+          })
+          .catch(function(e) {
+            btn.textContent = '💾 Salvar Condições';
+            btn.disabled = false;
+            msg.style.display = 'block';
+            msg.style.color = '#dc2626';
+            msg.textContent = '⚠️ Erro de rede: ' + e.message;
+          });
+        }
+
+        // ── Inicializar ────────────────────────────────────────────────────
+        renderPaymentRows();
+        // Fix: rota POST /extras espera JSON no body
+        // (o fetch já envia application/json — rota usa req.body com express.json())
+      </script>
+
       <!-- ══ RELATÓRIO DE ENGAJAMENTO ══ -->
       <div class="detail-card full-width-card" style="margin-top:2rem">
         <h3 class="card-title">📊 Relatório de Engajamento</h3>

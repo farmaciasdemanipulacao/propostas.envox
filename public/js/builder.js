@@ -314,6 +314,48 @@
         </div>
       </div>`;
 
+    // ── Condição Especial (admin definiu) ─────────────────────────────
+    let specialConditionHTML = '';
+    const specialCond = window.PROPOSAL_SPECIAL_CONDITION || '';
+    if (specialCond.trim()) {
+      specialConditionHTML = `
+        <div class="budget-special-condition">
+          <div class="budget-special-condition-icon">🏷️</div>
+          <div>
+            <div class="budget-special-condition-label">Condição Especial</div>
+            <div class="budget-special-condition-text">${esc(specialCond)}</div>
+          </div>
+        </div>`;
+    }
+
+    // ── Condições de Pagamento (admin definiu) ─────────────────────────
+    let adminPaymentCondHTML = '';
+    const adminPayConds = window.PROPOSAL_PAYMENT_CONDITIONS || [];
+    if (adminPayConds.length > 0) {
+      let rows = adminPayConds.map(c => {
+        const discVal = c.discount > 0
+          ? `<span class="apc-discount">− ${c.discount}% de desconto</span>`
+          : `<span style="color:#888;font-size:0.72rem">sem desconto</span>`;
+        const monthlyAfter = grandMonthly > 0
+          ? `<span class="apc-value">${fmtBRL(grandMonthly * c.months * (1 - (c.discount || 0) / 100))}</span><span style="font-size:0.7rem;color:#888"> total</span>`
+          : '';
+        return `
+          <div class="apc-row">
+            <div class="apc-months">${c.months}x</div>
+            <div class="apc-info">
+              <span class="apc-label">${c.months} ${c.months === 1 ? 'mês' : 'meses'}</span>
+              ${discVal}
+            </div>
+            ${monthlyAfter}
+          </div>`;
+      }).join('');
+      adminPaymentCondHTML = `
+        <div class="budget-admin-payment-conds">
+          <div class="budget-admin-payment-title">💳 Condições de Pagamento</div>
+          <div class="apc-list">${rows}</div>
+        </div>`;
+    }
+
     // Inline decision buttons below total
     const inlineActionsHTML = buildInlineActionButtons('admin');
 
@@ -323,6 +365,8 @@
         ${tableHTML}
         ${summaryCards}
         ${paymentOptions}
+        ${specialConditionHTML}
+        ${adminPaymentCondHTML}
         ${emailBtnHTML}
         ${inlineActionsHTML}
       </div>`;

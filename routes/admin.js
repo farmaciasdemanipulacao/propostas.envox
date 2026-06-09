@@ -715,6 +715,22 @@ router.post('/proposals/:proposalId/discounts', requireAdmin, (req, res) => {
   }
 });
 
+// ── POST /admin/proposals/:id/extras — condição especial + formas de pagamento ──
+router.post('/proposals/:proposalId/extras', requireAdmin, (req, res) => {
+  const proposalId = parseInt(req.params.proposalId);
+  const { special_condition, payment_conditions_json } = req.body;
+  try {
+    let paymentConditions = null;
+    if (payment_conditions_json) {
+      try { paymentConditions = JSON.parse(payment_conditions_json); } catch(e) { paymentConditions = null; }
+    }
+    db.updateProposalExtras(proposalId, special_condition || null, paymentConditions);
+    return res.json({ success: true });
+  } catch(err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // ══ PROPOSAL REQUESTS ══════════════════════════════════════
 router.get('/proposal-requests', requireAdmin, (req, res) => {
   const requests = db.getAllProposalRequests ? db.getAllProposalRequests() : [];

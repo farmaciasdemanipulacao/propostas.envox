@@ -154,6 +154,14 @@
     window.PROPOSAL_SCOPE    = '';
     window.PROPOSAL_TIMELINE = '';
     <% } %>
+    window.PROPOSAL_SPECIAL_CONDITION = <%- JSON.stringify(proposal.special_condition || '') %>;
+    window.PROPOSAL_PAYMENT_CONDITIONS = (function() {
+      try {
+        var raw = <%- JSON.stringify(proposal.payment_conditions || null) %>;
+        if (!raw) return [];
+        return typeof raw === 'string' ? JSON.parse(raw) : raw;
+      } catch(e) { return []; }
+    })();
   </script>
 
   <!-- ── DECISION WIDGET (floating right) ── -->

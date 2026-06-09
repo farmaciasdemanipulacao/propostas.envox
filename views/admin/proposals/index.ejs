@@ -53,7 +53,7 @@
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    /* ── Table ── */
+    /* ── Badges de status ── */
     .badge-archived  { background:#f1f1f1;color:#999; }
     .badge-active    { background:rgba(46,125,50,0.1);color:#2e7d32; }
     .badge-awaiting  { background:rgba(217,119,6,0.12);color:#d97706; }
@@ -147,8 +147,8 @@
     }
     #copy-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    /* ── Linha arquivada ── */
-    .row-archived td { opacity: 0.6; }
+    /* ── Linha arquivada / rejeitada ── */
+    .row-archived td, .row-rejected td { opacity: 0.6; }
 
     /* ── Empty state dentro da tab ── */
     .tab-empty {
@@ -181,8 +181,20 @@
       <% if (error)   { %><div class="alert alert-error"><span>⚠️</span> <%= error %></div><% } %>
 
       <%
-        const activeProposals   = proposals.filter(p => p.proposal_status !== 'archived');
-        const archivedProposals = proposals.filter(p => p.proposal_status === 'archived');
+        // Separar propostas por grupo:
+        // - Ativas: não arquivadas E não rejeitadas
+        // - Rejeitadas: latest_action === 'reject' OU proposal_status === 'rejected' (mas não arquivadas)
+        // - Arquivadas: proposal_status === 'archived'
+        const archivedProposals  = proposals.filter(p => p.proposal_status === 'archived');
+        const rejectedProposals  = proposals.filter(p =>
+          p.proposal_status !== 'archived' &&
+          (p.latest_action === 'reject' || p.proposal_status === 'rejected')
+        );
+        const activeProposals    = proposals.filter(p =>
+          p.proposal_status !== 'archived' &&
+          p.latest_action !== 'reject' &&
+          p.proposal_status !== 'rejected'
+        );
       %>
 
       <!-- ── Abas ── -->
@@ -191,13 +203,17 @@
           📋 Ativas
           <span class="tab-count" id="count-active"><%= activeProposals.length %></span>
         </button>
+        <button class="proposals-tab" id="tab-rejected" onclick="switchTab('rejected')">
+          ❌ Rejeitadas
+          <span class="tab-count" id="count-rejected"><%= rejectedProposals.length %></span>
+        </button>
         <button class="proposals-tab" id="tab-archived" onclick="switchTab('archived')">
           🗃️ Arquivadas
           <span class="tab-count" id="count-archived"><%= archivedProposals.length %></span>
         </button>
       </div>
 
-      <!-- ══════════════════════ ABA: ATIVAS ══════════════════════ -->
+      <!-- ═══════════════════════ ABA: ATIVAS ═══════════════════════ -->
       <div class="tab-panel active" id="panel-active">
         <div class="table-card">
           <% if (activeProposals.length === 0) { %>
@@ -272,8 +288,6 @@
                     <span class="badge badge-accepted">🎉 Aceita</span>
                   <% } else if (proposal.proposal_status === 'awaiting') { %>
                     <span class="badge badge-awaiting">⏳ Aguardando</span>
-                  <% } else if (proposal.proposal_status === 'rejected' || proposal.latest_action === 'reject') { %>
-                    <span class="badge badge-rejected">❌ Rejeitada</span>
                   <% } else { %>
                     <span class="badge badge-active">✅ Ativa</span>
                   <% } %>
@@ -310,7 +324,97 @@
         </div>
       </div>
 
-      <!-- ══════════════════════ ABA: ARQUIVADAS ══════════════════════ -->
+      <!-- ═══════════════════════ ABA: REJEITADAS ═══════════════════════ -->
+      <div class="tab-panel" id="panel-rejected">
+        <div class="table-card">
+          <% if (rejectedProposals.length === 0) { %>
+            <div class="tab-empty">
+              <div class="empty-icon">❌</div>
+              <p>Nenhuma proposta rejeitada.</p>
+            </div>
+          <% } else { %>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Lead Principal</th>
+                <th>Leads</th>
+                <th>Modo</th>
+                <th>Itens</th>
+                <th>Enviada em</th>
+                <th>Motivo / Ação</th>
+                <th class="actions-cell">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% rejectedProposals.forEach(proposal => { %>
+              <%
+                const modeStyle = {
+                  both:  { bg: 'rgba(233,30,99,0.08)',   color: '#E91E63' },
+                  ready: { bg: 'rgba(21,101,192,0.08)',  color: '#1565c0' },
+                  build: { bg: 'rgba(46,125,50,0.08)',   color: '#2e7d32' }
+                };
+                const ms = modeStyle[proposal.proposal_mode] || modeStyle.both;
+                const modeLabels = { ready: '📋 Pronta', build: '🔧 Montar', both: '✨ Ambas' };
+                const actionColors = { accept:'#16a34a', counter:'#1565c0', reject:'#dc2626', email_sent:'#d97706' };
+                const actionLabels = { accept:'✅ Aceita', counter:'🔄 Contra-proposta', reject:'❌ Rejeitada', email_sent:'🔥 Email enviado' };
+              %>
+              <tr class="row-rejected">
+                <td>
+                  <% if (proposal.primary_lead_name) { %>
+                    <div style="font-weight:700;color:#1a1a2e"><%= proposal.primary_lead_name %></div>
+                    <% if (proposal.primary_company) { %>
+                      <div style="font-size:0.72rem;color:#888"><%= proposal.primary_company %></div>
+                    <% } %>
+                  <% } else { %>
+                    <span style="color:#bbb;font-size:0.82rem">Sem lead</span>
+                  <% } %>
+                </td>
+                <td style="font-size:0.82rem;color:#555;font-weight:600">
+                  <%= proposal.leads_count || 0 %> lead(s)
+                </td>
+                <td>
+                  <span class="mode-badge" style="background:<%= ms.bg %>;color:<%= ms.color %>">
+                    <%= modeLabels[proposal.proposal_mode || 'both'] %>
+                  </span>
+                </td>
+                <td style="font-size:0.82rem"><%= proposal.items_count || 0 %> item(s)</td>
+                <td style="font-size:0.78rem;color:#666">
+                  <% if (proposal.proposal_sent_at) { %>
+                    <%= new Date(proposal.proposal_sent_at).toLocaleDateString('pt-BR') %>
+                  <% } else { %><span style="color:#bbb">—</span><% } %>
+                </td>
+                <td>
+                  <span style="font-size:0.78rem;font-weight:600;color:#dc2626">❌ Rejeitada</span>
+                </td>
+                <td class="actions-cell">
+                  <!-- Linha 1: Editar · Ver -->
+                  <div class="action-row">
+                    <a href="/admin/proposals/<%= proposal.id %>/edit" class="btn-sm btn-edit">✏️ Editar</a>
+                    <% if (proposal.leads_count > 0) { %>
+                      <a href="/admin/proposals/<%= proposal.id %>/lead-proposals" class="btn-sm btn-view">👁️ Ver</a>
+                    <% } else { %>
+                      <a href="/admin/proposals/<%= proposal.id %>/view" class="btn-sm btn-view">👁️ Ver</a>
+                    <% } %>
+                  </div>
+                  <!-- Linha 2: Calor · Reativar · Arquivar -->
+                  <div class="action-row">
+                    <a href="/admin/proposals/<%= proposal.id %>/heat" class="btn-sm btn-heat">🌡️ Calor</a>
+                    <form action="/admin/proposals/<%= proposal.id %>/archive" method="POST" style="display:contents"
+                          onsubmit="return confirm('Arquivar esta proposta?')">
+                      <input type="hidden" name="archived" value="1">
+                      <button type="submit" class="btn-sm btn-archive" title="Arquivar">🗃️ Arquivar</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════ ABA: ARQUIVADAS ═══════════════════════ -->
       <div class="tab-panel" id="panel-archived">
         <div class="table-card">
           <% if (archivedProposals.length === 0) { %>
@@ -413,27 +517,28 @@
 
   <script>
     /* ── Abas ── */
+    var ALL_TABS = ['active', 'rejected', 'archived'];
+
     function switchTab(tab) {
-      ['active', 'archived'].forEach(function(t) {
+      ALL_TABS.forEach(function(t) {
         document.getElementById('tab-' + t).classList.toggle('active', t === tab);
         document.getElementById('panel-' + t).classList.toggle('active', t === tab);
       });
       try { localStorage.setItem('proposalsTab', tab); } catch(e) {}
     }
 
-    // Restaura aba salva (ou abre em 'archived' se vier ?tab=archived na URL)
+    // Restaura aba salva ou lê ?tab= na URL
     (function () {
       var params = new URLSearchParams(window.location.search);
       var fromUrl = params.get('tab');
       var saved   = fromUrl || (function() { try { return localStorage.getItem('proposalsTab'); } catch(e) { return null; } })();
-      if (saved === 'archived') switchTab('archived');
+      if (saved && ALL_TABS.includes(saved)) switchTab(saved);
     })();
 
     /* ── Copiar link ── */
     function copyProposalLink(token, btn) {
       var link = window.location.origin + '/proposta/' + token;
       function onCopied() {
-        var orig = btn.textContent;
         btn.textContent = '✅ Copiado';
         btn.classList.add('copied');
         var toast = document.getElementById('copy-toast');

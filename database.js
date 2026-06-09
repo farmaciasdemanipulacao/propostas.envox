@@ -187,6 +187,14 @@ function initDatabase() {
     database.exec('ALTER TABLE services ADD COLUMN category_id INTEGER DEFAULT NULL');
   } catch(e) { /* já existe */ }
 
+  // Migração: condição especial e condições de pagamento na proposta
+  try {
+    database.exec(`ALTER TABLE proposals ADD COLUMN special_condition TEXT DEFAULT NULL`);
+  } catch(e) { /* já existe */ }
+  try {
+    database.exec(`ALTER TABLE proposals ADD COLUMN payment_conditions TEXT DEFAULT NULL`);
+  } catch(e) { /* já existe */ }
+
   // ══════════════════════════════════════════════════════════════════════
   // PROPOSAL_SHARED_LEADS — rastrea encaminhamentos do share widget
   // ══════════════════════════════════════════════════════════════════════
@@ -417,12 +425,30 @@ function updateLeadCompany(id, companyName, cargo) {
 
 function deleteLead(id) {
   const database = getDb();
-  // Cascade via FK. Remover de proposal_leads (shared leads + junction)
-  database.prepare(`DELETE FROM proposal_shared_leads WHERE shared_from_lead_id=? OR new_lead_id=?`).run(id, id);
-  database.prepare(`DELETE FROM proposal_leads WHERE lead_id=?`).run(id);
-  // Sessões e eventos ficam (orphans aceitáveis — lead pode ter sido deletado)
-  database.prepare(`DELETE FROM lead_invites WHERE lead_id=?`).run(id);
-  database.prepare(`DELETE FROM leads WHERE id=?`).run(id);
+  // Usar transação para garantir atomicidade
+  const deleteAll = database.transaction(() => {
+    // 1. Dependências de slide_events (referencia access_sessions)
+    database.prepare(`DELETE FROM slide_events WHERE lead_id=?`).run(id);
+    // 2. Sessões de acesso
+    database.prepare(`DELETE FROM access_sessions WHERE lead_id=?`).run(id);
+    // 3. Log de eventos
+    database.prepare(`DELETE FROM event_log WHERE lead_id=?`).run(id);
+    // 4. Planos customizados
+    database.prepare(`DELETE FROM custom_plans WHERE lead_id=?`).run(id);
+    // 5. Ações de proposta (accept/counter/reject)
+    database.prepare(`DELETE FROM proposal_actions WHERE lead_id=?`).run(id);
+    // 6. Solicitações de nova proposta
+    database.prepare(`DELETE FROM proposal_new_requests WHERE lead_id=?`).run(id);
+    // 7. Shared leads (compartilhamentos)
+    database.prepare(`DELETE FROM proposal_shared_leads WHERE shared_from_lead_id=? OR new_lead_id=?`).run(id, id);
+    // 8. Vínculo com propostas (junction)
+    database.prepare(`DELETE FROM proposal_leads WHERE lead_id=?`).run(id);
+    // 9. Convites e follow-ups
+    database.prepare(`DELETE FROM lead_invites WHERE lead_id=?`).run(id);
+    // 10. Por último: o lead em si
+    database.prepare(`DELETE FROM leads WHERE id=?`).run(id);
+  });
+  deleteAll();
 }
 
 function getAllLeads() {
@@ -550,6 +576,16 @@ function markCreatedByClient(proposalId) {
 function updateAdminDiscounts(proposalId, discountMonthly, discountOnetime, notes) {
   getDb().prepare(`UPDATE proposals SET admin_discount_monthly = ?, admin_discount_onetime = ?, admin_notes = ? WHERE id = ?`)
     .run(parseFloat(discountMonthly) || 0, parseFloat(discountOnetime) || 0, notes || '', proposalId);
+}
+
+// Salva condição especial de desconto e condições de pagamento (array JSON)
+function updateProposalExtras(proposalId, specialCondition, paymentConditions) {
+  getDb().prepare(`UPDATE proposals SET special_condition = ?, payment_conditions = ? WHERE id = ?`)
+    .run(
+      specialCondition || null,
+      paymentConditions ? JSON.stringify(paymentConditions) : null,
+      proposalId
+    );
 }
 
 // Marca que o lead visualizou o slide mas não preencheu a proposta (modo build/both sem itens)
@@ -1354,7 +1390,7 @@ module.exports = {
   getProposalWithLeads, getAllProposals,
   updateProposalContent, updateProposalMode, markProposalSent,
   setProposalStatus, setClientLocked, markCreatedByClient,
-  updateAdminDiscounts, setViewerBounced, deleteProposal, archiveProposal,
+  updateAdminDiscounts, updateProposalExtras, setViewerBounced, deleteProposal, archiveProposal,
   // Junction
   linkLeadToProposal, unlinkLeadFromProposal, getLeadsByProposal, getProposalsByLead,
   // Proposal Items
