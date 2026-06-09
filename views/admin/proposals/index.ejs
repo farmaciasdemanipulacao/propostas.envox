@@ -230,6 +230,7 @@
                 <th>Leads</th>
                 <th>Modo</th>
                 <th>Itens</th>
+                <th style="text-align:center">📊 Engajamento</th>
                 <th>Enviada em</th>
                 <th>Decisão</th>
                 <th>Status</th>
@@ -269,6 +270,17 @@
                   </span>
                 </td>
                 <td style="font-size:0.82rem"><%= proposal.items_count || 0 %> item(s)</td>
+                <td style="text-align:center">
+                  <% if ((proposal.totalAccesses||0) > 0) { %>
+                    <a href="/admin/proposals/<%= proposal.id %>/view" title="Ver relatório" style="text-decoration:none">
+                      <div style="font-size:0.82rem;font-weight:700;color:#1a1a2e"><%= proposal.totalAccesses %> acesso<%= proposal.totalAccesses !== 1 ? 's' : '' %></div>
+                      <% const _dm = Math.floor((proposal.totalDuration||0)/60); const _ds = Math.round((proposal.totalDuration||0)%60); %>
+                      <div style="font-size:0.7rem;color:#888"><%= _dm %>m<%= _ds %>s · <span style="color:#E91E63"><%= proposal.totalSlidesSeen||0 %>/12 slides</span></div>
+                    </a>
+                  <% } else { %>
+                    <span style="font-size:0.75rem;color:#ccc">Sem acessos</span>
+                  <% } %>
+                </td>
                 <td style="font-size:0.78rem;color:#666">
                   <% if (proposal.proposal_sent_at) { %>
                     <%= new Date(proposal.proposal_sent_at).toLocaleDateString('pt-BR') %>
