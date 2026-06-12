@@ -426,6 +426,94 @@
       </div>
       <% } %>
       
+      <!-- ── Rastreamento de Emails ── -->
+      <div class="detail-card full-width-card">
+        <h3 class="card-title">📧 Rastreamento de Emails</h3>
+        <% if (emailEvents && emailEvents.length > 0) { %>
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+              <thead>
+                <tr style="background:#f8f9fa;border-bottom:2px solid #eee">
+                  <th style="padding:10px 12px;text-align:left;font-weight:600;color:#555">Assunto</th>
+                  <th style="padding:10px 12px;text-align:left;font-weight:600;color:#555">Template</th>
+                  <th style="padding:10px 12px;text-align:center;font-weight:600;color:#555">Enviado</th>
+                  <th style="padding:10px 12px;text-align:center;font-weight:600;color:#555">Entregue</th>
+                  <th style="padding:10px 12px;text-align:center;font-weight:600;color:#555">Aberto</th>
+                  <th style="padding:10px 12px;text-align:center;font-weight:600;color:#555">Clicou</th>
+                  <th style="padding:10px 12px;text-align:center;font-weight:600;color:#555">Spam/Bounce</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% emailEvents.forEach(function(ev) {
+                  const sent     = ev.created_at ? new Date(ev.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+                  const delivered = ev.delivered_at ? new Date(ev.delivered_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : null;
+                  const opened   = ev.opened_at ? new Date(ev.opened_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : null;
+                  const clicked  = ev.clicked_at ? new Date(ev.clicked_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : null;
+                  const bounced  = ev.bounced_at || ev.complained_at;
+                  const bouncedTs = bounced ? new Date(bounced).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : null;
+                  const isSpam   = !!ev.complained_at;
+                %>
+                <tr style="border-bottom:1px solid #f5f5f5">
+                  <td style="padding:10px 12px;color:#333;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="<%= ev.email_subject %>">
+                    <%= ev.email_subject || '—' %>
+                  </td>
+                  <td style="padding:10px 12px">
+                    <span style="background:#f0f0f0;color:#555;font-size:0.74rem;padding:2px 8px;border-radius:20px">
+                      <%= ev.template || 'generic' %>
+                    </span>
+                  </td>
+                  <td style="padding:10px 12px;text-align:center;color:#888;font-size:0.78rem"><%= sent %></td>
+                  <td style="padding:10px 12px;text-align:center">
+                    <% if (delivered) { %>
+                      <span title="<%= delivered %>" style="color:#2e7d32;font-size:0.9rem">✅</span>
+                    <% } else { %>
+                      <span style="color:#ccc">—</span>
+                    <% } %>
+                  </td>
+                  <td style="padding:10px 12px;text-align:center">
+                    <% if (opened) { %>
+                      <span style="background:rgba(21,101,192,0.1);color:#1565c0;font-size:0.74rem;padding:2px 8px;border-radius:20px;white-space:nowrap">
+                        👁️ <%= opened %>
+                      </span>
+                    <% } else { %>
+                      <span style="color:#ccc;font-size:0.78rem">Não aberto</span>
+                    <% } %>
+                  </td>
+                  <td style="padding:10px 12px;text-align:center">
+                    <% if (clicked) { %>
+                      <span style="background:rgba(46,125,50,0.1);color:#2e7d32;font-size:0.74rem;padding:2px 8px;border-radius:20px;white-space:nowrap">
+                        🖱️ <%= clicked %>
+                      </span>
+                    <% } else { %>
+                      <span style="color:#ccc;font-size:0.78rem">Não clicou</span>
+                    <% } %>
+                  </td>
+                  <td style="padding:10px 12px;text-align:center">
+                    <% if (isSpam) { %>
+                      <span style="background:rgba(233,30,99,0.1);color:#E91E63;font-size:0.74rem;padding:2px 8px;border-radius:20px">
+                        ⚠️ Spam
+                      </span>
+                    <% } else if (bouncedTs) { %>
+                      <span style="background:rgba(198,40,40,0.1);color:#c62828;font-size:0.74rem;padding:2px 8px;border-radius:20px">
+                        ❌ Bounce
+                      </span>
+                    <% } else { %>
+                      <span style="color:#ccc">—</span>
+                    <% } %>
+                  </td>
+                </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } else { %>
+          <div style="text-align:center;padding:2rem;color:#bbb">
+            <div style="font-size:2rem;margin-bottom:0.5rem">📭</div>
+            <p style="font-size:0.82rem">Nenhum email enviado para este lead ainda.</p>
+          </div>
+        <% } %>
+      </div>
+
       <!-- Log de Eventos -->
       <div class="detail-card full-width-card">
         <h3 class="card-title">📋 Log de Eventos</h3>

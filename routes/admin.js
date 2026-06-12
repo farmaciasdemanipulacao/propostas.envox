@@ -160,13 +160,16 @@ router.get('/leads/:id', requireAdmin, (req, res) => {
     acceptFormData: db.getAcceptFormData(p.id)
   }));
 
+  // Histórico de emails rastreados
+  const emailEvents = db.getEmailEventsByLead ? db.getEmailEventsByLead(req.params.id) : [];
+
   res.render('admin/lead-detail', {
     stats, interestLevel, interestInfo,
     slideLabels: JSON.stringify(slideLabels),
     slideDurations: JSON.stringify(slideDurations),
     slideColors: JSON.stringify(slideColors),
     baseUrl, eventLog, inviteHistory, followupHistory, nextInviteMsg,
-    linkedProposals,
+    linkedProposals, emailEvents,
     success: req.query.success, error: req.query.error
   });
 });

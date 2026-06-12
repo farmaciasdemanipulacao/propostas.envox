@@ -390,6 +390,29 @@ function initDatabase() {
     )
   `);
 
+  // ── Tabela de rastreamento de emails ───────────────────────────────────────
+  getDb().exec(`
+    CREATE TABLE IF NOT EXISTS email_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      lead_id INTEGER,
+      proposal_id INTEGER,
+      resend_id TEXT,
+      track_token TEXT UNIQUE,
+      email_to TEXT NOT NULL,
+      email_subject TEXT,
+      template TEXT,
+      status TEXT DEFAULT 'sent',
+      opened_at DATETIME,
+      clicked_at DATETIME,
+      delivered_at DATETIME,
+      bounced_at DATETIME,
+      complained_at DATETIME,
+      bounce_reason TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (lead_id) REFERENCES leads(id)
+    )
+  `);
+
   console.log('✅ Banco de dados N:N inicializado com sucesso');
 }
 
@@ -1376,6 +1399,58 @@ function countPendingAccessRequests() {
   return row ? row.cnt : 0;
 }
 
+// ══════════════════════════════════════════════════════════
+// EMAIL EVENTS (Resend tracking)
+// ══════════════════════════════════════════════════════════
+
+function createEmailEvent({ leadId, proposalId, resendId, trackToken, emailTo, emailSubject, template }) {
+  const result = getDb().prepare(`
+    INSERT INTO email_events (lead_id, proposal_id, resend_id, track_token, email_to, email_subject, template, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'sent')
+  `).run(leadId || null, proposalId || null, resendId || null, trackToken, emailTo, emailSubject || '', template || '');
+  return result.lastInsertRowid;
+}
+
+function getEmailEventByTrackToken(trackToken) {
+  return getDb().prepare('SELECT * FROM email_events WHERE track_token = ?').get(trackToken);
+}
+
+function getEmailEventByResendId(resendId) {
+  return getDb().prepare('SELECT * FROM email_events WHERE resend_id = ?').get(resendId);
+}
+
+function updateEmailEventResendId(trackToken, resendId) {
+  getDb().prepare('UPDATE email_events SET resend_id = ? WHERE track_token = ?').run(resendId, trackToken);
+}
+
+function markEmailOpened(trackToken) {
+  getDb().prepare(`
+    UPDATE email_events SET status = 'opened', opened_at = COALESCE(opened_at, CURRENT_TIMESTAMP)
+    WHERE track_token = ? AND opened_at IS NULL
+  `).run(trackToken);
+}
+
+function markEmailClicked(trackToken) {
+  getDb().prepare(`
+    UPDATE email_events SET status = 'clicked', clicked_at = COALESCE(clicked_at, CURRENT_TIMESTAMP)
+    WHERE track_token = ?
+  `).run(trackToken);
+}
+
+function updateEmailEventByResendId(resendId, fields) {
+  const allowed = ['status','delivered_at','bounced_at','complained_at','bounce_reason','opened_at','clicked_at'];
+  const sets = Object.keys(fields).filter(k => allowed.includes(k)).map(k => `${k} = ?`).join(', ');
+  const vals = Object.keys(fields).filter(k => allowed.includes(k)).map(k => fields[k]);
+  if (!sets) return;
+  getDb().prepare(`UPDATE email_events SET ${sets} WHERE resend_id = ?`).run(...vals, resendId);
+}
+
+function getEmailEventsByLead(leadId) {
+  return getDb().prepare(`
+    SELECT * FROM email_events WHERE lead_id = ? ORDER BY created_at DESC LIMIT 50
+  `).all(leadId);
+}
+
 // EXPORTS
 // ══════════════════════════════════════════════════════════
 
@@ -1431,4 +1506,8 @@ module.exports = {
   deletePlanejamentoSlide, approveSlide, requestRevisionSlide, reorderPlanejamentoSlides,
   createPlanejamentoSession, closePlanejamentoSession, markPlanejamentoSessionAlertSent,
   recordPlanejamentoSlideEvent, logPlanejamentoEvent, getPlanejamentoEventLog, getPlanejamentoStats,
+  // Email Events (Resend tracking)
+  createEmailEvent, getEmailEventByTrackToken, getEmailEventByResendId,
+  updateEmailEventResendId, markEmailOpened, markEmailClicked,
+  updateEmailEventByResendId, getEmailEventsByLead,
 };

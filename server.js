@@ -14,6 +14,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ============ MIDDLEWARES ============
+
+// Webhook Resend precisa do raw body para verificar assinatura HMAC — DEVE vir ANTES do express.json()
+app.use('/api/webhooks/resend', express.raw({ type: 'application/json' }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -53,6 +57,90 @@ app.use('/proposta', proposalRouter);
 app.use('/planejamento', planejamentoClientRouter);
 app.use('/api/track', apiRouter);
 app.use('/api', apiRouter);
+
+// ── Pixel de abertura de email ───────────────────────────────────────────────
+app.get('/track/email-open/:token', (req, res) => {
+  try {
+    const { token } = req.params;
+    db.markEmailOpened(token);
+    console.log(`[EmailTrack] 👁️ Aberto | token: ${token}`);
+  } catch (e) {
+    console.error('[EmailTrack] open error:', e.message);
+  }
+  // Retorna GIF 1x1 transparente
+  const pixel = Buffer.from(
+    'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+    'base64'
+  );
+  res.set({ 'Content-Type': 'image/gif', 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache' });
+  res.end(pixel);
+});
+
+// ── Link rastreado (clique) — redireciona para a proposta ────────────────────
+app.get('/track/email-click/:token', (req, res) => {
+  try {
+    const { token } = req.params;
+    const { url } = req.query;
+    db.markEmailClicked(token);
+    console.log(`[EmailTrack] 🖱️ Clicado | token: ${token} → ${url}`);
+    return res.redirect(url || '/');
+  } catch (e) {
+    console.error('[EmailTrack] click error:', e.message);
+    return res.redirect('/');
+  }
+});
+
+// ── Webhook Resend (entrega, spam, bounce) ────────────────────────────────────
+app.post('/api/webhooks/resend', (req, res) => {
+  try {
+    const secret = process.env.RESEND_WEBHOOK_SECRET;
+    if (secret) {
+      const crypto = require('crypto');
+      const signature = req.headers['svix-signature'] || '';
+      const msgId    = req.headers['svix-id'] || '';
+      const msgTs    = req.headers['svix-timestamp'] || '';
+      const body     = req.body; // Buffer (raw)
+
+      // Resend usa Svix para assinar — verificação HMAC-SHA256
+      const toSign = `${msgId}.${msgTs}.${body.toString()}`;
+      // secret no formato whsec_BASE64 — decodifica
+      const secretBytes = Buffer.from(secret.replace(/^whsec_/, ''), 'base64');
+      const expectedSig = crypto.createHmac('sha256', secretBytes).update(toSign).digest('base64');
+      const sigs = signature.split(' ').map(s => s.replace(/^v1,/, ''));
+      if (!sigs.includes(expectedSig)) {
+        console.warn('[Webhook] Assinatura inválida — ignorando');
+        return res.status(401).json({ error: 'Invalid signature' });
+      }
+    }
+
+    const payload = JSON.parse(req.body.toString());
+    const { type, data } = payload;
+    const resendId = data?.email_id;
+
+    console.log(`[Webhook] Resend evento: ${type} | id: ${resendId}`);
+
+    if (!resendId) return res.json({ ok: true });
+
+    const now = new Date().toISOString();
+    if (type === 'email.delivered') {
+      db.updateEmailEventByResendId(resendId, { status: 'delivered', delivered_at: now });
+    } else if (type === 'email.bounced') {
+      db.updateEmailEventByResendId(resendId, { status: 'bounced', bounced_at: now, bounce_reason: JSON.stringify(data) });
+    } else if (type === 'email.complained') {
+      db.updateEmailEventByResendId(resendId, { status: 'spam', complained_at: now });
+    } else if (type === 'email.opened') {
+      // Resend também notifica abertura via webhook (complementa o pixel)
+      db.updateEmailEventByResendId(resendId, { opened_at: now });
+    } else if (type === 'email.clicked') {
+      db.updateEmailEventByResendId(resendId, { clicked_at: now });
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[Webhook] Erro:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Rota raiz — página inicial para clientes
 app.get('/', (req, res) => {
